@@ -359,6 +359,16 @@ def api_settings():
     if "proxy_url" in data:
         cfg["proxy_url"] = data["proxy_url"]
     
+    # 微信小店导出配置
+    if "wechat_export" in data:
+        if "wechat_export" not in cfg:
+            cfg["wechat_export"] = {}
+        wechat_keys = ["deliver_method", "seven_day_return", "freight_insurance",
+                       "default_stock", "brand_id", "listing", "release_mode"]
+        for key in wechat_keys:
+            if key in data["wechat_export"]:
+                cfg["wechat_export"][key] = data["wechat_export"][key]
+
     save_config(cfg)
     return jsonify({"ok": True})
 
