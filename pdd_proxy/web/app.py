@@ -177,7 +177,7 @@ def api_export() -> Any:
     format_type = data.get("format", "json")
     goods_ids = data.get("ids", [])
     try:
-        func_map = {"json": export_json, "csv": export_csv, "excel": export_excel, "taobao": export_for_taobao, "txt": export_txt}
+        func_map = {"json": export_json, "csv": export_csv, "excel": export_excel, "taobao": export_for_taobao, "txt": export_txt, "wechat": export_for_wechat}
         func = func_map.get(format_type)
         if not func: return jsonify({"error": f"不支持的格式: {format_type}"}), 400
         filepath = func(goods_ids if goods_ids else None)
@@ -320,6 +320,7 @@ import uuid
 import base64
 import requests as _requests
 from exporter import export_json, export_csv, export_excel, export_for_taobao, export_txt, generate_goods_txt, _safe_filename
+from wechat_export import export_for_wechat
 from web.ai import load_config, save_config, generate_image, edit_image, rewrite_text, PRESET_PROMPTS
 
 
