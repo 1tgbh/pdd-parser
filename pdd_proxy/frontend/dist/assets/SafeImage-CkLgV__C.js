@@ -1,0 +1,1 @@
+import{C as e,T as t,n}from"./index-yaFRusC7.js";var r=t(e(),1),i=n();function a({fallback:e,onError:t,...n}){let[a,o]=(0,r.useState)(!1),s=(0,r.useCallback)(e=>{o(!0),t?.(e)},[t]);return a?e?(0,i.jsx)(i.Fragment,{children:e}):null:(0,i.jsx)(`img`,{...n,onError:s})}export{a as t};

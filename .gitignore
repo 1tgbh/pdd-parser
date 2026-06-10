@@ -1,0 +1,38 @@
+# Python environment
+Lib/
+python/
+Scripts/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.dll
+*.exe
+*.zip
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files
+pdd_proxy/data/exports/
+pdd_proxy/data/ai_images/
+pdd_proxy/data/images/
+pdd_proxy/data/*.db
+pdd_proxy/data/config.json
+
+# Certificates
+pdd_proxy/certs/
+
+# Frontend build (keep dist for deployment)
+pdd_proxy/frontend/dist/assets/*.map
