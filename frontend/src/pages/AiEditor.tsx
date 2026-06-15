@@ -402,6 +402,24 @@ export default function AiEditor() {
     }
   }, [historyData, historySelected]);
 
+  const handleDownload = useCallback(async (imgPath: string) => {
+    try {
+      const url = getImgUrl(imgPath);
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `ai_${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      alert('下载失败');
+    }
+  }, []);
+
   const handleHistoryExport = useCallback(() => {
     if (!historyData?.items || historySelected.size === 0) return;
     const selectedItems = historyData.items.filter(item => historySelected.has(item.id));
@@ -420,24 +438,6 @@ export default function AiEditor() {
       alert('删除失败');
     }
   }, [historySelected, deleteHistMut]);
-
-  const handleDownload = useCallback(async (imgPath: string) => {
-    try {
-      const url = getImgUrl(imgPath);
-      const resp = await fetch(url);
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `ai_${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      alert('下载失败');
-    }
-  }, []);
 
   const handleBatchDownload = useCallback(async () => {
     for (const idx of selectedResults) {
