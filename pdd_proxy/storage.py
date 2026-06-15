@@ -56,6 +56,30 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_goods_shop ON goods(shop_name);
         CREATE INDEX IF NOT EXISTS idx_goods_crawl ON goods(crawl_time);
     """)
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS sku_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            goods_id TEXT NOT NULL,
+            sku_id TEXT DEFAULT '',
+            specs TEXT DEFAULT '{}',
+            price REAL DEFAULT 0.0,
+            original_price REAL DEFAULT 0.0,
+            stock INTEGER DEFAULT 0,
+            image TEXT DEFAULT '',
+            created_at TEXT,
+            updated_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_sku_items_goods_id ON sku_items(goods_id);
+    """)
+    for col_sql in [
+        "ALTER TABLE goods ADD COLUMN price_min REAL DEFAULT 0.0",
+        "ALTER TABLE goods ADD COLUMN price_max REAL DEFAULT 0.0",
+        "ALTER TABLE goods ADD COLUMN total_stock INTEGER DEFAULT 0",
+    ]:
+        try:
+            conn.execute(col_sql)
+        except Exception:
+            pass
     conn.commit()
     conn.close()
     print(f"✅ 数据库初始化完成: {DB_PATH}")
@@ -188,6 +212,137 @@ def _row_to_goods(row) -> GoodsInfo:
         source_url=row["source_url"] or "",
         crawl_time=row["crawl_time"] or datetime.now().isoformat(),
     )
+
+
+def upsert_sku_items(goods_id: str, sku_list: list) -> None:
+    """Upsert SKU items for a given goods_id."""
+    conn = get_conn()
+    now = datetime.now().isoformat()
+    try:
+        conn.execute("DELETE FROM sku_items WHERE goods_id = ?", (goods_id,))
+        for s in sku_list:
+            if not isinstance(s, dict):
+                continue
+            sku_id = str(s.get("sku_id", s.get("id", "")))
+            specs = s.get("specs", s.get("spec", {}))
+            if isinstance(specs, list):
+                specs_dict = {}
+                for sp in specs:
+                    if isinstance(sp, dict):
+                        k = sp.get("spec_key", sp.get("name", sp.get("spec", "")))
+                        v = sp.get("spec_value", sp.get("value", ""))
+                        if k:
+                            specs_dict[k] = v
+                specs = specs_dict
+            price = float(s.get("price", 0) or 0)
+            original_price = float(s.get("original_price", s.get("normal_price", 0)) or 0)
+            stock = int(s.get("stock", s.get("quantity", 0)) or 0)
+            image = s.get("image", s.get("thumb_url", ""))
+            conn.execute(
+                """INSERT INTO sku_items
+                   (goods_id, sku_id, specs, price, original_price, stock, image, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (goods_id, sku_id, json.dumps(specs, ensure_ascii=False),
+                 price, original_price, stock, image, now, now),
+            )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+
+def update_goods_price_range(goods_id: str, price_min: float, price_max: float, total_stock: int) -> None:
+    """Update price range and total stock for a goods row."""
+    conn = get_conn()
+    now = datetime.now().isoformat()
+    try:
+        conn.execute(
+            """UPDATE goods SET
+               price_min = ?, price_max = ?, total_stock = ?, updated_at = ?
+               WHERE goods_id = ?""",
+            (price_min, price_max, total_stock, now, goods_id),
+        )
+        conn.commit()
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+
+def get_sku_items(goods_id: str) -> list:
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM sku_items WHERE goods_id = ? ORDER BY id", (goods_id,)
+    ).fetchall()
+    conn.close()
+    result = []
+    for r in rows:
+        result.append({
+            "id": r["id"],
+            "goods_id": r["goods_id"],
+            "sku_id": r["sku_id"] or "",
+            "specs": json.loads(r["specs"] or "{}"),
+            "price": r["price"] or 0,
+            "original_price": r["original_price"] or 0,
+            "stock": r["stock"] or 0,
+            "image": r["image"] or "",
+            "created_at": r["created_at"] or "",
+            "updated_at": r["updated_at"] or "",
+        })
+    return result
+
+
+def upsert_sku_items(goods_id: str, sku_list: list) -> None:
+    conn = get_conn()
+    now = datetime.now().isoformat()
+    try:
+        conn.execute("DELETE FROM sku_items WHERE goods_id = ?", (goods_id,))
+        for s in sku_list:
+            specs = s.get("specs", {})
+            if isinstance(specs, list):
+                specs_dict = {}
+                for sp in specs:
+                    if isinstance(sp, dict):
+                        name = sp.get("name", sp.get("spec_key", ""))
+                        value = sp.get("value", sp.get("spec_value", ""))
+                        if name:
+                            specs_dict[name] = value
+                specs = specs_dict
+            conn.execute(
+                """INSERT INTO sku_items
+                   (goods_id, sku_id, specs, price, original_price, stock, image, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    goods_id,
+                    s.get("sku_id", ""),
+                    json.dumps(specs, ensure_ascii=False),
+                    float(s.get("price", 0) or 0),
+                    float(s.get("original_price", 0) or 0),
+                    int(s.get("stock", 0) or 0),
+                    s.get("image", ""),
+                    now, now,
+                ),
+            )
+        conn.commit()
+    except Exception as e:
+        print(f"❌ SKU upsert 失败: {e}")
+    finally:
+        conn.close()
+
+
+def update_goods_price_range(goods_id: str, price_min: float, price_max: float, total_stock: int) -> None:
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE goods SET price_min = ?, price_max = ?, total_stock = ? WHERE goods_id = ?",
+            (price_min, price_max, total_stock, goods_id),
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"❌ 更新价格区间失败: {e}")
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":

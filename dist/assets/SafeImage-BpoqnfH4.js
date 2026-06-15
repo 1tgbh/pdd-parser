@@ -1,0 +1,1 @@
+import{E as e,n as t,w as n}from"./index-Bgbll4Wv.js";var r=e(n(),1),i=t();function a({fallback:e,onError:t,...n}){let[a,o]=(0,r.useState)(!1),s=(0,r.useCallback)(e=>{o(!0),t?.(e)},[t]);return a?e?(0,i.jsx)(i.Fragment,{children:e}):null:(0,i.jsx)(`img`,{...n,onError:s})}export{a as t};

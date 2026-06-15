@@ -1,0 +1,193 @@
+.container { display: flex; flex-direction: column; gap: 16px; }
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+.searchInput:focus-visible { border-color: var(--orange-500); box-shadow: 0 0 0 2px rgba(249,115,22,0.2); }
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--orange-50);
+  border: 1px solid var(--orange-500);
+  border-radius: 14px;
+  font-size: 12px;
+  color: var(--orange-600);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: var(--orange-500);
+  color: var(--white);
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.chipRemove:hover { background: var(--orange-600); }
+.searchDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 50;
+}
+.searchDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+.searchDropdownItem:hover { background: var(--blue-50); }
+.searchDropdownThumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: var(--blue-100);
+}
+.searchDropdownTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.searchWrapper { position: relative; flex: 1; min-width: 200px; }
+
+.compareArea {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: auto;
+}
+.compareTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 600px;
+}
+.compareTable th,
+.compareTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--blue-100);
+  vertical-align: top;
+}
+.compareTable th {
+  background: var(--blue-50);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.attrCell {
+  min-width: 120px;
+  max-width: 160px;
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--blue-50);
+  white-space: nowrap;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.productCell {
+  min-width: 200px;
+  max-width: 280px;
+}
+.productCell a {
+  color: var(--blue-700);
+  text-decoration: none;
+}
+.productCell a:hover { text-decoration: underline; }
+.productImage {
+  width: 100%;
+  max-width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--blue-100);
+}
+.priceValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--orange-500);
+}
+.originalPrice {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-decoration: line-through;
+  margin-left: 6px;
+}
+.salesValue { font-weight: 600; }
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--blue-100);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--blue-700);
+}
+.emptyHint {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray-400);
+  font-size: 14px;
+}
+.emptyIcon { font-size: 48px; margin-bottom: 12px; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

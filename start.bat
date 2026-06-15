@@ -11,7 +11,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0init_venv.ps1" -PyDir 
 
 set PYTHONHOME=
 set PYTHONPATH=
+set PYTHONUNBUFFERED=1
 set PATH=%PY_DIR%;%PY_DIR%\Scripts;%PATH%
-"%PY_DIR%\python.exe" "%~dp0pdd_proxy\start.py"
+"%PY_DIR%\python.exe" -u "%~dp0pdd_proxy\start.py"
 if errorlevel 1 echo.
-pause
+pause

@@ -45,7 +45,7 @@ class GoodsParser:
         
         # 图片
         goods.main_images = GoodsParser._extract_images(goods_data, ["top_gallery", "topGallery", "gallery", "images"])
-        goods.detail_images = GoodsParser._extract_images(goods_data, ["detail_gallery", "desc_gallery", "goods_desc_images"])
+        goods.detail_images = GoodsParser._extract_images(goods_data, ["detail_gallery", "detailGallery", "desc_gallery", "goods_desc_images"])
         goods.sku_images = GoodsParser._extract_sku_images(goods_data)
         
         # 规格和 SKU
@@ -77,6 +77,13 @@ class GoodsParser:
         
         if "goods_id" in data or "goodsID" in data:
             return data
+        
+        if "store" in data:
+            store = data.get("store", {})
+            init = store.get("initDataObj", store.get("init_data_obj", {}))
+            goods = init.get("goods", {})
+            if goods and isinstance(goods, dict) and ("goodsID" in goods or "goods_id" in goods):
+                return goods
         
         return None
     
@@ -226,6 +233,16 @@ class GoodsParser:
                         value = p.get("value", p.get("val", ""))
                         if name and value:
                             attrs[name] = value
+        
+        for key in ["goodsProperty", "goods_property"]:
+            props = data.get(key, [])
+            if isinstance(props, list):
+                for p in props:
+                    if isinstance(p, dict):
+                        name = p.get("key", "")
+                        values = p.get("values", [])
+                        if name and values:
+                            attrs[name] = str(values[0]) if isinstance(values, list) and values else str(values)
         
         # 从基本信息提取
         basic_attrs = {

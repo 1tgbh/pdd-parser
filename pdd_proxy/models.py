@@ -65,6 +65,9 @@ class GoodsInfo:
     source_url: str = ""
     crawl_time: str = ""
     raw_data: Optional[dict] = None
+    price_min: float = 0.0
+    price_max: float = 0.0
+    total_stock: int = 0
     
     def to_dict(self) -> dict:
         """转为字典，用于导出"""

@@ -6,6 +6,7 @@ import time
 import re
 import requests
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 CONFIG_PATH = DATA_DIR / "config.json"
@@ -28,11 +29,11 @@ def save_config(cfg: dict):
 # ============ grsai 图片生成 (SSE 流式) ============
 
 PRESET_PROMPTS = {
-    "white_bg": "Remove the background and replace with pure white background. Keep the product clear and centered. E-commerce main image style.",
-    "scene": "Place this product on a beautiful lifestyle scene, such as a wooden table or marble countertop with natural soft lighting. Product photography style.",
-    "poster": "Create a beautiful marketing poster with this product as the main subject. Add elegant background, decorative elements and soft lighting.",
-    "remove_watermark": "Remove all watermarks, text overlays, promotional labels and stickers from this image. Keep the product image clean and clear.",
-    "style_cartoon": "Convert this product image to a cute cartoon illustration style while keeping the product features recognizable.",
+    "white_bg": "白底商品主图",
+    "scene": "产品场景摄影",
+    "poster": "商品宣传海报",
+    "remove_watermark": "去除图片水印",
+    "style_cartoon": "卡通插画风格",
 }
 
 
@@ -51,8 +52,33 @@ def _parse_sse_events(raw_text: str) -> list:
     return events
 
 
+def _fetch_image_as_data_url(image_url: str) -> str | None:
+    """下载图片并转为 base64 data URL，失败返回 None"""
+    import base64
+    try:
+        full_url = image_url
+        if image_url.startswith("/"):
+            full_url = f"http://127.0.0.1:5000{image_url}"
+        resp = requests.get(full_url, timeout=30, headers={"Referer": "https://mobile.yangkeduo.com/"}, verify=False)
+        if resp.status_code != 200:
+            return None
+        ct = resp.headers.get("content-type", "image/jpeg")
+        if "jpeg" in ct or "jpg" in ct:
+            ct = "image/jpeg"
+        elif "png" in ct:
+            ct = "image/png"
+        elif "webp" in ct:
+            ct = "image/webp"
+        else:
+            ct = "image/jpeg"
+        b64 = base64.b64encode(resp.content).decode()
+        return f"data:{ct};base64,{b64}"
+    except Exception:
+        return None
+
+
 def _call_grsai(prompt: str, image_url: str = None, size: str = "1024x1024") -> dict:
-    """调用 grsai API 生成图片，返回最终结果"""
+    """调用 grsai API 生成图片，逐行读取 SSE 流式响应"""
     cfg = load_config().get("image_api", {})
     api_key = cfg.get("api_key", "")
     base_url = cfg.get("base_url", "https://grsai.dakka.com.cn").rstrip("/")
@@ -72,9 +98,12 @@ def _call_grsai(prompt: str, image_url: str = None, size: str = "1024x1024") -> 
         "aspectRatio": size,
     }
 
-    # 如果有参考图，用 urls 参数传入（支持多张）
     if image_url:
-        body["urls"] = [image_url]
+        image_data_url = _fetch_image_as_data_url(image_url)
+        if image_data_url:
+            body["urls"] = [image_data_url]
+        else:
+            body["urls"] = [image_url]
 
     url = f"{base_url}/v1/draw/completions"
 
@@ -83,15 +112,28 @@ def _call_grsai(prompt: str, image_url: str = None, size: str = "1024x1024") -> 
         if resp.status_code != 200:
             return {"error": f"API 请求失败 (HTTP {resp.status_code}): {resp.text[:200]}"}
 
-        # 读取 SSE 流
-        full_text = resp.text
-        events = _parse_sse_events(full_text)
+        final = None
+        for line in resp.iter_lines(decode_unicode=True):
+            if not line:
+                continue
+            line = line.strip()
+            if line.startswith("data:"):
+                data_str = line[5:].strip()
+                if data_str:
+                    try:
+                        evt = json.loads(data_str)
+                        final = evt
+                        if evt.get("status") == "succeeded" and evt.get("results"):
+                            resp.close()
+                            break
+                        if evt.get("status") == "failed":
+                            resp.close()
+                            break
+                    except json.JSONDecodeError:
+                        pass
 
-        if not events:
+        if not final:
             return {"error": "API 返回数据为空，请检查 API Key 和模型配置"}
-
-        # 取最后一个事件（最终结果）
-        final = events[-1]
 
         if final.get("status") == "succeeded" and final.get("results"):
             urls = [r["url"] for r in final["results"] if r.get("url")]
@@ -100,7 +142,6 @@ def _call_grsai(prompt: str, image_url: str = None, size: str = "1024x1024") -> 
         if final.get("status") == "failed" or final.get("error"):
             return {"error": f"生成失败: {final.get('error') or final.get('failure_reason', '未知错误')}"}
 
-        # 如果流式结束但没成功
         return {"error": f"生成未完成，状态: {final.get('status', '未知')}"}
 
     except requests.exceptions.Timeout:
@@ -132,42 +173,122 @@ def _download_and_save(url: str, goods_id: str, prefix: str = "ai") -> str | Non
         return None
 
 
+_executor = ThreadPoolExecutor(max_workers=2)
+
+
+def _save_image_bg(url: str, goods_id: str, prefix: str):
+    """后台下载保存图片到本地"""
+    import sqlite3 as _sqlite3
+    try:
+        path = _download_and_save(url, goods_id, prefix)
+        if path:
+            db_path = DATA_DIR / "goods.db"
+            conn = _sqlite3.connect(str(db_path))
+            conn.execute(
+                "INSERT INTO ai_images (goods_id, result_path, model) VALUES (?, ?, ?)",
+                (goods_id, path, load_config().get("image_api", {}).get("model", ""))
+            )
+            conn.commit()
+            conn.close()
+    except Exception:
+        pass
+
+
 def generate_image(prompt: str, goods_id: str, size: str = "1024x1024") -> dict:
-    """文生图"""
+    """文生图 — 直接返回 API URL，后台下载到本地"""
     result = _call_grsai(prompt, size=size)
     if "error" in result:
         return result
 
-    # 下载并保存
-    saved = []
-    for url in result.get("urls", []):
-        path = _download_and_save(url, goods_id, "gen")
-        if path:
-            saved.append(path)
+    urls = result.get("urls", [])
+    if not urls:
+        return {"error": "图片生成成功但未返回图片URL"}
 
-    if not saved:
-        return {"error": "图片生成成功但下载失败，请重试"}
+    for url in urls:
+        _executor.submit(_save_image_bg, url, goods_id, "gen")
 
-    return {"paths": saved, "prompt": prompt}
+    return {"urls": urls, "prompt": prompt}
 
 
-def edit_image(image_url: str, prompt: str, goods_id: str) -> dict:
-    """图片编辑（基于原图 + 提示词）"""
-    # 直接用用户提示词，grsai 会自动参考 urls 中的图片
-    result = _call_grsai(prompt, image_url=image_url)
+def edit_image(image_url: str, prompt: str, goods_id: str, size: str = "1024x1024") -> dict:
+    """图片编辑 — 直接返回 API URL，后台下载到本地"""
+    result = _call_grsai(prompt, image_url=image_url, size=size)
     if "error" in result:
         return result
 
-    saved = []
-    for url in result.get("urls", []):
-        path = _download_and_save(url, goods_id, "edit")
-        if path:
-            saved.append(path)
+    urls = result.get("urls", [])
+    if not urls:
+        return {"error": "图片编辑成功但未返回图片URL"}
 
-    if not saved:
-        return {"error": "图片编辑成功但下载失败，请重试"}
+    for url in urls:
+        _executor.submit(_save_image_bg, url, goods_id, "edit")
 
-    return {"paths": saved, "prompt": prompt}
+    return {"urls": urls, "prompt": prompt}
+
+
+def remove_background(image_url: str) -> str:
+    """Remove background from image using grsai API."""
+    import requests
+    config = load_config()
+    api_key = config.get("api_key", "")
+    base_url = (config.get("base_url", "") or "https://api.grsai.ai/v1").rstrip("/")
+
+    if not api_key:
+        raise ValueError("未配置 AI API Key，请在设置中添加")
+
+    img_resp = requests.get(image_url, timeout=30)
+    img_resp.raise_for_status()
+
+    import base64, io
+    from PIL import Image
+    img = Image.open(io.BytesIO(img_resp.content))
+    if img.mode == 'RGBA':
+        img = img.convert('RGB')
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=95)
+    img_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    url = f"{base_url}/images/edits"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    body = {
+        "model": "gpt-image-1",
+        "prompt": "Remove the background, keep only the main subject on transparent background",
+        "image": f"data:image/jpeg;base64,{img_b64}",
+        "n": 1,
+        "size": "1024x1024",
+    }
+
+    resp = requests.post(url, headers=headers, json=body, timeout=120)
+    resp.raise_for_status()
+    data = resp.json()
+
+    images = []
+    if "data" in data:
+        for item in data["data"]:
+            if "b64_json" in item:
+                import base64 as b64
+                img_bytes = b64.b64decode(item["b64_json"])
+                images.append(("base64", img_bytes))
+            elif "url" in item:
+                images.append(("url", item["url"]))
+
+    if not images:
+        raise ValueError("AI 未返回图片")
+
+    from pathlib import Path
+    out_dir = Path(__file__).parent.parent / "data" / "ai_images"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    ts = int(time.time() * 1000)
+
+    kind, payload = images[0]
+    out_path = out_dir / f"bg_{ts}.png"
+    if kind == "base64":
+        out_path.write_bytes(payload)
+    else:
+        r = requests.get(payload, timeout=30)
+        out_path.write_bytes(r.content)
+
+    return f"/api/ai-image/{out_path.name}"
 
 
 # ============ 小米文本改写 ============
@@ -244,6 +365,76 @@ def rewrite_text(goods_info: dict, targets: list = None, style: str = "default",
         return {"result": result}
     except json.JSONDecodeError:
         return {"result": {"text": content}}
+
+
+def generate_copywriting(goods_info: dict, copy_type: str = "all", style: str = "default", custom_prompt: str = None) -> dict:
+    cfg = load_config().get("text_api", {})
+    api_key = cfg.get("api_key", "")
+    base_url = cfg.get("base_url", "")
+    model = cfg.get("model", "")
+    if not api_key or not base_url:
+        return {"error": "未配置文本 API，请在设置中配置"}
+
+    styles = {
+        "default": "用专业电商风格",
+        "taobao": "用适合淘宝/天猫的风格，注意标题30字以内",
+        "douyin": "用适合抖音电商的风格，语言活泼有吸引力",
+        "pdd": "用适合拼多多的风格，突出性价比",
+    }
+    style_text = styles.get(style, styles["default"])
+
+    goods_text = f"【标题】{goods_info.get('title', '')}\n"
+    goods_text += f"【副标题】{goods_info.get('subtitle', '')}\n"
+    sps = goods_info.get("selling_points", [])
+    if isinstance(sps, list):
+        goods_text += f"【卖点】{', '.join(sps)}\n"
+    goods_text += f"【商品描述】{goods_info.get('description', '')[:500]}\n"
+    attrs = goods_info.get("attributes", {})
+    if attrs:
+        goods_text += f"【属性】{json.dumps(attrs, ensure_ascii=False)[:300]}\n"
+
+    type_instructions = {
+        "title": "只生成标题，返回JSON: {\"title\": \"...\", \"subtitle\": \"...\"}",
+        "selling_points": "只生成卖点，返回JSON: {\"selling_points\": [\"卖点1\", \"卖点2\", \"卖点3\", \"卖点4\", \"卖点5\"]}",
+        "description": "只生成商品详情文案，返回JSON: {\"description\": \"...\"}",
+        "all": "生成标题、副标题、卖点和详情，返回JSON: {\"title\": \"...\", \"subtitle\": \"...\", \"selling_points\": [...], \"description\": \"...\"}",
+    }
+
+    user_msg = f"商品信息:\n{goods_text}\n{style_text}。{type_instructions.get(copy_type, type_instructions['all'])}"
+    if custom_prompt:
+        user_msg += f"\n额外要求: {custom_prompt}"
+    user_msg += "\n只返回纯JSON，不要任何其他文字。"
+
+    resp = requests.post(
+        f"{base_url}/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={
+            "model": model,
+            "messages": [
+                {"role": "system", "content": "你是电商文案专家，擅长撰写吸引人的商品文案。"},
+                {"role": "user", "content": user_msg},
+            ],
+            "temperature": 0.7,
+            "max_tokens": 2000,
+        },
+        timeout=60,
+        verify=False,
+    )
+
+    if resp.status_code != 200:
+        return {"error": f"API 请求失败: HTTP {resp.status_code}"}
+
+    content = resp.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+    content = content.strip()
+    if content.startswith("```"):
+        content = re.sub(r"^```(?:json)?\n?", "", content)
+        content = re.sub(r"\n?```$", "", content)
+
+    try:
+        result = json.loads(content)
+        return result
+    except json.JSONDecodeError:
+        return {"error": "AI 返回格式异常", "raw": content}
 
 
 

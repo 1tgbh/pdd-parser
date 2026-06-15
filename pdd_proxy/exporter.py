@@ -8,6 +8,7 @@ import csv
 import json
 import os
 import sqlite3
+import tempfile
 import zipfile
 import requests as _req
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -63,6 +64,29 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
+def _sku_specs_to_dict(specs) -> dict:
+    """将 SKU specs 统一转为 {key: value} 字典格式。
+    
+    数据库中 specs 可能是:
+      - dict: {"颜色": "红"} (旧格式)
+      - list: [{"key": "颜色", "value": "红"}] (新格式)
+    """
+    if not specs:
+        return {}
+    if isinstance(specs, dict):
+        return specs
+    if isinstance(specs, list):
+        result = {}
+        for item in specs:
+            if isinstance(item, dict):
+                k = item.get("key", item.get("spec_key", ""))
+                v = item.get("value", item.get("spec_value", ""))
+                if k:
+                    result[k] = v
+        return result
+    return {}
+
+
 def _load_goods(rows) -> list:
     """将数据库行转为商品字典列表"""
     goods_list = []
@@ -88,13 +112,34 @@ def _load_goods(rows) -> list:
             "attributes": json.loads(r["attributes"] or "{}"),
             "source_url": r["source_url"] or "",
             "crawl_time": r["crawl_time"] or "",
+            "price_min": r["price_min"] if "price_min" in r.keys() else (r["price"] or 0),
+            "price_max": r["price_max"] if "price_max" in r.keys() else (r["price"] or 0),
+            "total_stock": r["total_stock"] if "total_stock" in r.keys() else 0,
         }
+        if not goods["skus"]:
+            try:
+                conn2 = sqlite3.connect(str(DATA_DIR / "goods.db"))
+                conn2.row_factory = sqlite3.Row
+                sku_rows = conn2.execute("SELECT * FROM sku_items WHERE goods_id = ?", (r["goods_id"],)).fetchall()
+                conn2.close()
+                for sr in sku_rows:
+                    specs_dict = json.loads(sr["specs"] or "{}")
+                    goods["skus"].append({
+                        "sku_id": sr["sku_id"] or "",
+                        "specs": specs_dict,
+                        "price": sr["price"] or 0,
+                        "original_price": sr["original_price"] or 0,
+                        "stock": sr["stock"] or 0,
+                        "image": sr["image"] or "",
+                    })
+            except Exception:
+                pass
         goods_list.append(goods)
     return goods_list
 
 
 def _safe_filename(s: str, max_len: int = 30) -> str:
-    bad = '/\:*?"<>|'
+    bad = '/\\:*?"<>|'
     for ch in bad:
         s = s.replace(ch, "_")
     return s[:max_len]
@@ -139,7 +184,7 @@ def generate_goods_txt(g: dict) -> str:
     if g.get("skus"):
         lines.append("SKU详情:")
         for sk in g["skus"]:
-            spec_str = " ".join(sk.get("specs", {}).values()) if sk.get("specs") else ""
+            spec_str = " ".join(_sku_specs_to_dict(sk.get("specs")).values()) if sk.get("specs") else ""
             price_str = f"  {spec_str} - {sk['price']:.2f}元" if spec_str else f"  {sk['price']:.2f}元"
             if sk.get("stock"):
                 price_str += f" - 库存{sk['stock']}"
@@ -211,7 +256,7 @@ def export_csv(goods_ids: list = None) -> str:
             specs_str = "; ".join([f"{k}: {','.join(v)}" for k, v in g["specs"].items()])
             sku_parts = []
             for s in g["skus"]:
-                spec_str = " ".join([f"{k}:{v}" for k, v in s.get("specs", {}).items()])
+                spec_str = " ".join([f"{k}:{v}" for k, v in _sku_specs_to_dict(s.get("specs")).items()])
                 sku_parts.append(f"{spec_str} ¥{s.get('price', 0)} 库存{s.get('stock', 0)}")
             skus_str = " | ".join(sku_parts)
             writer.writerow([
@@ -258,7 +303,7 @@ def export_excel(goods_ids: list = None) -> str:
         specs_str = "; ".join([f"{k}: {','.join(v)}" for k, v in g["specs"].items()])
         sku_parts = []
         for s in g["skus"]:
-            spec_str = " ".join([f"{k}:{v}" for k, v in s.get("specs", {}).items()])
+            spec_str = " ".join([f"{k}:{v}" for k, v in _sku_specs_to_dict(s.get("specs")).items()])
             sku_parts.append(f"{spec_str} ¥{s.get('price', 0)} 库存{s.get('stock', 0)}")
         skus_str = " | ".join(sku_parts)
         ws.append([
@@ -284,6 +329,37 @@ def export_excel(goods_ids: list = None) -> str:
     wb.save(filepath)
     print(f"Excel export done: {filepath} ({len(goods_list)} goods)")
     return filepath
+
+
+def export_with_template(goods_list: list, fields: list, column_map: dict) -> tuple:
+    try:
+        import openpyxl
+    except ImportError:
+        print("需要安装 openpyxl: pip install openpyxl")
+        return None, "export.xlsx"
+    from openpyxl.styles import Font
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "商品数据"
+    headers = [column_map.get(f, f) for f in fields]
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = Font(bold=True)
+    for row_idx, g in enumerate(goods_list, 2):
+        for col_idx, field in enumerate(fields, 1):
+            value = getattr(g, field, None) if hasattr(g, 'get') is False else g.get(field, "")
+            if isinstance(value, list):
+                value = ", ".join(str(v) for v in value)
+            elif isinstance(value, dict):
+                value = json.dumps(value, ensure_ascii=False)
+            ws.cell(row=row_idx, column=col_idx, value=value)
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or "")) for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 40)
+    tmp = tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False, mode="wb")
+    wb.save(tmp.name)
+    tmp.close()
+    return tmp.name, "export.xlsx"
 
 
 def export_for_taobao(goods_ids: list = None) -> str:
@@ -317,7 +393,7 @@ def export_for_taobao(goods_ids: list = None) -> str:
         if g["skus"]:
             sku_props, sku_quantities, sku_prices = [], [], []
             for s in g["skus"]:
-                props = ";".join([f"{k}:{v}" for k, v in s.get("specs", {}).items()])
+                props = ";".join([f"{k}:{v}" for k, v in _sku_specs_to_dict(s.get("specs")).items()])
                 sku_props.append(props)
                 sku_quantities.append(str(s.get("stock", 0)))
                 sku_prices.append(str(s.get("price", g["price"])))
@@ -400,6 +476,261 @@ def export_txt(goods_ids: list = None) -> str:
     print(f"TXT export done: {zip_path}")
     print(f"  {len(goods_list)} goods, {downloaded} images OK, {failed} failed")
     return zip_path
+def export_dawang(goods_ids: list = None, template: str = "universal") -> str:
+    """导出大王解析兼容格式（CSV）
+
+    template:
+    - "universal": 通用数据包格式
+    - "wechat": 微信小店上货格式
+    - "pdd": 拼多多上货格式
+    """
+    conn = get_conn()
+    if goods_ids:
+        placeholders = ",".join(["?"] * len(goods_ids))
+        rows = conn.execute(
+            f"SELECT * FROM goods WHERE goods_id IN ({placeholders})", goods_ids
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM goods ORDER BY crawl_time DESC").fetchall()
+    conn.close()
+    goods_list = _load_goods(rows)
+    if not goods_list:
+        return None
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    if template == "wechat":
+        return _export_dawang_wechat(goods_list, timestamp)
+    elif template == "pdd":
+        return _export_dawang_pdd(goods_list, timestamp)
+    else:
+        return _export_dawang_universal(goods_list, timestamp)
+
+
+def _export_dawang_universal(goods_list: list, timestamp: str) -> str:
+    filepath = EXPORT_DIR / f"dawang_universal_{timestamp}.csv"
+    headers = [
+        "商品ID", "商品标题", "副标题", "当前价格", "原价", "拼团价",
+        "销量", "已拼件数", "店铺名称", "店铺ID",
+        "主图链接", "详情图链接", "商品描述",
+        "规格信息", "SKU详情", "商品属性", "商品链接", "采集时间",
+    ]
+    with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        for g in goods_list:
+            specs_str = "; ".join(
+                [f"{k}:{','.join(v)}" for k, v in g["specs"].items()]
+            )
+            sku_parts = []
+            for s in g["skus"]:
+                spec_vals = " ".join(_sku_specs_to_dict(s.get("specs")).values()) if s.get("specs") else ""
+                price_str = f"{s.get('price', 0):.2f}"
+                stock_str = str(s.get("stock", 999))
+                sku_parts.append(f"{spec_vals}/{price_str}/{stock_str}")
+            skus_str = "|".join(sku_parts)
+            attrs_str = "; ".join(
+                [f"{k}:{v}" for k, v in g["attributes"].items()]
+            )
+            writer.writerow([
+                g["goods_id"], g["title"], g["subtitle"],
+                f"{g['price']:.2f}", f"{g['original_price']:.2f}",
+                f"{g['min_group_price']:.2f}",
+                g["sales"], g["sold_quantity"],
+                g["shop_name"], g["shop_id"],
+                "|".join(g["main_images"]),
+                "|".join(g["detail_images"]),
+                g["description"][:2000],
+                specs_str, skus_str, attrs_str,
+                g["source_url"], g.get("crawl_time", ""),
+            ])
+    print(f"Dawang universal export: {filepath} ({len(goods_list)} goods)")
+    return filepath
+
+
+def _export_dawang_wechat(goods_list: list, timestamp: str) -> str:
+    filepath = EXPORT_DIR / f"dawang_wechat_{timestamp}.csv"
+    max_main = 9
+    max_detail = 5
+    headers = ["商品标题", "副标题", "价格", "原价", "销量", "库存", "商品描述"]
+    for i in range(1, max_main + 1):
+        headers.append(f"主图{i}")
+    for i in range(1, max_detail + 1):
+        headers.append(f"详情图{i}")
+    headers.extend([
+        "规格名1", "规格值1", "规格名2", "规格值2",
+        "SKU规格", "SKU价格", "SKU库存", "SKU图片",
+        "品牌", "发货方式", "七天无理由",
+    ])
+    with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        for g in goods_list:
+            title = g["title"][:60] if g["title"] else ""
+            row = [
+                title, g["subtitle"][:20] if g["subtitle"] else "",
+                f"{g['price']:.2f}", f"{g['original_price']:.2f}",
+                g["sales"], 999, g["description"][:2000],
+            ]
+            main_imgs = g["main_images"][:max_main]
+            for i in range(max_main):
+                row.append(main_imgs[i] if i < len(main_imgs) else "")
+            detail_imgs = g["detail_images"][:max_detail]
+            for i in range(max_detail):
+                row.append(detail_imgs[i] if i < len(detail_imgs) else "")
+            spec_names = list(g["specs"].keys())
+            spec_vals_list = list(g["specs"].values())
+            row.append(spec_names[0] if len(spec_names) > 0 else "")
+            row.append(",".join(spec_vals_list[0]) if len(spec_vals_list) > 0 else "")
+            row.append(spec_names[1] if len(spec_names) > 1 else "")
+            row.append(",".join(spec_vals_list[1]) if len(spec_vals_list) > 1 else "")
+            sku_specs_parts = []
+            sku_prices = []
+            sku_stocks = []
+            sku_imgs = []
+            for s in g["skus"]:
+                spec_str = " ".join(_sku_specs_to_dict(s.get("specs")).values()) if s.get("specs") else ""
+                sku_specs_parts.append(spec_str)
+                sku_prices.append(f"{s.get('price', g['price']):.2f}")
+                sku_stocks.append(str(s.get("stock", 999)))
+                sku_imgs.append(s.get("image", ""))
+            row.append("|".join(sku_specs_parts))
+            row.append("|".join(sku_prices))
+            row.append("|".join(sku_stocks))
+            row.append("|".join(sku_imgs))
+            brand = g["attributes"].get("品牌", "") if g.get("attributes") else ""
+            row.extend([brand, "快递发货", "是"])
+            writer.writerow(row)
+    print(f"Dawang WeChat export: {filepath} ({len(goods_list)} goods)")
+    return filepath
+
+
+def _export_dawang_pdd(goods_list: list, timestamp: str) -> str:
+    filepath = EXPORT_DIR / f"数据包_拼多多上货_{timestamp}.csv"
+    headers = [
+        "商品ID", "商品标题", "副标题", "当前价格", "原价",
+        "销量", "库存", "店铺名称", "商品描述",
+        "主图链接", "详情图链接",
+        "规格名称", "规格值", "SKU价格", "SKU库存",
+        "商品属性", "商品链接",
+    ]
+    with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        for g in goods_list:
+            spec_names = "; ".join(g["specs"].keys())
+            spec_vals = "; ".join(
+                [",".join(v) for v in g["specs"].values()]
+            )
+            sku_prices = "|".join(
+                [f"{s.get('price', 0):.2f}" for s in g["skus"]]
+            )
+            sku_stocks = "|".join(
+                [str(s.get("stock", 999)) for s in g["skus"]]
+            )
+            total_stock = sum(s.get("stock", 999) for s in g["skus"]) or 999
+            attrs_str = "; ".join(
+                [f"{k}:{v}" for k, v in g["attributes"].items()]
+            )
+            writer.writerow([
+                g["goods_id"], g["title"], g["subtitle"],
+                f"{g['price']:.2f}", f"{g['original_price']:.2f}",
+                g["sales"], total_stock,
+                g["shop_name"], g["description"][:2000],
+                " ".join(g["main_images"]),
+                " ".join(g["detail_images"]),
+                spec_names, spec_vals,
+                sku_prices, sku_stocks,
+                attrs_str, g["source_url"],
+            ])
+    print(f"Dawang PDD export: {filepath} ({len(goods_list)} goods)")
+    return filepath
+
+
+def _normalize_to_dawang_format(data: dict) -> dict:
+    """将不同来源的 raw_data 统一转为大王解析格式: {"ts":..., "store": {"initDataObj":...}}
+    
+    DB中存在3种格式:
+    1. 大王解析导入: {"ts":..., "store": {"initDataObj": {...}}} - 已是标准格式
+    2. 系统采集(initDataObj): {"goods":{...},"mall":{...},...} - 需要包装
+    3. 旧格式(简化): {"goods_id":...,"attributes":...} - 无法还原完整数据
+    """
+    # 格式1: 已经是大王解析标准格式
+    if "store" in data and isinstance(data.get("store"), dict):
+        if "initDataObj" in data["store"]:
+            return data
+    # 格式2: initDataObj扁平结构 (有goods字段)
+    if "goods" in data and isinstance(data.get("goods"), dict):
+        ts = int(data.get("ts", data.get("goods", {}).get("eventTime", 0)))
+        if ts < 1000000000000:
+            ts = ts * 1000
+        return {"ts": ts, "store": {"initDataObj": data}}
+    # 格式3: 旧简化格式 - 包装为最小可用结构
+    goods_id = data.get("goods_id", "")
+    mall_info = data.get("mall_info") or {}
+    return {
+        "ts": 0,
+        "store": {
+            "initDataObj": {
+                "goods": {
+                    "goodsID": goods_id,
+                    "goodsName": data.get("title", ""),
+                    "topGallery": [{"url": u} for u in data.get("main_images", [])],
+                    "detailGallery": [{"url": u} for u in data.get("detail_images", [])],
+                    "skus": [],
+                    "goodsProperty": [
+                        {"key": k, "values": [v]} for k, v in data.get("attributes", {}).items()
+                    ],
+                },
+                "mall": {
+                    "mallName": mall_info.get("mall_name", data.get("shop_name", "")),
+                    "mallID": str(mall_info.get("mall_id", data.get("shop_id", ""))),
+                },
+            }
+        },
+    }
+
+
+def export_dawang_raw(goods_ids: list = None) -> str:
+    conn = get_conn()
+    if goods_ids:
+        placeholders = ",".join(["?"] * len(goods_ids))
+        rows = conn.execute(
+            f"SELECT goods_id, raw_data FROM goods WHERE goods_id IN ({placeholders})", goods_ids
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT goods_id, raw_data FROM goods ORDER BY crawl_time DESC").fetchall()
+    conn.close()
+    if not rows:
+        return None
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_dir = EXPORT_DIR / f"dawang_raw_{timestamp}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    count = 0
+    for r in rows:
+        raw = r["raw_data"]
+        if not raw:
+            continue
+        try:
+            data = json.loads(raw)
+        except Exception:
+            continue
+        normalized = _normalize_to_dawang_format(data)
+        filepath = out_dir / f"{r['goods_id']}.txt"
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(normalized, f, ensure_ascii=False)
+        count += 1
+    if count == 0:
+        return None
+    zip_path = EXPORT_DIR / f"dawang_raw_{timestamp}.zip"
+    with zipfile.ZipFile(str(zip_path), "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in out_dir.iterdir():
+            zf.write(str(f), f.name)
+    import shutil
+    shutil.rmtree(str(out_dir), ignore_errors=True)
+    print(f"Dawang raw export: {zip_path} ({count} goods)")
+    return zip_path
+
+
 if __name__ == "__main__":
     print("=" * 50)
     print("  数据导出工具")

@@ -1,0 +1,315 @@
+.container {
+  display: flex;
+  gap: 20px;
+  min-height: calc(100vh - 120px);
+}
+
+.leftCol {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rightCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--blue-100);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardBody {
+  padding: 16px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.searchInput:focus-visible {
+  border-color: var(--orange-500);
+  box-shadow: 0 0 0 2px rgba(249,115,22,0.2);
+}
+
+.productList {
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.productItem {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  align-items: center;
+}
+
+.productItem:hover {
+  background: var(--blue-50);
+  border-color: var(--blue-100);
+}
+
+.productItemActive {
+  background: var(--orange-50);
+  border-color: var(--orange-500);
+}
+
+.productThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--blue-100);
+}
+
+.productTitle {
+  font-size: 12px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.currentInfo {
+  margin-top: 12px;
+}
+
+.infoRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.infoLabel {
+  color: var(--gray-500);
+  white-space: nowrap;
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  color: var(--blue-900);
+  word-break: break-all;
+}
+
+.emptyHint {
+  text-align: center;
+  padding: 24px;
+  color: var(--gray-400);
+  font-size: 13px;
+}
+
+.typeBar,
+.styleBar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.typeBtn,
+.styleBtn {
+  padding: 7px 16px;
+  font-size: 13px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.typeBtn:hover,
+.styleBtn:hover {
+  border-color: var(--orange-500);
+  color: var(--orange-500);
+}
+
+.typeBtnActive,
+.styleBtnActive {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  color: var(--white);
+}
+
+.customPrompt {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.customPrompt:focus-visible {
+  border-color: var(--orange-500);
+  box-shadow: 0 0 0 2px rgba(249,115,22,0.2);
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-900);
+  margin-bottom: 8px;
+}
+
+.generateBtn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.resultsArea {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultCard {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.resultCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--blue-100);
+  background: var(--blue-50);
+}
+
+.resultCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-900);
+}
+
+.resultCardActions {
+  display: flex;
+  gap: 6px;
+}
+
+.resultCardBody {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--blue-900);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.resultCardBodyList {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultListItem {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--blue-900);
+  padding: 6px 10px;
+  background: var(--blue-50);
+  border-radius: 6px;
+}
+
+.copyBtn,
+.applyBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-500);
+}
+
+.copyBtn:hover {
+  border-color: var(--orange-500);
+  color: var(--orange-500);
+}
+
+.applyBtn {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  color: var(--white);
+}
+
+.applyBtn:hover {
+  opacity: 0.9;
+}
+
+.copied {
+  border-color: var(--green-500);
+  color: var(--green-500);
+}
+
+.applyAllBtn {
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  margin-top: 8px;
+  align-self: flex-end;
+}
+
+.emptyResult {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--gray-400);
+  font-size: 14px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.emptyResultIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
