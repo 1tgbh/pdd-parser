@@ -32,7 +32,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const show = useCallback((type: ToastItem['type'], message: string) => {
     const id = ++_toastId;
     setToasts(prev => [...prev, { id, type, message }]);
-    const duration = type === 'error' ? 5000 : 3000;
+    const duration = type === 'error' ? 8000 : 5000;
     timers.current.set(id, setTimeout(() => remove(id), duration));
   }, [remove]);
 
