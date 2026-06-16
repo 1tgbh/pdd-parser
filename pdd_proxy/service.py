@@ -124,6 +124,14 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_monitor_history ON monitor_history(goods_id, checked_at);
     """)
+    # Migrate: add price_modified column to existing databases
+    for col_sql in [
+        "ALTER TABLE goods ADD COLUMN price_modified INTEGER DEFAULT 0",
+    ]:
+        try:
+            conn.execute(col_sql)
+        except Exception:
+            pass
     conn.commit()
     existing = conn.execute("SELECT COUNT(*) FROM export_templates").fetchone()[0]
     if existing == 0:
