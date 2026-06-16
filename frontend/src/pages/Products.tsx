@@ -337,6 +337,9 @@ export default function Products() {
                   {totalStock > 0 && totalStock <= 5 && (
                     <span className={s.stockBadge}>仅剩 {totalStock}</span>
                   )}
+                  {g.price_modified === 1 && (
+                    <span style={{ position: 'absolute', top: 8, right: totalStock > 0 && totalStock <= 5 ? 70 : 8, background: '#f59e0b', color: '#fff', fontSize: 11, padding: '2px 6px', borderRadius: 4, zIndex: 1, fontWeight: 600 }}>已改价</span>
+                  )}
                   <div className={s.cardActions}>
                     <button className={s.actionBtn} title="复制链接" onClick={(e) => { e.stopPropagation(); handleCopyLink(g.goods_id); }}>
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M3 11V4a2 2 0 012-2h7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>

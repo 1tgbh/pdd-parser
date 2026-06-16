@@ -607,3 +607,81 @@ ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有�
 2026-06-16 22:48:38 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
 2026-06-16 22:48:39 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
 2026-06-16 22:48:40 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:54:11 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:54:13 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:54:21 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:55:35 [ERROR] web.app: Exception on /api/products/batch-update [POST]
+Traceback (most recent call last):
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\pdd_proxy\web\app.py", line 1381, in api_batch_update
+    conn.execute(
+sqlite3.OperationalError: no such column: price_modified
+2026-06-16 22:55:37 [ERROR] web.app: Exception on /api/products/batch-update [POST]
+Traceback (most recent call last):
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\pdd_proxy\web\app.py", line 1381, in api_batch_update
+    conn.execute(
+sqlite3.OperationalError: no such column: price_modified
+2026-06-16 22:56:00 [ERROR] web.app: Exception on /api/product/962650241866/batch-price [POST]
+Traceback (most recent call last):
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\pdd_proxy\web\app.py", line 1324, in api_batch_price_single
+    conn.execute(
+sqlite3.OperationalError: no such column: price_modified
+2026-06-16 22:58:50 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
+2026-06-16 23:00:41 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
+2026-06-16 23:02:01 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
+2026-06-16 23:02:31 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 23:02:33 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 23:03:13 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 23:05:20 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. connection closed
+2026-06-16 23:05:56 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
+2026-06-16 23:07:33 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 23:07:33 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 23:07:36 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 23:09:02 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
