@@ -1,7 +1,7 @@
 .container {
   display: flex;
   height: calc(100vh - 68px);
-  background: var(--blue-50);
+  background: var(--brand-bg);
   margin: -24px -28px;
   overflow: hidden;
 }
@@ -9,8 +9,8 @@
 .leftPanel {
   width: 280px;
   flex-shrink: 0;
-  background: var(--white);
-  border-right: 1px solid var(--blue-100);
+  background: var(--brand-surface);
+  border-right: 1px solid var(--brand-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -27,8 +27,8 @@
 .rightPanel {
   width: 320px;
   flex-shrink: 0;
-  background: var(--white);
-  border-left: 1px solid var(--blue-100);
+  background: var(--brand-surface);
+  border-left: 1px solid var(--brand-border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -36,7 +36,7 @@
 
 .tabBar {
   display: flex;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-border);
   flex-shrink: 0;
 }
 
@@ -45,7 +45,7 @@
   padding: 10px 0;
   font-size: 13px;
   font-weight: 500;
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
   text-align: center;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -57,12 +57,12 @@
 }
 
 .tab:hover {
-  color: var(--orange-500);
+  color: var(--brand-accent);
 }
 
 .tabActive {
-  color: var(--orange-500);
-  border-bottom-color: var(--orange-500);
+  color: var(--brand-accent);
+  border-bottom-color: var(--brand-accent);
 }
 
 .panelBody {
@@ -80,14 +80,14 @@
 .searchBox input {
   flex: 1;
   padding: 7px 10px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   outline: none;
 }
 
 .searchBox input:focus {
-  border-color: var(--orange-500);
+  border-color: var(--brand-accent);
 }
 
 .filterRow {
@@ -99,17 +99,17 @@
 .filterSelect {
   flex: 1;
   padding: 5px 8px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 12px;
-  color: var(--gray-500);
-  background: var(--white);
+  color: var(--brand-text-secondary);
+  background: var(--brand-surface);
   outline: none;
   cursor: pointer;
 }
 
 .filterSelect:focus {
-  border-color: var(--orange-500);
+  border-color: var(--brand-accent);
 }
 
 .productList {
@@ -122,20 +122,20 @@
   display: flex;
   gap: 10px;
   padding: 8px;
-  border: 1px solid var(--blue-100);
+  border: 1px solid var(--brand-border);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .productItem:hover {
-  border-color: var(--orange-500);
-  background: var(--orange-50);
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
 }
 
 .productItemActive {
-  border-color: var(--orange-500);
-  background: var(--orange-50);
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
 }
 
 .productThumb {
@@ -144,7 +144,7 @@
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
 }
 
 .productInfo {
@@ -168,7 +168,7 @@
   gap: 6px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid var(--blue-100);
+  border-top: 1px solid var(--brand-border);
 }
 
 .productImg {
@@ -182,33 +182,33 @@
 }
 
 .productImg:hover {
-  border-color: var(--orange-500);
+  border-color: var(--brand-accent);
 }
 
 .productImgActive {
-  border-color: var(--orange-500);
+  border-color: var(--brand-accent);
 }
 
 .uploadZone {
-  border: 2px dashed var(--gray-300);
+  border: 2px dashed var(--brand-border);
   border-radius: var(--radius);
   padding: 40px 20px;
   text-align: center;
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .uploadZone:hover {
-  border-color: var(--orange-500);
-  color: var(--orange-500);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
 }
 
 .uploadZoneDragOver {
-  border-color: var(--orange-500);
-  background: var(--orange-50);
-  color: var(--orange-500);
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
+  color: var(--brand-accent);
 }
 
 .uploadIcon {
@@ -219,7 +219,7 @@
 
 .uploadHint {
   font-size: 11px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   margin-top: 6px;
 }
 
@@ -240,7 +240,7 @@
 }
 
 .historyImg:hover {
-  border-color: var(--orange-500);
+  border-color: var(--brand-accent);
 }
 
 .canvasContainer {
@@ -250,14 +250,14 @@
   justify-content: center;
   padding: 24px;
   min-height: 300px;
-  background: var(--blue-50);
+  background: var(--brand-bg);
   overflow: hidden;
   user-select: none;
 }
 
 .canvasEmpty {
   text-align: center;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
 }
 
 .canvasEmptyIcon {
@@ -277,14 +277,14 @@
   object-fit: contain;
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
-  background: var(--white);
+  background: var(--brand-surface);
   pointer-events: none;
 }
 
 .resultSection {
   padding: 16px 24px;
-  border-top: 1px solid var(--blue-100);
-  background: var(--white);
+  border-top: 1px solid var(--brand-border);
+  background: var(--brand-surface);
 }
 
 .resultHeader {
@@ -306,11 +306,11 @@
   overflow: hidden;
   border: 2px solid transparent;
   transition: border-color 0.15s;
-  background: var(--blue-50);
+  background: var(--brand-bg);
 }
 
 .resultItem:hover {
-  border-color: var(--blue-100);
+  border-color: var(--brand-border);
 }
 
 .resultImg {
@@ -325,8 +325,8 @@
   display: flex;
   gap: 4px;
   padding: 6px 8px;
-  background: var(--white);
-  border-top: 1px solid var(--blue-100);
+  background: var(--brand-surface);
+  border-top: 1px solid var(--brand-border);
 }
 
 .resultCheckbox {
@@ -335,13 +335,13 @@
   left: 6px;
   width: 20px;
   height: 20px;
-  accent-color: var(--orange-500);
+  accent-color: var(--brand-accent);
   cursor: pointer;
 }
 
 .resultLabel {
   font-size: 11px;
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -349,13 +349,13 @@
 
 .toolSection {
   padding: 16px;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-border);
 }
 
 .toolLabel {
   font-size: 12px;
   font-weight: 600;
-  color: var(--blue-900);
+  color: var(--brand-text);
   margin-bottom: 8px;
 }
 
@@ -370,7 +370,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--green-500);
+  background: var(--brand-green);
 }
 
 .presetGrid {
@@ -382,31 +382,31 @@
 .presetBtn {
   padding: 7px 4px;
   font-size: 12px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   text-align: center;
   cursor: pointer;
   transition: all 0.15s;
-  background: var(--white);
-  color: var(--gray-500);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
 }
 
 .presetBtn:hover {
-  border-color: var(--orange-500);
-  color: var(--orange-500);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
 }
 
 .presetBtnActive {
-  background: var(--orange-500);
-  border-color: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
 }
 
 .promptArea {
   width: 100%;
   min-height: 80px;
   padding: 8px 10px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   resize: vertical;
@@ -416,7 +416,7 @@
 }
 
 .promptArea:focus {
-  border-color: var(--orange-500);
+  border-color: var(--brand-accent);
 }
 
 .ratioGrid {
@@ -428,24 +428,24 @@
 .ratioBtn {
   padding: 6px 0;
   font-size: 12px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   text-align: center;
   cursor: pointer;
   transition: all 0.15s;
-  background: var(--white);
-  color: var(--gray-500);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
 }
 
 .ratioBtn:hover {
-  border-color: var(--orange-500);
-  color: var(--orange-500);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
 }
 
 .ratioBtnActive {
-  background: var(--orange-500);
-  border-color: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
 }
 
 .generateBtn {
@@ -468,7 +468,7 @@
 }
 
 .modalContent {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
   max-width: 600px;
@@ -482,14 +482,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 18px;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-border);
   font-weight: 600;
   font-size: 14px;
 }
 
 .modalClose {
   font-size: 18px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   cursor: pointer;
   background: none;
   border: none;
@@ -498,7 +498,7 @@
 }
 
 .modalClose:hover {
-  color: var(--blue-900);
+  color: var(--brand-text);
 }
 
 .modalBody {
@@ -521,7 +521,7 @@
 .applySearchResults {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid var(--blue-100);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
 }
 
@@ -532,7 +532,7 @@
   padding: 8px 10px;
   cursor: pointer;
   transition: background 0.1s;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-border);
 }
 
 .applySearchItem:last-child {
@@ -540,11 +540,11 @@
 }
 
 .applySearchItem:hover {
-  background: var(--blue-50);
+  background: var(--brand-bg);
 }
 
 .applySearchItemActive {
-  background: var(--orange-50);
+  background: var(--brand-accent-light);
 }
 
 .applySearchThumb {
@@ -576,7 +576,7 @@
 }
 
 .targetRadio input {
-  accent-color: var(--orange-500);
+  accent-color: var(--brand-accent);
 }
 
 .editToolbar {
@@ -584,8 +584,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: var(--white);
-  border-bottom: 1px solid var(--blue-100);
+  background: var(--brand-surface);
+  border-bottom: 1px solid var(--brand-border);
   flex-shrink: 0;
 }
 
@@ -593,8 +593,8 @@
   margin-left: auto;
   font-size: 12px;
   font-weight: 600;
-  color: var(--gray-500);
-  background: var(--blue-50);
+  color: var(--brand-text-secondary);
+  background: var(--brand-bg);
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -624,8 +624,8 @@
 
 .cropRect {
   position: absolute;
-  border: 2px dashed var(--orange-500);
-  background: rgba(255, 149, 0, 0.15);
+  border: 2px dashed var(--brand-accent);
+  background: rgba(217, 119, 87, 0.15);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
 }
 
@@ -634,24 +634,24 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: var(--blue-50);
+  background: var(--brand-bg);
   border-radius: 6px;
   margin-bottom: 12px;
   font-size: 13px;
-  color: var(--blue-900);
+  color: var(--brand-text);
 }
 
 .batchProgressBarInner {
   flex: 1;
   height: 6px;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .batchProgressBarFill {
   height: 100%;
-  background: var(--orange-500);
+  background: var(--brand-accent);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -659,7 +659,7 @@
 .batchResultGroup {
   margin-bottom: 16px;
   padding: 12px;
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
@@ -667,7 +667,7 @@
 .batchResultTitle {
   font-size: 13px;
   font-weight: 600;
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
   margin-bottom: 8px;
 }
 

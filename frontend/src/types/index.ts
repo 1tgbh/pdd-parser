@@ -114,6 +114,7 @@ export interface SettingsData {
   };
   proxy_url?: string;
   wechat_export?: WechatExportSettings;
+  risk_monitor?: { enabled: boolean; interval: number };
 }
 
 export interface DuplicateGroup {
@@ -202,4 +203,27 @@ export interface MonitorHistoryPoint {
   price: number | null;
   stock: number | null;
   sales: number | null;
+}
+
+export interface LogInfo {
+  size: number;
+  modified: string | null;
+  exists: boolean;
+}
+
+export interface LogData {
+  lines: string[];
+  total: number;
+  file: string;
+}
+
+export interface RiskCheckItem {
+  goods_id: string;
+  title: string;
+  price: number;
+  image: string;
+}
+
+export interface RiskCheckData {
+  goods: RiskCheckItem[];
 }

@@ -1,4 +1,4 @@
-import axios from 'axios';import type {  GoodsInfo, PaginatedResponse, DashboardStats, AutoTaskStatus,  ExportFormat, TagInfo, GroupInfo, AiImage, SettingsData, DuplicateGroup,  AiEditorProduct, AiHistoryItem, CompareItem, CopywritingResult,  ExportTemplate, MonitorItem, MonitorHistoryPoint, SkuItem,  ImportPreview, ImportResult,} from '../types';const client = axios.create({ baseURL: '/api', timeout: 15000 });const aiClient = axios.create({ baseURL: '/api', timeout: 120000 });// Dashboard
+import axios from 'axios';import type {  GoodsInfo, PaginatedResponse, DashboardStats, AutoTaskStatus,  ExportFormat, TagInfo, GroupInfo, AiImage, SettingsData, DuplicateGroup,  AiEditorProduct, AiHistoryItem, CompareItem, CopywritingResult,  ExportTemplate, MonitorItem, MonitorHistoryPoint, SkuItem,  ImportPreview, ImportResult, LogInfo, LogData, RiskCheckData,} from '../types';const client = axios.create({ baseURL: '/api', timeout: 15000 });const aiClient = axios.create({ baseURL: '/api', timeout: 120000 });// Dashboard
 export async function fetchDashboard(): Promise<DashboardStats> {  const { data } = await client.get('/dashboard');  return data;}
 export async function fetchPriceDistribution() {  const { data } = await client.get('/dashboard/price-distribution');  return data;}
 export async function fetchTopSales() {  const { data } = await client.get('/dashboard/top-sales');  return data;}
@@ -57,7 +57,8 @@ export async function uploadImage(goodsId: string, file: File, target: 'main' | 
 export async function reorderImages(goodsId: string, target: 'main' | 'detail', order: string[]): Promise<{ ok: boolean }> {  const { data } = await client.put(`/product/${goodsId}/images/reorder`, { target, order });  return data;}// Compare
 export async function fetchCompare(goodsIds: string[]): Promise<CompareItem[]> {  const { data } = await client.post('/compare', { goods_ids: goodsIds });  return data;}// Duplicates
 export async function fetchDuplicates(): Promise<{ duplicates: DuplicateGroup[]; total_groups: number }> {  const { data } = await client.get('/products/duplicates');  return data;}// Copywriting
-export async function aiCopywriting(goodsId: string, copyType: string, style: string, customPrompt?: string): Promise<CopywritingResult & { error?: string }> {  const { data } = await aiClient.post('/ai/copywriting', { goods_id: goodsId, copy_type: copyType, style, custom_prompt: customPrompt });  return data;}
+export async function aiCopywriting(goodsId: string, copyType: string, style: string, customPrompt?: string): Promise<AiCopywritingResult> {  const { data } = await aiClient.post('/ai/copywriting', { goods_id: goodsId, copy_type: copyType, style, custom_prompt: customPrompt });  return data;}
+export async function aiSuggestPrompt(imageUrl: string): Promise<{ prompt: string }> {  const { data } = await aiClient.post('/ai/suggest-prompt', { image_url: imageUrl });  return data;}
 export async function applyCopywriting(goodsId: string, fields: Record<string, unknown>): Promise<{ ok: boolean }> {  const { data } = await client.post(`/product/${goodsId}/copywriting`, { fields });  return data;}// Export Templates
 export async function fetchExportTemplates(): Promise<ExportTemplate[]> {  const { data } = await client.get('/export-templates');  return data;}
 export async function createExportTemplate(name: string, fields: string[], columnMap: Record<string, string>): Promise<{ ok: boolean; id: number }> {  const { data } = await client.post('/export-templates', { name, fields, column_map: columnMap });  return data;}
@@ -90,5 +91,38 @@ export async function importRawJsonDir(directory: string): Promise<{ imported: n
     headers: { "Content-Type": "multipart/form-data" },
     timeout: 120000,
   });
+  return data;
+}
+
+export async function fetchLogs(type: string, page = 1, pageSize = 200): Promise<LogData> {
+  const { data } = await client.get('/logs', { params: { type, page, page_size: pageSize } });
+  return data;
+}
+
+export async function fetchLogInfo(): Promise<Record<string, LogInfo>> {
+  const { data } = await client.get('/logs/info');
+  return data;
+}
+
+export async function exportLogs(type: string): Promise<Blob> {
+  const { data } = await client.get('/logs/export', {
+    params: { type },
+    responseType: 'blob',
+  });
+  return data;
+}
+
+export async function fetchRiskCheck(): Promise<RiskCheckData> {
+  const { data } = await client.get('/risk-check');
+  return data;
+}
+
+export async function fetchShops(): Promise<{ shops: string[] }> {
+  const { data } = await client.get('/shops');
+  return data;
+}
+
+export async function dismissRiskCheck(): Promise<{ ok: boolean }> {
+  const { data } = await client.post('/risk-check/dismiss');
   return data;
 }

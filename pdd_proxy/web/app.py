@@ -9,6 +9,7 @@ import sqlite3
 import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
+import os as _os
 from typing import Any
 
 import re as _re
@@ -20,6 +21,54 @@ from flask import Flask, request, jsonify, send_file, send_from_directory
 logger = logging.getLogger(__name__)
 
 _BASE_DIR = Path(__file__).resolve().parent.parent
+_DATA_DIR = _BASE_DIR / "data"
+_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+_log_fmt = logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+class _NoiseFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        if "ConnectionResetError" in msg:
+            return False
+        if "CancelledError" in msg:
+            return False
+        if "_call_connection_lost" in msg:
+            return False
+        if record.name == "asyncio" and "Unhandled error" in msg:
+            return False
+        return True
+
+
+_noise = _NoiseFilter()
+
+_file_handler = logging.FileHandler(_DATA_DIR / "server.log", encoding="utf-8")
+_file_handler.setLevel(logging.INFO)
+_file_handler.setFormatter(_log_fmt)
+_file_handler.addFilter(_noise)
+
+_err_handler = logging.FileHandler(_DATA_DIR / "server_err.log", encoding="utf-8")
+_err_handler.setLevel(logging.WARNING)
+_err_handler.setFormatter(_log_fmt)
+_err_handler.addFilter(_noise)
+
+_console_handler = logging.StreamHandler()
+_console_handler.setLevel(logging.INFO)
+_console_handler.setFormatter(_log_fmt)
+_console_handler.addFilter(_noise)
+
+_root = logging.getLogger()
+_root.setLevel(logging.INFO)
+_root.addHandler(_file_handler)
+_root.addHandler(_err_handler)
+_root.addHandler(_console_handler)
+
+logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+
 sys.path.insert(0, str(_BASE_DIR))
 
 DIST_DIR: Path = _BASE_DIR / "frontend" / "dist"
@@ -36,6 +85,28 @@ def add_cors(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+
+import time as _time
+
+
+@app.before_request
+def _log_request_start():
+    request._start_time = _time.time()
+
+
+@app.after_request
+def _log_request_end(response):
+    if getattr(request, "_start_time", None):
+        elapsed = round((_time.time() - request._start_time) * 1000)
+        if request.path.startswith("/api/"):
+            logger.info(
+                "%s %s %s %d %dms",
+                request.method, request.path,
+                request.remote_addr or "-",
+                response.status_code, elapsed,
+            )
     return response
 
 
@@ -140,6 +211,7 @@ def api_proxy_image():
 @app.route("/product/<path:_id>")
 @app.route("/export")
 @app.route("/settings")
+@app.route("/logs")
 @app.route("/ai-editor")
 def serve_spa(_id: str = "") -> Any:
     return send_from_directory(str(DIST_DIR), "index.html")
@@ -343,6 +415,14 @@ def api_products() -> dict:
     return jsonify({"items": items, "total": total, "page": page, "page_size": page_size})
 
 
+@app.route("/api/shops", methods=["GET"])
+def api_shops():
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT DISTINCT shop_name FROM goods WHERE shop_name IS NOT NULL AND shop_name != '' ORDER BY shop_name"
+    ).fetchall()
+    conn.close()
+    return jsonify({"shops": [r["shop_name"] for r in rows]})
 
 
 @app.route("/api/capture-toggle", methods=["GET", "POST"])
@@ -781,6 +861,21 @@ def api_ingest() -> Any:
         price_min = float(data.get("price_min", 0) or 0)
         price_max = float(data.get("price_max", 0) or 0)
         total_stock = int(data.get("total_stock", 0) or 0)
+
+        if (price_min <= 0 or price_max <= 0) and isinstance(sku_list, list) and len(sku_list) > 0:
+            prices = []
+            stock_sum = 0
+            for s in sku_list:
+                p = float(s.get("price", 0) or 0)
+                if p > 0:
+                    prices.append(p)
+                stock_sum += int(s.get("stock", 0) or 0)
+            if prices:
+                price_min = min(prices)
+                price_max = max(prices)
+            if stock_sum > 0:
+                total_stock = stock_sum
+
         if price_min > 0 or price_max > 0 or total_stock > 0:
             update_goods_price_range(goods_id, price_min, price_max, total_stock)
 
@@ -830,6 +925,8 @@ def api_settings():
                     safe[section]["api_key_masked"] = ""
                     safe[section]["api_key_set"] = False
                 del safe[section]["api_key"]
+        risk_monitor = cfg.get("risk_monitor", {"enabled": False, "interval": 30})
+        safe["risk_monitor"] = risk_monitor
         return jsonify(safe)
     
     data = request.get_json() or {}
@@ -856,6 +953,9 @@ def api_settings():
         for key in wechat_keys:
             if key in data["wechat_export"]:
                 cfg["wechat_export"][key] = data["wechat_export"][key]
+
+    if "risk_monitor" in data:
+        cfg["risk_monitor"] = data["risk_monitor"]
 
     save_config(cfg)
     return jsonify({"ok": True})
@@ -914,6 +1014,100 @@ def api_settings_test():
             return jsonify({"ok": False, "error": "连接超时，请检查网络"})
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)})
+
+
+# ==================== 风控扫描 ====================
+
+@app.route("/api/risk-check", methods=["GET"])
+def api_risk_check():
+    conn = get_conn()
+    try:
+        rows = conn.execute(
+            """SELECT goods_id, title, price, main_images FROM goods
+               WHERE skus IS NULL OR skus = '[]' OR skus = '[] '
+               ORDER BY updated_at DESC LIMIT 50"""
+        ).fetchall()
+        goods = []
+        for r in rows:
+            imgs = json.loads(r["main_images"] or "[]")
+            goods.append({
+                "goods_id": r["goods_id"],
+                "title": r["title"] or "",
+                "price": r["price"] or 0,
+                "image": imgs[0] if imgs else "",
+            })
+        return jsonify({"goods": goods})
+    finally:
+        conn.close()
+
+
+@app.route("/api/risk-check/dismiss", methods=["POST"])
+def api_risk_check_dismiss():
+    return jsonify({"ok": True})
+
+
+# ==================== 系统日志 ====================
+
+_LOG_FILES = {
+    "server": DATA_DIR / "server.log",
+    "server_err": DATA_DIR / "server_err.log",
+}
+
+
+@app.route("/api/logs/info", methods=["GET"])
+def api_logs_info():
+    """获取日志文件信息"""
+    result = {}
+    for key, path in _LOG_FILES.items():
+        if path.exists():
+            stat = path.stat()
+            result[key] = {
+                "size": stat.st_size,
+                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                "exists": True,
+            }
+        else:
+            result[key] = {"size": 0, "modified": None, "exists": False}
+    return jsonify(result)
+
+
+@app.route("/api/logs", methods=["GET"])
+def api_logs():
+    """获取日志内容"""
+    log_type = request.args.get("type", "server")
+    page = max(1, int(request.args.get("page", 1)))
+    page_size = min(500, max(50, int(request.args.get("page_size", 200))))
+
+    path = _LOG_FILES.get(log_type)
+    if not path or not path.exists():
+        return jsonify({"lines": [], "total": 0, "file": log_type})
+
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            all_lines = f.readlines()
+        total = len(all_lines)
+        start = max(0, total - page * page_size)
+        end = total - (page - 1) * page_size
+        lines = [line.rstrip("\n") for line in all_lines[start:end]]
+        lines.reverse()
+        return jsonify({"lines": lines, "total": total, "file": log_type})
+    except Exception as e:
+        return jsonify({"error": str(e), "lines": [], "total": 0, "file": log_type}), 500
+
+
+@app.route("/api/logs/export", methods=["GET"])
+def api_logs_export():
+    """导出日志文件"""
+    log_type = request.args.get("type", "server")
+    path = _LOG_FILES.get(log_type)
+    if not path or not path.exists():
+        return jsonify({"error": "日志文件不存在"}), 404
+    return send_file(
+        str(path),
+        as_attachment=True,
+        download_name=f"{log_type}.log",
+        mimetype="text/plain; charset=utf-8",
+    )
 
 
 # ==================== 标签 ====================
@@ -1369,6 +1563,19 @@ def api_compare():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/ai/suggest-prompt", methods=["POST"])
+def api_ai_suggest_prompt():
+    from .ai import suggest_prompt
+    data = request.get_json() or {}
+    image_url = data.get("image_url", "")
+    if not image_url:
+        return jsonify({"error": "请提供图片"}), 400
+    result = suggest_prompt(image_url)
+    if "error" in result:
+        return jsonify(result), 400
+    return jsonify(result)
 
 
 @app.route("/api/ai/copywriting", methods=["POST"])

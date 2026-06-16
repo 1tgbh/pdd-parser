@@ -16,7 +16,7 @@
   gap: 12px;
 }
 .statCard {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 16px 18px;
@@ -34,10 +34,10 @@
   font-size: 20px;
   flex-shrink: 0;
 }
-.statIconBlue { background: #eff6ff; color: #3b82f6; }
-.statIconGreen { background: #f0fdf4; color: #22c55e; }
-.statIconOrange { background: #fff7ed; color: #f97316; }
-.statLabel { font-size: 12px; color: var(--gray-500); }
+.statIconBlue { background: var(--brand-blue-light); color: var(--brand-blue); }
+.statIconGreen { background: var(--brand-green-light); color: var(--brand-green); }
+.statIconOrange { background: var(--brand-orange-light); color: var(--brand-orange); }
+.statLabel { font-size: 12px; color: var(--brand-text-secondary); }
 .statValue { font-size: 22px; font-weight: 700; margin-top: 2px; }
 
 .monitorGrid {
@@ -46,7 +46,7 @@
   gap: 14px;
 }
 .monitorCard {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -64,7 +64,7 @@
   height: 80px;
   border-radius: 6px;
   object-fit: cover;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
   flex-shrink: 0;
 }
 .monitorInfo { flex: 1; min-width: 0; }
@@ -78,28 +78,28 @@
   overflow: hidden;
   margin-bottom: 6px;
 }
-.monitorGoodsId { font-size: 11px; color: var(--gray-400); }
+.monitorGoodsId { font-size: 11px; color: var(--brand-text-muted); }
 
 .monitorMetrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
   margin: 12px 14px;
   border-radius: 6px;
   overflow: hidden;
 }
 .metricCell {
-  background: var(--white);
+  background: var(--brand-surface);
   padding: 10px 8px;
   text-align: center;
 }
-.metricLabel { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
-.metricValue { font-size: 15px; font-weight: 700; color: var(--blue-900); }
+.metricLabel { font-size: 11px; color: var(--brand-text-muted); margin-bottom: 4px; }
+.metricValue { font-size: 15px; font-weight: 700; color: var(--brand-text); }
 .metricChange { font-size: 11px; margin-top: 2px; }
-.changeUp { color: var(--green-500); }
-.changeDown { color: var(--red-500); }
-.changeFlat { color: var(--gray-400); }
+.changeUp { color: var(--brand-green); }
+.changeDown { color: var(--brand-red); }
+.changeFlat { color: var(--brand-text-muted); }
 
 .monitorCardBottom {
   display: flex;
@@ -110,15 +110,15 @@
 }
 .freqSelect {
   padding: 4px 8px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 12px;
-  background: var(--white);
-  color: var(--blue-900);
+  background: var(--brand-surface);
+  color: var(--brand-text);
   outline: none;
   cursor: pointer;
 }
-.freqSelect:focus-visible { border-color: var(--orange-500); box-shadow: 0 0 0 2px rgba(249,115,22,0.2); }
+.freqSelect:focus-visible { border-color: var(--brand-accent); box-shadow: 0 0 0 3px var(--brand-accent-ring); }
 .bottomActions { display: flex; gap: 6px; }
 
 .btn {
@@ -134,25 +134,25 @@
   gap: 4px;
 }
 .btnPrimary {
-  background: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  color: #fff;
 }
-.btnPrimary:hover { background: var(--orange-600); }
+.btnPrimary:hover { background: var(--brand-accent-hover); }
 .btnGhost {
   background: transparent;
-  color: var(--gray-500);
-  border-color: var(--gray-300);
+  color: var(--brand-text-secondary);
+  border-color: var(--brand-border);
 }
-.btnGhost:hover { color: var(--blue-900); border-color: var(--gray-400); }
+.btnGhost:hover { color: var(--brand-text); border-color: var(--brand-text-muted); }
 .btnDanger {
   background: transparent;
-  color: var(--red-500);
-  border-color: #fecaca;
+  color: var(--brand-red);
+  border-color: var(--brand-red-light);
 }
-.btnDanger:hover { background: #fef2f2; }
+.btnDanger:hover { background: var(--brand-red-light); }
 .btnSuccess {
-  background: var(--green-500);
-  color: var(--white);
+  background: var(--brand-green);
+  color: var(--brand-surface);
 }
 .btnSuccess:hover { opacity: 0.9; }
 
@@ -174,9 +174,9 @@
 }
 
 .modal {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   width: 90%;
   max-width: 560px;
   max-height: 80vh;
@@ -192,7 +192,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-border);
 }
 .modalTitle { font-size: 16px; font-weight: 700; }
 .modalClose {
@@ -203,11 +203,11 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.modalClose:hover { background: var(--blue-100); color: var(--blue-900); }
+.modalClose:hover { background: var(--brand-gray-5); color: var(--brand-text); }
 
 .modalBody { padding: 16px 20px; overflow-y: auto; flex: 1; }
 .modalFooter {
@@ -215,7 +215,7 @@
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 20px;
-  border-top: 1px solid var(--blue-100);
+  border-top: 1px solid var(--brand-border);
 }
 
 .searchBox {
@@ -226,12 +226,12 @@
 .searchInput {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   outline: none;
 }
-.searchInput:focus-visible { border-color: var(--orange-500); box-shadow: 0 0 0 2px rgba(249,115,22,0.2); }
+.searchInput:focus-visible { border-color: var(--brand-accent); box-shadow: 0 0 0 3px var(--brand-accent-ring); }
 
 .addSearchWrapper { position: relative; flex: 1; }
 .addSearchDropdown {
@@ -239,8 +239,8 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--white);
-  border: 1px solid var(--gray-300);
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   box-shadow: var(--shadow-md);
   max-height: 240px;
@@ -256,14 +256,14 @@
   font-size: 13px;
   transition: background 0.1s;
 }
-.dropdownItem:hover { background: var(--blue-50); }
+.dropdownItem:hover { background: var(--brand-bg); }
 .dropdownThumb {
   width: 36px;
   height: 36px;
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
 }
 .dropdownTitle {
   overflow: hidden;
@@ -273,7 +273,7 @@
 .dropdownEmpty {
   padding: 20px;
   text-align: center;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   font-size: 13px;
 }
 
@@ -284,26 +284,26 @@
 }
 .freqOption {
   padding: 6px 14px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
-  background: var(--white);
+  background: var(--brand-surface);
 }
-.freqOption:hover { border-color: var(--orange-500); color: var(--orange-500); }
+.freqOption:hover { border-color: var(--brand-accent); color: var(--brand-accent); }
 .freqOptionActive {
-  background: var(--orange-500);
-  border-color: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: #fff;
 }
-.freqOptionActive:hover { background: var(--orange-600); color: var(--white); }
+.freqOptionActive:hover { background: var(--brand-accent-hover); color: #fff; }
 
 .emptyState {
   text-align: center;
   padding: 60px 20px;
-  color: var(--gray-400);
-  background: var(--white);
+  color: var(--brand-text-muted);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
@@ -313,37 +313,37 @@
 .chartContainer {
   margin-top: 16px;
   padding: 12px;
-  background: var(--blue-50);
+  background: var(--brand-bg);
   border-radius: 8px;
 }
-.chartTitle { font-size: 12px; color: var(--gray-500); margin-bottom: 8px; font-weight: 600; }
+.chartTitle { font-size: 12px; color: var(--brand-text-secondary); margin-bottom: 8px; font-weight: 600; }
 
 .timeline { margin-top: 16px; }
-.timelineTitle { font-size: 12px; color: var(--gray-500); margin-bottom: 8px; font-weight: 600; }
+.timelineTitle { font-size: 12px; color: var(--brand-text-secondary); margin-bottom: 8px; font-weight: 600; }
 .timelineList { display: flex; flex-direction: column; gap: 6px; }
 .timelineItem {
   display: grid;
   grid-template-columns: 130px 1fr 1fr 1fr;
   gap: 8px;
   padding: 8px 10px;
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: 6px;
   font-size: 12px;
   align-items: center;
 }
 .timelineItemHead {
-  background: var(--blue-50);
+  background: var(--brand-bg);
   font-weight: 600;
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
 }
-.timelineTime { color: var(--gray-500); }
+.timelineTime { color: var(--brand-text-secondary); }
 
 .loadingWrap {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   font-size: 13px;
   gap: 8px;
 }

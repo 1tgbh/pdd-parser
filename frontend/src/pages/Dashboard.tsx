@@ -39,30 +39,30 @@ export default function Dashboard() {
       </div>
 
       {alerts && alerts.length > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
-          border: '1px solid #fecaca',
+        <div className={s.fadeIn} style={{
+          background: 'linear-gradient(135deg, var(--brand-red-light), rgba(255, 59, 48, 0.12))',
+          border: '1px solid rgba(255, 59, 48, 0.2)',
           borderRadius: 8,
           padding: '12px 16px',
           marginBottom: 16,
         }}>
-          <div style={{ fontWeight: 600, color: '#dc2626', marginBottom: 8, fontSize: 14 }}>
+          <div style={{ fontWeight: 600, color: 'var(--brand-red)', marginBottom: 8, fontSize: 14 }}>
             ⚠️ 价格预警 ({alerts.length} 个商品降价)
           </div>
           {alerts.slice(0, 5).map((alert: any) => (
             <a key={alert.goods_id} href={`/products/${alert.goods_id}`}
-               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', color: '#374151', textDecoration: 'none', fontSize: 13 }}>
+               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', color: 'var(--brand-text)', textDecoration: 'none', fontSize: 13 }}>
               {alert.image && <img src={alert.image} alt="" style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} />}
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alert.title}</span>
-              <span style={{ color: '#6b7280' }}>¥{alert.prev_price}</span>
-              <span style={{ color: '#dc2626', fontWeight: 600 }}>→ ¥{alert.current_price}</span>
-              <span style={{ color: '#dc2626', fontSize: 12 }}>-{alert.drop_percent}%</span>
+              <span style={{ color: 'var(--brand-text-secondary)' }}>¥{alert.prev_price}</span>
+              <span style={{ color: 'var(--brand-red)', fontWeight: 600 }}>→ ¥{alert.current_price}</span>
+              <span style={{ color: 'var(--brand-red)', fontSize: 12 }}>-{alert.drop_percent}%</span>
             </a>
           ))}
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className={`stats-grid ${s.fadeIn} ${s.fadeInDelay1}`}>
         {STAT_CARDS.map((c) => (
           <div key={c.key} className="stat-card">
             <div className={`stat-icon ${c.icon}`}>{SHOP_ICON_SVG}</div>
@@ -74,7 +74,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid-2">
+      <div className={`grid-2 ${s.fadeIn} ${s.fadeInDelay2}`}>
         <div className="card">
           <div className="card-header">最近采集</div>
           <div className="card-body">

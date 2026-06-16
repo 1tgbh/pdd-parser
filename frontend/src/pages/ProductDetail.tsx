@@ -8,18 +8,23 @@ import {
 import type { GoodsInfo, SkuItem } from '../types';
 import s from '../styles/modules/ProductDetail.module.css';
 
+function getImgUrl(path: string) {
+  if (path.startsWith('http')) return path;
+  return `/api/ai-image/${path.replace(/^\/+/, '')}`;
+}
+
 const overlayStyle: React.CSSProperties = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
   background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
 };
 const modalStyle: React.CSSProperties = {
-  background: '#fff', borderRadius: 12, padding: 24, maxWidth: 800, width: '90%', maxHeight: '85vh', overflow: 'auto', position: 'relative',
+  background: 'var(--brand-surface)', borderRadius: 12, padding: 24, maxWidth: 800, width: '90%', maxHeight: '85vh', overflow: 'auto', position: 'relative',
 };
 const thStyle: React.CSSProperties = {
-  textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid var(--gray-200, #e5e7eb)', fontWeight: 600, whiteSpace: 'nowrap',
+  textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid var(--brand-border)', fontWeight: 600, whiteSpace: 'nowrap',
 };
 const tdStyle: React.CSSProperties = {
-  padding: '6px 10px', borderBottom: '1px solid var(--gray-100, #f3f4f6)',
+  padding: '6px 10px', borderBottom: '1px solid var(--brand-border)',
 };
 
 export default function ProductDetail() {
@@ -47,6 +52,7 @@ export default function ProductDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [toastCompare, setToastCompare] = useState('');
   const [toastMonitor, setToastMonitor] = useState('');
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
   const updateProduct = useUpdateProduct();
   const packageGoods = usePackageGoods();
@@ -195,7 +201,8 @@ export default function ProductDetail() {
         goodsId: id,
         preset: aiPreset || undefined,
       });
-      if (result.paths) setAiResults(result.paths);
+      const items = result.urls || result.paths || [];
+      if (items.length > 0) setAiResults(items);
       else if (result.error) alert(result.error);
     } catch {
       alert('AI 编辑失败');
@@ -356,8 +363,8 @@ export default function ProductDetail() {
             {(displayImages || []).map((img, i) => (
               <div key={i} className={s.thumbWrap} onMouseEnter={setActiveImg(i)} style={{ position: 'relative' }}>
                 <img src={img} alt={`${product.title} 图片 ${i + 1}`} className={i === activeImgIdx ? 'active' : ''} referrerPolicy="no-referrer" />
-                <button onClick={() => openAiEdit(img)} style={{ position: 'absolute', bottom: 2, left: 2, background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: 3, fontSize: 10, padding: '1px 4px', cursor: 'pointer' }}>AI</button>
-                <button onClick={e => { e.stopPropagation(); downloadFile(img, `图片_${i + 1}.jpg`); }} style={{ position: 'absolute', bottom: 2, right: 2, background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: 3, fontSize: 10, padding: '1px 4px', cursor: 'pointer' }}>⬇</button>
+                <button onClick={() => openAiEdit(img)} style={{ position: 'absolute', bottom: 2, left: 2, background: 'rgba(0,0,0,0.7)', color: 'var(--brand-surface)', border: 'none', borderRadius: 3, fontSize: 10, padding: '1px 4px', cursor: 'pointer' }}>AI</button>
+                <button onClick={e => { e.stopPropagation(); downloadFile(img, `图片_${i + 1}.jpg`); }} style={{ position: 'absolute', bottom: 2, right: 2, background: 'rgba(0,0,0,0.7)', color: 'var(--brand-surface)', border: 'none', borderRadius: 3, fontSize: 10, padding: '1px 4px', cursor: 'pointer' }}>⬇</button>
               </div>
             ))}
           </div>
@@ -401,12 +408,12 @@ export default function ProductDetail() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span>¥</span>
                 <input type="number" step="0.01" value={editData.price || ''} onChange={e => updateEditData('price', e.target.value)}
-                  style={{ width: 100, padding: '4px 8px', border: '1px solid var(--gray-300)', borderRadius: 4 }} />
+                  style={{ width: 100, padding: '4px 8px', border: '1px solid var(--brand-border)', borderRadius: 4 }} />
                 {hasOriginalPrice && <small>¥{product.original_price.toFixed(2)}</small>}
               </div>
             ) : (
               <>
-                ¥{displayPrice.toFixed(2)}
+                ¥{displayPrice.toFixed(2) || '—'}
                 {hasOriginalPrice && <small>¥{product.original_price.toFixed(2)}</small>}
               </>
             )}
@@ -422,7 +429,7 @@ export default function ProductDetail() {
           {productTags && productTags.length > 0 && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 8 }}>
               {(productTags || []).map(tag => (
-                <span key={tag.id} style={{ background: tag.color, color: '#fff', padding: '2px 8px', borderRadius: 10, fontSize: 11 }}>
+                <span key={tag.id} style={{ background: tag.color, color: 'var(--brand-surface)', padding: '2px 8px', borderRadius: 10, fontSize: 11 }}>
                   {tag.name}
                 </span>
               ))}
@@ -476,7 +483,7 @@ export default function ProductDetail() {
                   {(aiImages || []).map(img => (
                     <div key={img.id} className={s.imageGridItem} style={{ width: 100, height: 100 }}>
                       <img src={`/api/ai-image/${img.result_path}`} alt={img.prompt} />
-                      <button className={s.imageDeleteBtn} style={{ background: '#3b82f6', color: '#fff' }}
+                      <button className={s.imageDeleteBtn} style={{ background: 'var(--brand-blue)', color: 'var(--brand-surface)' }}
                         onClick={() => handleUseAiImage(img.result_path, 'main')}>+</button>
                     </div>
                   ))}
@@ -512,7 +519,7 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {product.skus.length > 0 && (
+          {product.skus && product.skus.length > 0 && (
             <div className={`card ${s.detailSection}`}>
               <div className="card-header">SKU 列表 <span className="badge-orange badge">{product.skus.length} 个</span></div>
               <div className={`card-body ${s.detailSectionBody}`}>
@@ -556,19 +563,19 @@ export default function ProductDetail() {
                       {skus.map((sku, i) => (
                         <tr key={sku.sku_id || i}>
                           <td style={tdStyle}>{Array.isArray(sku.specs) ? sku.specs.map(sp => `${sp.key}: ${sp.value}`).join(' / ') : (sku.specs && typeof sku.specs === 'object' ? Object.entries(sku.specs).map(([k,v]) => `${k}: ${v}`).join(' / ') : '')}</td>
-                          <td style={{ ...tdStyle, color: 'var(--orange-500)', fontWeight: 600 }}>¥{sku.price?.toFixed(2) || '0.00'}</td>
-                          <td style={{ ...tdStyle, textDecoration: 'line-through', color: '#9ca3af' }}>
+                          <td style={{ ...tdStyle, color: 'var(--brand-text)', fontWeight: 600 }}>¥{sku.price?.toFixed(2) || '0.00'}</td>
+                          <td style={{ ...tdStyle, textDecoration: 'line-through', color: 'var(--brand-text-muted)' }}>
                             {sku.original_price > 0 ? `¥${sku.original_price.toFixed(2)}` : '-'}
                           </td>
                           <td style={tdStyle}>
                             {sku.stock > 0 ? (
-                              <span style={{ color: '#16a34a' }}>{sku.stock}</span>
+                              <span style={{ color: 'var(--brand-green)' }}>{sku.stock}</span>
                             ) : (
-                              <span style={{ color: '#dc2626' }}>缺货</span>
+                              <span style={{ color: 'var(--brand-red)' }}>缺货</span>
                             )}
                           </td>
                           <td style={tdStyle}>
-                            {sku.image && <img src={sku.image} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} referrerPolicy="no-referrer" />}
+                            {sku.image && <img src={sku.image} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4, cursor: 'pointer' }} referrerPolicy="no-referrer" onClick={() => setLightboxImg(sku.image)} />}
                           </td>
                         </tr>
                       ))}
@@ -592,7 +599,7 @@ export default function ProductDetail() {
               <div className="card-body">
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <a href={product.source_url} target="_blank" rel="noopener noreferrer"
-                    style={{ color: '#3b82f6', wordBreak: 'break-all', fontSize: 13, flex: 1 }}>
+                    style={{ color: 'var(--brand-blue)', wordBreak: 'break-all', fontSize: 13, flex: 1 }}>
                     {product.source_url}
                   </a>
                   <button className="btn btn-outline btn-sm" style={{ flexShrink: 0, fontSize: 12 }}
@@ -613,11 +620,11 @@ export default function ProductDetail() {
             <h3 style={{ margin: '0 0 16px' }}>AI 图片编辑</h3>
             <div style={{ display: 'flex', gap: 16 }}>
               <div style={{ flex: 1 }}>
-                <img src={aiEditModal.imageUrl} alt="原图" style={{ width: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 8, background: '#f3f4f6' }} />
+                <img src={aiEditModal.imageUrl} alt="原图" style={{ width: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 8, background: 'var(--brand-bg)' }} />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, color: '#666' }}>预设模板</label>
+                  <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>预设模板</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                     {aiPresets && Object.entries(aiPresets).map(([key, val]) => (
                       <button key={key} className={`btn btn-sm ${aiPreset === key ? 'btn-primary' : 'btn-outline'}`}
@@ -629,26 +636,26 @@ export default function ProductDetail() {
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: '#666' }}>自定义提示词</label>
+                  <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>自定义提示词</label>
                   <textarea value={aiPrompt} onChange={e => { setAiPrompt(e.target.value); setAiPreset(''); }}
                     placeholder="描述你想要的效果..." rows={3}
-                    style={{ width: '100%', padding: 8, border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, resize: 'vertical' }} />
+                    style={{ width: '100%', padding: 8, border: '1px solid var(--brand-border)', borderRadius: 6, fontSize: 13, resize: 'vertical' }} />
                 </div>
-                <button className="btn btn-primary" onClick={handleAiEdit} disabled={aiLoading || (!aiPrompt && !aiPreset)}>
+                <button className="btn btn-primary" style={{ background: '#1d1d1f', color: '#fff', fontWeight: 500 }} onClick={handleAiEdit} disabled={aiLoading || (!aiPrompt && !aiPreset)}>
                   {aiLoading ? '生成中...' : '开始生成'}
                 </button>
                 {aiResults.length > 0 && (
                   <div>
-                    <label style={{ fontSize: 12, color: '#666' }}>生成结果</label>
+                    <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>生成结果</label>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                       {(aiResults || []).map((path, i) => (
                         <div key={i} style={{ position: 'relative' }}>
-                          <img src={`/api/ai-image/${path}`} alt={`结果${i + 1}`}
-                            style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 6, border: '1px solid #e5e7eb' }} />
+                          <img src={getImgUrl(path)} alt={`结果${i + 1}`}
+                            style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--brand-border)' }} />
                           <div style={{ display: 'flex', gap: 2, marginTop: 4 }}>
-                            <button className="btn btn-primary btn-sm" style={{ fontSize: 10, padding: '2px 6px' }}
+                            <button className="btn btn-primary btn-sm" style={{ fontSize: 10, padding: '2px 6px', background: '#1d1d1f', color: '#fff', fontWeight: 500 }}
                               onClick={() => handleUseAiImage(path, 'main')}>主图</button>
-                            <button className="btn btn-outline btn-sm" style={{ fontSize: 10, padding: '2px 6px' }}
+                            <button className="btn btn-outline btn-sm" style={{ fontSize: 10, padding: '2px 6px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#1d1d1f', fontWeight: 500 }}
                               onClick={() => handleUseAiImage(path, 'detail')}>详情</button>
                           </div>
                         </div>
@@ -671,22 +678,23 @@ export default function ProductDetail() {
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               {['default', 'taobao', 'douyin', 'pdd'].map(style => (
                 <button key={style} className={`btn btn-sm ${rewriteStyle === style ? 'btn-primary' : 'btn-outline'}`}
+                  style={rewriteStyle === style ? { background: '#1d1d1f', color: '#fff', fontWeight: 500 } : { background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#1d1d1f', fontWeight: 500 }}
                   onClick={() => setRewriteStyle(style)}>
                   {style === 'default' ? '通用' : style === 'taobao' ? '淘宝' : style === 'douyin' ? '抖音' : '拼多多'}
                 </button>
               ))}
-              <button className="btn btn-primary btn-sm" onClick={handleRewrite} disabled={rewriteLoading}>
+              <button className="btn btn-primary btn-sm" style={{ background: '#1d1d1f', color: '#fff', fontWeight: 500 }} onClick={handleRewrite} disabled={rewriteLoading}>
                 {rewriteLoading ? '改写中...' : '重新改写'}
               </button>
             </div>
-            {rewriteLoading && <p style={{ color: '#666' }}>正在改写，请稍候...</p>}
+            {rewriteLoading && <p style={{ color: 'var(--brand-text-secondary)' }}>正在改写，请稍候...</p>}
             {rewriteResult && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {Object.entries(rewriteResult).map(([field, value]) => (
-                  <div key={field} style={{ background: '#f9fafb', padding: 12, borderRadius: 8 }}>
-                    <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>{field}</div>
+                  <div key={field} style={{ background: 'var(--brand-bg)', padding: 12, borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, color: 'var(--brand-text-secondary)', marginBottom: 4 }}>{field}</div>
                     <div style={{ fontSize: 14, lineHeight: 1.6 }}>{String(value)}</div>
-                    <button className="btn btn-outline btn-sm" style={{ marginTop: 8 }}
+                    <button className="btn btn-outline btn-sm" style={{ marginTop: 8, background: '#1d1d1f', color: '#fff', border: 'none', fontWeight: 500 }}
                       onClick={() => { handleApplyRewrite(field, String(value)); setShowRewrite(false); }}>应用到商品</button>
                   </div>
                 ))}
@@ -709,7 +717,7 @@ export default function ProductDetail() {
                   return (
                     <button key={tag.id}
                       style={{
-                        background: isActive ? tag.color : '#f3f4f6', color: isActive ? '#fff' : '#374151',
+                        background: isActive ? tag.color : 'var(--brand-bg)', color: isActive ? 'var(--brand-surface)' : 'var(--brand-text)',
                         border: 'none', padding: '6px 14px', borderRadius: 16, cursor: 'pointer', fontSize: 13,
                       }}
                       onClick={() => toggleTag(tag.id)}>
@@ -719,7 +727,7 @@ export default function ProductDetail() {
                 })}
               </div>
             ) : (
-              <p style={{ color: '#999' }}>暂无标签，请先在商品列表页面创建标签</p>
+              <p style={{ color: 'var(--brand-text-muted)' }}>暂无标签，请先在商品列表页面创建标签</p>
             )}
             <button style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
               onClick={() => setShowTagModal(false)}>×</button>
@@ -730,10 +738,19 @@ export default function ProductDetail() {
       {(toastCompare || toastMonitor) && (
         <div role="status" aria-live="polite" style={{
           position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          background: '#1f2937', color: '#fff', padding: '10px 24px', borderRadius: 8, fontSize: 14,
+          background: 'var(--brand-text)', color: 'var(--brand-surface)', padding: '10px 24px', borderRadius: 8, fontSize: 14,
           zIndex: 1100, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         }}>
           {toastCompare || toastMonitor}
+        </div>
+      )}
+
+      {lightboxImg && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => setLightboxImg(null)}>
+          <img src={lightboxImg} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 8 }} referrerPolicy="no-referrer" onClick={e => e.stopPropagation()} />
+          <button style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', width: 40, height: 40, borderRadius: 20, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setLightboxImg(null)}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" width="18" height="18"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
+          </button>
         </div>
       )}
     </>

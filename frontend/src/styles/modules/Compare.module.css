@@ -6,7 +6,7 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 12px 16px;
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
@@ -14,12 +14,12 @@
   flex: 1;
   min-width: 200px;
   padding: 8px 12px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   outline: none;
 }
-.searchInput:focus-visible { border-color: var(--orange-500); box-shadow: 0 0 0 2px rgba(249,115,22,0.2); }
+.searchInput:focus-visible { border-color: var(--brand-accent); box-shadow: 0 0 0 2px var(--brand-accent-ring); }
 .chips {
   display: flex;
   gap: 6px;
@@ -32,11 +32,11 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  background: var(--orange-50);
-  border: 1px solid var(--orange-500);
+  background: var(--brand-accent-light);
+  border: 1px solid var(--brand-accent);
   border-radius: 14px;
   font-size: 12px;
-  color: var(--orange-600);
+  color: var(--brand-accent-hover);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -50,21 +50,21 @@
   height: 16px;
   border-radius: 50%;
   border: none;
-  background: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  color: var(--brand-surface);
   font-size: 10px;
   cursor: pointer;
   flex-shrink: 0;
   line-height: 1;
 }
-.chipRemove:hover { background: var(--orange-600); }
+.chipRemove:hover { background: var(--brand-accent-hover); }
 .searchDropdown {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--white);
-  border: 1px solid var(--gray-300);
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   box-shadow: var(--shadow-md);
   max-height: 300px;
@@ -80,14 +80,14 @@
   font-size: 13px;
   transition: background 0.1s;
 }
-.searchDropdownItem:hover { background: var(--blue-50); }
+.searchDropdownItem:hover { background: var(--brand-bg); }
 .searchDropdownThumb {
   width: 36px;
   height: 36px;
   object-fit: cover;
   border-radius: 4px;
   flex-shrink: 0;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
 }
 .searchDropdownTitle {
   overflow: hidden;
@@ -97,7 +97,7 @@
 .searchWrapper { position: relative; flex: 1; min-width: 200px; }
 
 .compareArea {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: auto;
@@ -111,14 +111,14 @@
 .compareTable th,
 .compareTable td {
   padding: 12px 14px;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-gray-5);
   vertical-align: top;
 }
 .compareTable th {
-  background: var(--blue-50);
+  background: var(--brand-bg);
   font-weight: 600;
   font-size: 12px;
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   position: sticky;
@@ -129,8 +129,8 @@
   min-width: 120px;
   max-width: 160px;
   font-weight: 600;
-  color: var(--gray-500);
-  background: var(--blue-50);
+  color: var(--brand-text-secondary);
+  background: var(--brand-bg);
   white-space: nowrap;
   position: sticky;
   left: 0;
@@ -141,7 +141,7 @@
   max-width: 280px;
 }
 .productCell a {
-  color: var(--blue-700);
+  color: var(--brand-blue);
   text-decoration: none;
 }
 .productCell a:hover { text-decoration: underline; }
@@ -151,16 +151,16 @@
   height: 180px;
   object-fit: cover;
   border-radius: 6px;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
 }
 .priceValue {
   font-size: 16px;
   font-weight: 700;
-  color: var(--orange-500);
+  color: var(--brand-text);
 }
 .originalPrice {
   font-size: 12px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   text-decoration: line-through;
   margin-left: 6px;
 }
@@ -173,15 +173,15 @@
 .tag {
   display: inline-block;
   padding: 2px 8px;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
   border-radius: 10px;
   font-size: 11px;
-  color: var(--blue-700);
+  color: var(--brand-blue);
 }
 .emptyHint {
   text-align: center;
   padding: 60px 20px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   font-size: 14px;
 }
 .emptyIcon { font-size: 48px; margin-bottom: 12px; }

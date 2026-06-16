@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useProducts, useExportGoods, usePackageGoods, useDeleteProducts, useExportTemplates, useAllProductIds } from '../hooks/useApi';
 import { createExportTemplate, updateExportTemplate, deleteExportTemplate } from '../api';
 import SafeImage from '../components/SafeImage';
+import { useConfirm } from '../components/Confirm';
 import type { ExportFormat, ExportTemplate } from '../types';
 import s from '../styles/modules/Export.module.css';
 
@@ -74,6 +75,7 @@ export default function Export() {
   const exportMut = useExportGoods();
   const packageMut = usePackageGoods();
   const deleteMut = useDeleteProducts();
+  const { confirm } = useConfirm();
   const { data: templates, refetch: refetchTemplates } = useExportTemplates();
 
   const [tplModal, setTplModal] = useState<{ open: boolean; editing: ExportTemplate | null }>({ open: false, editing: null });
@@ -108,7 +110,8 @@ export default function Export() {
 
   const handleDeleteSelected = useCallback(async () => {
     if (selected.size === 0) return;
-    if (!window.confirm(`确定删除选中的 ${selected.size} 件商品？此操作不可恢复。`)) return;
+    const ok = await confirm({ title: '删除商品', message: `确定删除选中的 ${selected.size} 件商品？此操作不可恢复。`, confirmText: '删除', danger: true });
+    if (!ok) return;
     try {
       await deleteMut.mutateAsync([...selected]);
       setSelected(new Set());
@@ -195,7 +198,8 @@ export default function Export() {
   }, [tplName, tplFields, tplColumnMap, tplModal.editing, closeTplModal, refetchTemplates]);
 
   const handleDeleteTemplate = useCallback(async (tpl: ExportTemplate) => {
-    if (!window.confirm(`确定删除模板「${tpl.name}」？`)) return;
+    const ok = await confirm({ title: '删除模板', message: `确定删除模板「${tpl.name}」？`, confirmText: '删除', danger: true });
+    if (!ok) return;
     try {
       await deleteExportTemplate(tpl.id);
       if (templateId === tpl.id) setTemplateId(undefined);

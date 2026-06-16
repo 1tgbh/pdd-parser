@@ -21,7 +21,7 @@
 }
 
 .card {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -31,7 +31,7 @@
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  border-bottom: 1px solid var(--blue-100);
+  border-bottom: 1px solid var(--brand-border);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -44,15 +44,15 @@
 .searchInput {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   outline: none;
 }
 
 .searchInput:focus-visible {
-  border-color: var(--orange-500);
-  box-shadow: 0 0 0 2px rgba(249,115,22,0.2);
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
 }
 
 .productList {
@@ -73,13 +73,13 @@
 }
 
 .productItem:hover {
-  background: var(--blue-50);
-  border-color: var(--blue-100);
+  background: var(--brand-bg);
+  border-color: var(--brand-border);
 }
 
 .productItemActive {
-  background: var(--orange-50);
-  border-color: var(--orange-500);
+  background: var(--brand-accent-light);
+  border-color: var(--brand-accent);
 }
 
 .productThumb {
@@ -88,7 +88,7 @@
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
-  background: var(--blue-100);
+  background: var(--brand-gray-5);
 }
 
 .productTitle {
@@ -115,21 +115,21 @@
 }
 
 .infoLabel {
-  color: var(--gray-500);
+  color: var(--brand-text-secondary);
   white-space: nowrap;
   min-width: 48px;
   flex-shrink: 0;
 }
 
 .infoValue {
-  color: var(--blue-900);
+  color: var(--brand-text);
   word-break: break-all;
 }
 
 .emptyHint {
   text-align: center;
   padding: 24px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   font-size: 13px;
 }
 
@@ -144,32 +144,32 @@
 .styleBtn {
   padding: 7px 16px;
   font-size: 13px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
-  background: var(--white);
-  color: var(--gray-500);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .typeBtn:hover,
 .styleBtn:hover {
-  border-color: var(--orange-500);
-  color: var(--orange-500);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
 }
 
 .typeBtnActive,
 .styleBtnActive {
-  background: var(--orange-500);
-  border-color: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
 }
 
 .customPrompt {
   width: 100%;
   min-height: 60px;
   padding: 8px 12px;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 13px;
   resize: vertical;
@@ -180,14 +180,14 @@
 }
 
 .customPrompt:focus-visible {
-  border-color: var(--orange-500);
-  box-shadow: 0 0 0 2px rgba(249,115,22,0.2);
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
 }
 
 .sectionLabel {
   font-size: 13px;
   font-weight: 600;
-  color: var(--blue-900);
+  color: var(--brand-text);
   margin-bottom: 8px;
 }
 
@@ -206,7 +206,7 @@
 }
 
 .resultCard {
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -217,14 +217,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--blue-100);
-  background: var(--blue-50);
+  border-bottom: 1px solid var(--brand-border);
+  background: var(--brand-bg);
 }
 
 .resultCardTitle {
   font-size: 13px;
   font-weight: 600;
-  color: var(--blue-900);
+  color: var(--brand-text);
 }
 
 .resultCardActions {
@@ -236,7 +236,7 @@
   padding: 12px 16px;
   font-size: 13px;
   line-height: 1.8;
-  color: var(--blue-900);
+  color: var(--brand-text);
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -251,9 +251,9 @@
 .resultListItem {
   font-size: 13px;
   line-height: 1.6;
-  color: var(--blue-900);
+  color: var(--brand-text);
   padding: 6px 10px;
-  background: var(--blue-50);
+  background: var(--brand-bg);
   border-radius: 6px;
 }
 
@@ -264,20 +264,20 @@
   border-radius: 4px;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
-  border: 1px solid var(--gray-300);
-  background: var(--white);
-  color: var(--gray-500);
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
 }
 
 .copyBtn:hover {
-  border-color: var(--orange-500);
-  color: var(--orange-500);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
 }
 
 .applyBtn {
-  background: var(--orange-500);
-  border-color: var(--orange-500);
-  color: var(--white);
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
 }
 
 .applyBtn:hover {
@@ -285,8 +285,95 @@
 }
 
 .copied {
-  border-color: var(--green-500);
-  color: var(--green-500);
+  border-color: var(--brand-green);
+  color: var(--brand-green);
+}
+
+.editBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  border: 1px solid var(--brand-accent);
+  background: var(--brand-accent-light);
+  color: var(--brand-accent-hover);
+}
+
+.editBtn:hover {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
+}
+
+.editSaveBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--brand-green);
+  background: var(--brand-green);
+  color: var(--brand-surface);
+  transition: opacity 0.15s;
+}
+
+.editSaveBtn:hover {
+  opacity: 0.85;
+}
+
+.editCancelBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.editCancelBtn:hover {
+  border-color: var(--brand-text-muted);
+  color: var(--brand-text);
+}
+
+.editArea {
+  padding: 12px 16px;
+}
+
+.editInput {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid var(--brand-accent);
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.editInput:focus-visible {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.15);
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid var(--brand-accent);
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.8;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.editTextarea:focus-visible {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.15);
 }
 
 .applyAllBtn {
@@ -301,9 +388,9 @@
 .emptyResult {
   text-align: center;
   padding: 48px 24px;
-  color: var(--gray-400);
+  color: var(--brand-text-muted);
   font-size: 14px;
-  background: var(--white);
+  background: var(--brand-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }

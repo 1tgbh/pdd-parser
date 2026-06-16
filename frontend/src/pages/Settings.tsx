@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSettings, useSaveSettings, useTestApi } from '../hooks/useApi';
+import { useToast } from '../components/Toast';
 import type { WechatExportSettings } from '../types';
 
 const selectStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, marginTop: 4, background: '#fff',
+  width: '100%', padding: '8px 12px', border: '1px solid var(--brand-border)', borderRadius: 6, fontSize: 14, marginTop: 4, background: 'var(--brand-surface)',
 };
 
 export default function Settings() {
   const { data: settings, isLoading } = useSettings();
   const saveMut = useSaveSettings();
   const testMut = useTestApi();
+  const toast = useToast();
 
   const [imgKey, setImgKey] = useState('');
   const [imgBase, setImgBase] = useState('https://grsai.dakka.com.cn');
@@ -18,7 +20,6 @@ export default function Settings() {
   const [txtBase, setTxtBase] = useState('https://token-plan-cn.xiaomimimo.com/v1');
   const [txtModel, setTxtModel] = useState('mimo-v2.5');
 
-  // 微信小店导出配置
   const [wechatCfg, setWechatCfg] = useState<WechatExportSettings>({
     deliver_method: 0,
     seven_day_return: 1,
@@ -30,6 +31,7 @@ export default function Settings() {
 
   const [imgTestResult, setImgTestResult] = useState('');
   const [txtTestResult, setTxtTestResult] = useState('');
+  const [riskMonitor, setRiskMonitor] = useState({ enabled: false, interval: 30 });
   const [saving, setSaving] = useState(false);
   const [imgKeySet, setImgKeySet] = useState(false);
   const [imgKeyMasked, setImgKeyMasked] = useState('');
@@ -53,6 +55,9 @@ export default function Settings() {
       if (settings.wechat_export) {
         setWechatCfg(prev => ({ ...prev, ...settings.wechat_export }));
       }
+      if (settings.risk_monitor) {
+        setRiskMonitor(prev => ({ ...prev, ...settings.risk_monitor }));
+      }
     }
   }, [settings]);
 
@@ -69,6 +74,7 @@ export default function Settings() {
         if (txtKey) (payload.text_api as Record<string, unknown>).api_key = txtKey;
       }
       payload.wechat_export = wechatCfg;
+      payload.risk_monitor = riskMonitor;
       await saveMut.mutateAsync(payload);
       if (imgKey) {
         const len = imgKey.length;
@@ -82,13 +88,13 @@ export default function Settings() {
         setTxtKeyMasked(len > 8 ? txtKey.slice(0, 4) + '****' + txtKey.slice(-4) : '');
         setTxtKey('');
       }
-      alert('保存成功');
+      toast.success('保存成功');
     } catch {
-      alert('保存失败');
+      toast.error('保存失败');
     } finally {
       setSaving(false);
     }
-  }, [imgKey, imgBase, imgModel, txtKey, txtBase, txtModel, wechatCfg, saveMut]);
+  }, [imgKey, imgBase, imgModel, txtKey, txtBase, txtModel, wechatCfg, riskMonitor, saveMut]);
 
   const handleTest = useCallback(async (type: 'text' | 'image') => {
     const params = type === 'image'
@@ -123,24 +129,24 @@ export default function Settings() {
             <button className="btn btn-outline btn-sm" onClick={() => { setImgKey(''); setImgBase(''); setImgModel(''); }}>清空配置</button>
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0, lineHeight: 1.5 }}>
               配置用于 AI 图片编辑和生成的模型接口，支持兼容 OpenAI 格式的 API 服务。
             </p>
             <div>
-              <label style={{ fontSize: 12, color: '#666' }}>API Key {imgKeySet ? <span style={{color:'#22c55e'}}>(已配置: {imgKeyMasked})</span> : <span style={{color:'#ef4444'}}>(未配置)</span>}</label>
+              <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>API Key {imgKeySet ? <span style={{color:'var(--brand-green)'}}>(已配置: {imgKeyMasked})</span> : <span style={{color:'var(--brand-red)'}}>(未配置)</span>}</label>
               <input type="password" value={imgKey} onChange={e => setImgKey(e.target.value)} placeholder="输入新的 API Key（留空不修改）" style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: '#666' }}>Base URL</label>
+              <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>Base URL</label>
               <input value={imgBase} onChange={e => setImgBase(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: '#666' }}>模型名称</label>
+              <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>模型名称</label>
               <input value={imgModel} onChange={e => setImgModel(e.target.value)} style={inputStyle} />
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <button className="btn btn-outline btn-sm" onClick={() => handleTest('image')}>测试连接</button>
-              {imgTestResult && <span style={{ fontSize: 13, color: imgTestResult.includes('成功') ? '#22c55e' : '#ef4444' }}>{imgTestResult}</span>}
+              {imgTestResult && <span style={{ fontSize: 13, color: imgTestResult.includes('成功') ? 'var(--brand-green)' : 'var(--brand-red)' }}>{imgTestResult}</span>}
             </div>
           </div>
         </div>
@@ -151,24 +157,24 @@ export default function Settings() {
             <button className="btn btn-outline btn-sm" onClick={() => { setTxtKey(''); setTxtBase(''); setTxtModel(''); }}>清空配置</button>
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0, lineHeight: 1.5 }}>
               配置用于 AI 文案改写的语言模型接口，支持兼容 OpenAI 格式的 API 服务。
             </p>
             <div>
-              <label style={{ fontSize: 12, color: '#666' }}>API Key {txtKeySet ? <span style={{color:'#22c55e'}}>(已配置: {txtKeyMasked})</span> : <span style={{color:'#ef4444'}}>(未配置)</span>}</label>
+              <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>API Key {txtKeySet ? <span style={{color:'var(--brand-green)'}}>(已配置: {txtKeyMasked})</span> : <span style={{color:'var(--brand-red)'}}>(未配置)</span>}</label>
               <input type="password" value={txtKey} onChange={e => setTxtKey(e.target.value)} placeholder="输入新的 API Key（留空不修改）" style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: '#666' }}>Base URL</label>
+              <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>Base URL</label>
               <input value={txtBase} onChange={e => setTxtBase(e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: '#666' }}>模型名称</label>
+              <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>模型名称</label>
               <input value={txtModel} onChange={e => setTxtModel(e.target.value)} style={inputStyle} />
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <button className="btn btn-outline btn-sm" onClick={() => handleTest('text')}>测试连接</button>
-              {txtTestResult && <span style={{ fontSize: 13, color: txtTestResult.includes('成功') ? '#22c55e' : '#ef4444' }}>{txtTestResult}</span>}
+              {txtTestResult && <span style={{ fontSize: 13, color: txtTestResult.includes('成功') ? 'var(--brand-green)' : 'var(--brand-red)' }}>{txtTestResult}</span>}
             </div>
           </div>
         </div>
@@ -176,41 +182,41 @@ export default function Settings() {
         <div className="card">
           <div className="card-header">微信小店导出设置</div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0, lineHeight: 1.5 }}>
               配置导出到微信小店时的默认商品属性参数。
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 12, color: '#666' }}>发货方式</label>
+                <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>发货方式</label>
                 <select value={wechatCfg.deliver_method ?? 0} onChange={e => updateWechat('deliver_method', Number(e.target.value))} style={selectStyle}>
                   <option value={0}>快递发货</option>
                   <option value={1}>无需快递</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#666' }}>七天无理由退换</label>
+                <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>七天无理由退换</label>
                 <select value={wechatCfg.seven_day_return ?? 1} onChange={e => updateWechat('seven_day_return', Number(e.target.value))} style={selectStyle}>
                   <option value={1}>是</option>
                   <option value={0}>否</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#666' }}>运费险</label>
+                <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>运费险</label>
                 <select value={wechatCfg.freight_insurance ?? 0} onChange={e => updateWechat('freight_insurance', Number(e.target.value))} style={selectStyle}>
                   <option value={0}>关闭</option>
                   <option value={1}>开启</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#666' }}>默认库存</label>
+                <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>默认库存</label>
                 <input type="number" value={wechatCfg.default_stock ?? 999} onChange={e => updateWechat('default_stock', Number(e.target.value))} style={inputStyle} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#666' }}>品牌ID</label>
+                <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>品牌ID</label>
                 <input value={String(wechatCfg.brand_id ?? '2100000000')} onChange={e => setWechatCfg(prev => ({ ...prev, brand_id: e.target.value }))} style={inputStyle} />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: '#666' }}>上架状态</label>
+                <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>上架状态</label>
                 <select value={wechatCfg.listing ?? 0} onChange={e => updateWechat('listing', Number(e.target.value))} style={selectStyle}>
                   <option value={0}>放入仓库</option>
                   <option value={1}>立即上架</option>
@@ -218,9 +224,43 @@ export default function Settings() {
               </div>
 
             </div>
-            <p style={{ fontSize: 12, color: '#999', margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'var(--brand-text-muted)', margin: 0 }}>
               以上参数在导出"微信小店"格式时生效，控制导出数据包的默认商品属性。
             </p>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">风控检测</div>
+          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0, lineHeight: 1.5 }}>
+              定期扫描商品列表中缺少 SKU 信息的商品，可能是拼多多账号被风控导致。
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{ fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={riskMonitor.enabled}
+                  onChange={e => setRiskMonitor(prev => ({ ...prev, enabled: e.target.checked }))}
+                  style={{ width: 16, height: 16 }}
+                />
+                启用风控检测
+              </label>
+            </div>
+            {riskMonitor.enabled && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontSize: 13, color: 'var(--brand-text-secondary)' }}>扫描间隔</label>
+                <input
+                  type="number"
+                  min={3}
+                  max={300}
+                  value={riskMonitor.interval}
+                  onChange={e => setRiskMonitor(prev => ({ ...prev, interval: Math.max(3, Number(e.target.value) || 30) }))}
+                  style={{ ...inputStyle, width: 80, marginTop: 0 }}
+                />
+                <span style={{ fontSize: 13, color: 'var(--brand-text-muted)' }}>秒</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -233,5 +273,5 @@ export default function Settings() {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 14, marginTop: 4,
+  width: '100%', padding: '8px 12px', border: '1px solid var(--brand-border)', borderRadius: 6, fontSize: 14, marginTop: 4,
 };

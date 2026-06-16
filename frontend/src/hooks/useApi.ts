@@ -11,11 +11,13 @@ import {
   uploadEditorImage, searchProductsForEditor, fetchAiHistory, deleteAiHistory, removeBackground,
   uploadImage, reorderImages,
   fetchDuplicates,
-  aiCopywriting, applyCopywriting,
+  aiCopywriting, applyCopywriting, aiSuggestPrompt,
   fetchExportTemplates,
   fetchMonitorList, addMonitor, removeMonitor, updateMonitorFrequency,
   fetchMonitorHistory, refreshMonitor, fetchProductSkus,
   importRawJson, importRawJsonDir,
+  fetchLogs, fetchLogInfo, exportLogs,
+  fetchRiskCheck, dismissRiskCheck, fetchShops,
   fetchProductIds,
   fetchCaptureToggle, setCaptureToggle,
 } from '../api';
@@ -289,6 +291,10 @@ export function useAiCopywriting() {
   });
 }
 
+export function useAiSuggestPrompt() {
+  return useMutation({ mutationFn: aiSuggestPrompt });
+}
+
 export function useApplyCopywriting() {
   const qc = useQueryClient();
   return useMutation({
@@ -370,6 +376,24 @@ export function useMonitorHistory(goodsId: string) {
   });
 }
 
+export function useLogs(type: string, page = 1, pageSize = 200) {
+  return useQuery({
+    queryKey: ['logs', type, page],
+    queryFn: () => fetchLogs(type, page, pageSize),
+    refetchInterval: 3000,
+  });
+}
+
+export function useLogInfo() {
+  return useQuery({ queryKey: ['logInfo'], queryFn: fetchLogInfo, refetchInterval: 10000 });
+}
+
+export function useExportLogs() {
+  return useMutation({
+    mutationFn: (type: string) => exportLogs(type),
+  });
+}
+
 export function useRemoveBackground() {
   return useMutation({
     mutationFn: (imageUrl: string) => removeBackground(imageUrl),
@@ -403,5 +427,22 @@ export function useImportData() {
     mutationFn: ({ file, columnMapping }: { file: File; columnMapping?: Record<string, number> }) =>
       importData(file, columnMapping),
   });
+}
+
+export function useRiskCheck(enabled = false, interval = 30) {
+  return useQuery({
+    queryKey: ['riskCheck'],
+    queryFn: fetchRiskCheck,
+    refetchInterval: enabled ? interval * 1000 : false,
+    enabled,
+  });
+}
+
+export function useDismissRiskCheck() {
+  return useMutation({ mutationFn: dismissRiskCheck });
+}
+
+export function useShops() {
+  return useQuery({ queryKey: ['shops'], queryFn: fetchShops, staleTime: 60000 });
 }
 

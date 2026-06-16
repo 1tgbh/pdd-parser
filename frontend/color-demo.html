@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apple Style Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --text-2: #6e6e73;
+      --text-3: #aeaeb2;
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.1);
+      --accent: #1d1d1f;
+      --accent-hover: #333336;
+      --accent-light: rgba(29,29,31,0.06);
+      --accent-ring: rgba(29,29,31,0.18);
+      --blue: #007AFF;
+      --blue-light: rgba(0,122,255,0.08);
+      --green: #34C759;
+      --green-light: rgba(52,199,89,0.08);
+      --orange: #FF9500;
+      --orange-light: rgba(255,149,0,0.08);
+      --red: #FF3B30;
+      --red-light: rgba(255,59,48,0.08);
+      --purple: #AF52DE;
+      --purple-light: rgba(175,82,222,0.08);
+      --gray-4: #d1d1d6;
+      --gray-5: #e5e5ea;
+      --gray-6: #f2f2f7;
+      --sidebar-w: 220px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-lg: 16px;
+      --shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.02);
+      --shadow-md: 0 0 0 1px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.02);
+      --shadow-lg: 0 0 0 1px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.03);
+      --blur: saturate(180%) blur(20px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, h5, h6 { font-weight: 600; color: var(--text); letter-spacing: -0.02em; }
+
+    .sidebar {
+      width: var(--sidebar-w); min-height: 100vh; position: fixed; left: 0; top: 0;
+      background: rgba(255,255,255,0.72); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100;
+    }
+    .sidebar-logo { padding: 24px 20px 20px; }
+    .sidebar-logo h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .sidebar-logo small { font-size: 11px; color: var(--text-3); margin-top: 2px; display: block; }
+    .sidebar-nav { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; gap: 1px; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; font-size: 13px; font-weight: 400;
+      color: var(--text-2); border-radius: var(--radius-sm); transition: all 0.15s ease;
+    }
+    .sidebar-nav a:hover { color: var(--text); background: rgba(0,0,0,0.03); }
+    .sidebar-nav a.active { color: var(--blue); background: var(--blue-light); font-weight: 500; }
+    .sidebar-nav a svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+    .sidebar-nav a.active svg, .sidebar-nav a:hover svg { opacity: 1; }
+    .sidebar-footer {
+      padding: 14px 20px; font-size: 11px; color: var(--text-3);
+      border-top: 1px solid var(--border);
+    }
+
+    .main { flex: 1; margin-left: var(--sidebar-w); padding: 24px 32px; min-height: 100vh; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .page-header h2 { font-size: 22px; }
+    .page-header small { font-size: 12px; color: var(--text-3); font-weight: 400; }
+
+    .demo-section { margin-bottom: 36px; }
+    .demo-label {
+      font-size: 12px; font-weight: 500; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; display: block;
+    }
+
+    .color-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .color-chip {
+      width: 72px; height: 72px; border-radius: var(--radius);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 500; box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .color-chip:hover { transform: scale(1.05); box-shadow: var(--shadow-md); }
+    .color-chip span { margin-top: 4px; font-size: 9px; opacity: 0.8; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat-card {
+      background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+      padding: 20px; display: flex; flex-direction: column; gap: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stat-icon svg { width: 18px; height: 18px; }
+    .stat-icon.blue { background: var(--blue-light); color: var(--blue); }
+    .stat-icon.green { background: var(--green-light); color: var(--green); }
+    .stat-icon.orange { background: var(--orange-light); color: var(--orange); }
+    .stat-icon.purple { background: var(--purple-light); color: var(--purple); }
+    .stat-value { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; }
+    .stat-label { font-size: 12px; color: var(--text-2); }
+
+    .card {
+      background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      font-weight: 500; font-size: 14px;
+    }
+    .card-body { padding: 20px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 16px; font-size: 13px; font-weight: 500;
+      border-radius: var(--radius-sm); border: none; cursor: pointer;
+      transition: all 0.15s ease; font-family: inherit;
+    }
+    .btn svg { width: 14px; height: 14px; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+    .btn-secondary { background: var(--accent-light); color: var(--text); }
+    .btn-secondary:hover { background: rgba(29,29,31,0.09); }
+    .btn-ghost { background: transparent; color: var(--text); }
+    .btn-ghost:hover { background: var(--accent-light); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; font-size: 11px; font-weight: 500; border-radius: 20px;
+    }
+    .badge svg { width: 10px; height: 10px; }
+    .badge-blue { background: var(--blue-light); color: var(--blue); }
+    .badge-green { background: var(--green-light); color: var(--green); }
+    .badge-orange { background: var(--orange-light); color: var(--orange); }
+    .badge-red { background: var(--red-light); color: var(--red); }
+    .badge-gray { background: var(--gray-6); color: var(--text-2); }
+    .badge-purple { background: var(--purple-light); color: var(--purple); }
+    .tag-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .input-demo {
+      padding: 9px 14px 9px 34px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      font-size: 13px; outline: none; width: 280px; transition: all 0.15s ease;
+      font-family: inherit; background: var(--surface); color: var(--text);
+    }
+    .input-demo::placeholder { color: var(--text-3); }
+    .input-demo:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+    .input-wrap { position: relative; display: inline-block; }
+    .input-wrap svg {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: var(--text-3); pointer-events: none;
+    }
+
+    .progress-track { height: 4px; background: var(--gray-5); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; width: 68%; transition: width 0.4s ease; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 16px; }
+    th {
+      font-weight: 500; color: var(--text-3); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border);
+    }
+    td { border-bottom: 1px solid var(--border); }
+    tbody tr { transition: background 0.12s ease; }
+    tbody tr:hover { background: rgba(0,0,0,0.015); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .product-card {
+      background: var(--surface); border-radius: var(--radius-lg); overflow: hidden;
+      box-shadow: var(--shadow); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer;
+    }
+    .product-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .product-card-img {
+      width: 100%; height: 150px; background: var(--gray-6);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .product-card-img svg { width: 32px; height: 32px; color: var(--gray-4); }
+    .product-card-body { padding: 14px 16px; }
+    .product-card-title { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 8px; }
+    .product-card-meta { display: flex; align-items: baseline; justify-content: space-between; }
+    .product-card-price { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+    .product-card-sales { font-size: 11px; color: var(--text-3); }
+
+    .toast {
+      position: fixed; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.85); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+      color: var(--text); padding: 10px 16px; border-radius: var(--radius); font-size: 13px;
+      box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px;
+      animation: slideIn 0.3s ease;
+    }
+    .toast svg { width: 16px; height: 16px; color: var(--green); flex-shrink: 0; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .toggle {
+      position: relative; width: 42px; height: 24px; border-radius: 12px;
+      background: var(--gray-4); border: none; cursor: pointer; padding: 0;
+      transition: background 0.2s ease;
+    }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; border-radius: 50%; background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: left 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .toggle.on { background: var(--accent); }
+    .toggle.on::after { left: 20px; }
+
+    .seg-ctrl { display: inline-flex; background: var(--gray-6); border-radius: var(--radius-sm); padding: 2px; }
+    .seg-ctrl button {
+      padding: 6px 14px; font-size: 12px; font-weight: 500;
+      border: none; border-radius: 6px; cursor: pointer;
+      background: transparent; color: var(--text-2); font-family: inherit; transition: all 0.15s ease;
+    }
+    .seg-ctrl button.active {
+      background: var(--surface); color: var(--text); font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 0 1px rgba(0,0,0,0.06);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+
+    .stagger > * { opacity: 0; transform: translateY(8px); animation: fadeInUp 0.4s ease forwards; }
+    .stagger > *:nth-child(1) { animation-delay: 0.02s; }
+    .stagger > *:nth-child(2) { animation-delay: 0.06s; }
+    .stagger > *:nth-child(3) { animation-delay: 0.10s; }
+    .stagger > *:nth-child(4) { animation-delay: 0.14s; }
+    .stagger > *:nth-child(5) { animation-delay: 0.18s; }
+    .stagger > *:nth-child(6) { animation-delay: 0.22s; }
+    .stagger > *:nth-child(7) { animation-delay: 0.26s; }
+    .stagger > *:nth-child(8) { animation-delay: 0.30s; }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>多多采集</h1>
+      <small>AI 增强版 v1.1.2</small>
+    </div>
+    <div class="sidebar-nav">
+      <a class="active">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="3" height="6" rx="0.5"/><rect x="8.5" y="6" width="3" height="10" rx="0.5"/><rect x="14" y="3" width="3" height="13" rx="0.5"/></svg>
+        数据概览
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5"/></svg>
+        商品列表
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="12" height="16" rx="2"/><line x1="7" y1="6" x2="13" y2="6"/><line x1="7" y1="9.5" x2="13" y2="9.5"/><line x1="7" y1="13" x2="10" y2="13"/></svg>
+        商品详情
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12"/><path d="M12 6l4 4-4 4"/><circle cx="6" cy="10" r="2.5"/><circle cx="15" cy="10" r="1"/></svg>
+        对比分析
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15V5"/><path d="M6 9l4-4 4 4"/><path d="M4 17h12"/></svg>
+        数据导入
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5v10"/><path d="M6 11l4 4 4-4"/><path d="M4 3h12"/></svg>
+        数据导出
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 3.5l5 5-9 9H2.5v-5l9-9z"/><circle cx="14" cy="6" r="0.5" fill="currentColor"/><path d="M10 5l5 5"/></svg>
+        AI 编辑器
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l2-6L14.5 2.5a1 1 0 011.4 0l1.6 1.6a1 1 0 010 1.4L9 15l-5 2z"/><line x1="12.5" y1="4.5" x2="15.5" y2="7.5"/></svg>
+        AI 文案
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,14 6,8 9,11 12,5 15,9 18,6"/><line x1="3" y1="17" x2="18" y2="17"/></svg>
+        价格监控
+      </a>
+      <a>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.5"/><path d="M10 2v1.5M10 16.5V18M18 10h-1.5M3.5 10H2M15.7 4.3l-1 1M5.3 14.7l-1 1M15.7 15.7l-1-1M5.3 5.3l-1-1"/></svg>
+        API 设置
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span>采集开关</span>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="page-header">
+      <h2>Dashboard</h2>
+      <small>Apple Style Preview</small>
+    </div>
+
+    <div class="stagger">
+
+    <div class="demo-section">
+      <span class="demo-label">Colors</span>
+      <div class="color-row">
+        <div class="color-chip" style="background:#1d1d1f;color:#fff;"><span>#1d1d1f</span></div>
+        <div class="color-chip" style="background:#333336;color:#fff;"><span>#333336</span></div>
+        <div class="color-chip" style="background:#fff;border:1px solid rgba(0,0,0,0.06);"><span>#ffffff</span></div>
+        <div class="color-chip" style="background:#f5f5f7;"><span>#f5f5f7</span></div>
+        <div class="color-chip" style="background:#007AFF;color:#fff;"><span>#007AFF</span></div>
+        <div class="color-chip" style="background:#34C759;color:#fff;"><span>#34C759</span></div>
+        <div class="color-chip" style="background:#FF9500;color:#fff;"><span>#FF9500</span></div>
+        <div class="color-chip" style="background:#FF3B30;color:#fff;"><span>#FF3B30</span></div>
+        <div class="color-chip" style="background:#8e8e93;color:#fff;"><span>#8e8e93</span></div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <span class="demo-label">Statistics</span>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="10" width="3" height="6" rx="0.5"/><rect x="8.5" y="6" width="3" height="10" rx="0.5"/><rect x="14" y="3" width="3" height="13" rx="0.5"/></svg>
+          </div>
+          <div class="stat-value">128</div>
+          <div class="stat-label">商品总数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3-4.9-2.6L5.1 17l.9-5.3-4-3.9 5.5-.8z"/></svg>
+          </div>
+          <div class="stat-value">356</div>
+          <div class="stat-label">标签总数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM13.5 13.5l3 3"/></svg>
+          </div>
+          <div class="stat-value">5</div>
+          <div class="stat-label">分组总数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="3"/><circle cx="10" cy="10" r="7"/><line x1="10" y1="1" x2="10" y2="3"/><line x1="10" y1="17" x2="10" y2="19"/><line x1="1" y1="10" x2="3" y2="10"/><line x1="17" y1="10" x2="19" y2="10"/></svg>
+          </div>
+          <div class="stat-value">12</div>
+          <div class="stat-label">监控中</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <span class="demo-label">Buttons & Badges</span>
+      <div class="btn-group" style="margin-bottom:12px;">
+        <button class="btn btn-primary">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="3" x2="7" y2="11"/><line x1="3" y1="7" x2="11" y2="7"/></svg>
+          添加商品
+        </button>
+        <button class="btn btn-secondary">次要操作</button>
+        <button class="btn btn-ghost">文字按钮</button>
+        <button class="btn btn-green">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,7.5 5.5,10 11,4"/></svg>
+          确认
+        </button>
+        <button class="btn btn-red">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="4" y1="4" x2="10" y2="10"/><line x1="10" y1="4" x2="4" y2="10"/></svg>
+          删除
+        </button>
+      </div>
+      <div class="tag-row">
+        <span class="badge badge-blue">
+          <svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>
+          蓝色
+        </span>
+        <span class="badge badge-green">
+          <svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>
+          绿色
+        </span>
+        <span class="badge badge-orange">
+          <svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>
+          橙色
+        </span>
+        <span class="badge badge-red">
+          <svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>
+          红色
+        </span>
+        <span class="badge badge-purple">
+          <svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>
+          紫色
+        </span>
+        <span class="badge badge-gray">灰色</span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="demo-section">
+        <span class="demo-label">Input & Progress</span>
+        <div class="input-wrap">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+          <input class="input-demo" type="text" placeholder="搜索商品..." />
+        </div>
+        <div style="margin-top:14px;width:280px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:var(--text-2);">采集进度</span>
+            <span style="font-size:12px;color:var(--text-3);">68%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill"></div></div>
+        </div>
+      </div>
+      <div class="demo-section">
+        <span class="demo-label">Controls</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span style="font-size:13px;color:var(--text-2);">自动采集</span>
+          <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          <span style="font-size:12px;color:var(--accent);font-weight:500;">已开启</span>
+        </div>
+        <div class="seg-ctrl">
+          <button class="active">全部</button>
+          <button>在售</button>
+          <button>下架</button>
+          <button>监控中</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><polyline points="5,8 7,10.5 11,5.5"/></svg>
+      操作成功
+    </div>
+
+    <div class="demo-section">
+      <span class="demo-label">Table</span>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <table>
+            <thead><tr><th>商品名称</th><th>价格</th><th>销量</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:500;">冬季加厚保暖羽绒服</td><td>¥199.00</td><td>3,256</td><td><span class="badge badge-green"><svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>在售</span></td></tr>
+              <tr><td style="font-weight:500;">夏季透气运动短裤</td><td>¥59.90</td><td>8,102</td><td><span class="badge badge-green"><svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>在售</span></td></tr>
+              <tr><td style="font-weight:500;">儿童纯棉长袖T恤</td><td>¥39.00</td><td>1,520</td><td><span class="badge badge-red"><svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>下架</span></td></tr>
+              <tr><td style="font-weight:500;">真皮手提单肩包</td><td>¥299.00</td><td>890</td><td><span class="badge badge-orange"><svg viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="2.5"/></svg>监控中</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <span class="demo-label">Products</span>
+      <div class="product-grid">
+        <div class="product-card">
+          <div class="product-card-img">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="24" height="20" rx="2"/><circle cx="11" cy="13" r="2.5"/><path d="M4 22l6-5 4 3 6-6 8 8"/></svg>
+          </div>
+          <div class="product-card-body">
+            <div class="product-card-title">冬季加厚保暖羽绒服男款</div>
+            <div class="product-card-meta">
+              <div class="product-card-price">¥199</div>
+              <div class="product-card-sales">已售 3,256</div>
+            </div>
+          </div>
+        </div>
+        <div class="product-card">
+          <div class="product-card-img">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="24" height="20" rx="2"/><circle cx="11" cy="13" r="2.5"/><path d="M4 22l6-5 4 3 6-6 8 8"/></svg>
+          </div>
+          <div class="product-card-body">
+            <div class="product-card-title">夏季透气运动短裤速干</div>
+            <div class="product-card-meta">
+              <div class="product-card-price">¥59.9</div>
+              <div class="product-card-sales">已售 8,102</div>
+            </div>
+          </div>
+        </div>
+        <div class="product-card">
+          <div class="product-card-img">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="24" height="20" rx="2"/><circle cx="11" cy="13" r="2.5"/><path d="M4 22l6-5 4 3 6-6 8 8"/></svg>
+          </div>
+          <div class="product-card-body">
+            <div class="product-card-title">儿童纯棉长袖T恤</div>
+            <div class="product-card-meta">
+              <div class="product-card-price">¥39</div>
+              <div class="product-card-sales">已售 1,520</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

@@ -9,6 +9,13 @@ import SafeImage from '../components/SafeImage';
 import type { CopywritingResult } from '../types';
 import s from '../styles/modules/AiCopywriting.module.css';
 
+type EditableResult = {
+  title: string;
+  subtitle: string;
+  selling_points: string[];
+  description: string;
+};
+
 const COPY_TYPES = [
   { key: 'all', label: '全部' },
   { key: 'title', label: '标题' },
@@ -37,6 +44,7 @@ export default function AiCopywriting() {
   const [style, setStyle] = useState('default');
   const [customPrompt, setCustomPrompt] = useState('');
   const [result, setResult] = useState<CopywritingResult | null>(null);
+  const [editedResult, setEditedResult] = useState<EditableResult | null>(null);
   const [copiedField, setCopiedField] = useState<string>('');
   const [searchDebounce, setSearchDebounce] = useState('');
 
@@ -56,6 +64,7 @@ export default function AiCopywriting() {
   const handleSelect = useCallback((goodsId: string) => {
     setSelectedGoodsId(goodsId);
     setResult(null);
+    setEditedResult(null);
   }, []);
 
   const handleGenerate = useCallback(() => {
@@ -69,6 +78,12 @@ export default function AiCopywriting() {
             return;
           }
           setResult(data);
+          setEditedResult({
+            title: data.title || '',
+            subtitle: data.subtitle || '',
+            selling_points: data.selling_points || [],
+            description: data.description || '',
+          });
         },
       },
     );
@@ -91,18 +106,18 @@ export default function AiCopywriting() {
   }, [selectedGoodsId, applyMut]);
 
   const handleApplyAll = useCallback(() => {
-    if (!selectedGoodsId || !result) return;
+    if (!selectedGoodsId || !editedResult) return;
     const fields: Record<string, unknown> = {};
-    if (result.title) fields.title = result.title;
-    if (result.subtitle) fields.subtitle = result.subtitle;
-    if (result.selling_points) fields.selling_points = result.selling_points;
-    if (result.description) fields.description = result.description;
+    if (editedResult.title) fields.title = editedResult.title;
+    if (editedResult.subtitle) fields.subtitle = editedResult.subtitle;
+    if (editedResult.selling_points.length > 0) fields.selling_points = editedResult.selling_points;
+    if (editedResult.description) fields.description = editedResult.description;
     if (Object.keys(fields).length === 0) return;
     applyMut.mutate(
       { goodsId: selectedGoodsId, fields },
       { onSuccess: () => alert('全部文案已应用到商品') },
     );
-  }, [selectedGoodsId, result, applyMut]);
+  }, [selectedGoodsId, editedResult, applyMut]);
 
   return (
     <>
@@ -212,11 +227,16 @@ export default function AiCopywriting() {
             </div>
           </div>
 
-          {result && <ResultArea result={result} copiedField={copiedField} onCopy={handleCopy} onApplyField={handleApplyField} onApplyAll={handleApplyAll} applying={applyMut.isPending} />}
+          {result && <ResultArea editedResult={editedResult!} onUpdate={setEditedResult} copiedField={copiedField} onCopy={handleCopy} onApplyField={handleApplyField} onApplyAll={handleApplyAll} applying={applyMut.isPending} />}
 
           {!result && (
             <div className={s.emptyResult}>
-              <div className={s.emptyResultIcon}>✍️</div>
+              <div className={s.emptyResultIcon}>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:32,height:32}}>
+                  <path d="M4 17l2-6L14.5 2.5a1 1 0 011.4 0l1.6 1.6a1 1 0 010 1.4L9 15l-5 2z"/>
+                  <line x1="12.5" y1="4.5" x2="15.5" y2="7.5"/>
+                </svg>
+              </div>
               选择商品并点击「生成文案」
             </div>
           )}
@@ -236,7 +256,8 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 interface ResultAreaProps {
-  result: CopywritingResult;
+  editedResult: EditableResult;
+  onUpdate: React.Dispatch<React.SetStateAction<EditableResult | null>>;
   copiedField: string;
   onCopy: (field: string, value: string | string[]) => void;
   onApplyField: (field: string, value: unknown) => void;
@@ -244,50 +265,110 @@ interface ResultAreaProps {
   applying: boolean;
 }
 
-function ResultArea({ result, copiedField, onCopy, onApplyField, onApplyAll, applying }: ResultAreaProps) {
+function ResultArea({ editedResult, onUpdate, copiedField, onCopy, onApplyField, onApplyAll, applying }: ResultAreaProps) {
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
   const entries: { field: string; label: string; value: string | string[] }[] = [];
 
-  if (result.title) entries.push({ field: 'title', label: '标题', value: result.title });
-  if (result.subtitle) entries.push({ field: 'subtitle', label: '副标题', value: result.subtitle });
-  if (result.selling_points && result.selling_points.length > 0) {
-    entries.push({ field: 'selling_points', label: '卖点', value: result.selling_points });
+  if (editedResult.title) entries.push({ field: 'title', label: '标题', value: editedResult.title });
+  if (editedResult.subtitle) entries.push({ field: 'subtitle', label: '副标题', value: editedResult.subtitle });
+  if (editedResult.selling_points.length > 0) {
+    entries.push({ field: 'selling_points', label: '卖点', value: editedResult.selling_points });
   }
-  if (result.description) entries.push({ field: 'description', label: '详情文案', value: result.description });
+  if (editedResult.description) entries.push({ field: 'description', label: '详情文案', value: editedResult.description });
 
   if (entries.length === 0) return null;
+
+  const startEdit = (field: string, value: string | string[]) => {
+    setEditValue(Array.isArray(value) ? value.join('\n') : value);
+    setEditingField(field);
+  };
+
+  const saveEdit = () => {
+    if (!editingField) return;
+    if (editingField === 'selling_points') {
+      const items = editValue.split('\n').map(s => s.trim()).filter(Boolean);
+      onUpdate(prev => prev ? { ...prev, selling_points: items } : prev);
+    } else {
+      onUpdate(prev => prev ? { ...prev, [editingField]: editValue } : prev);
+    }
+    setEditingField(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
 
   return (
     <div className={s.resultsArea}>
       {entries.map((entry) => {
         const isArray = Array.isArray(entry.value);
+        const isEditing = editingField === entry.field;
         return (
           <div key={entry.field} className={s.resultCard}>
             <div className={s.resultCardHeader}>
               <span className={s.resultCardTitle}>{entry.label}</span>
               <div className={s.resultCardActions}>
-                <button
-                  className={`${s.copyBtn} ${copiedField === entry.field ? s.copied : ''}`}
-                  onClick={() => onCopy(entry.field, entry.value)}
-                >
-                  {copiedField === entry.field ? '已复制' : '复制'}
-                </button>
-                <button
-                  className={s.applyBtn}
-                  onClick={() => onApplyField(entry.field, entry.value)}
-                  disabled={applying}
-                >
-                  应用
-                </button>
+                {isEditing ? (
+                  <>
+                    <button className={s.editSaveBtn} onClick={saveEdit}>保存</button>
+                    <button className={s.editCancelBtn} onClick={cancelEdit}>取消</button>
+                  </>
+                ) : (
+                  <>
+                    <button className={s.editBtn} onClick={() => startEdit(entry.field, entry.value)}>编辑</button>
+                    <button
+                      className={`${s.copyBtn} ${copiedField === entry.field ? s.copied : ''}`}
+                      onClick={() => onCopy(entry.field, entry.value)}
+                    >
+                      {copiedField === entry.field ? '已复制' : '复制'}
+                    </button>
+                    <button
+                      className={s.applyBtn}
+                      onClick={() => onApplyField(entry.field, entry.value)}
+                      disabled={applying}
+                    >
+                      应用
+                    </button>
+                  </>
+                )}
               </div>
             </div>
-            {isArray ? (
-              <div className={s.resultCardBodyList}>
-                {(entry.value as string[]).map((item, idx) => (
-                  <div key={idx} className={s.resultListItem}>{item}</div>
-                ))}
+            {isEditing ? (
+              <div className={s.editArea}>
+                {entry.field === 'title' || entry.field === 'subtitle' ? (
+                  <input
+                    className={s.editInput}
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                    autoFocus
+                  />
+                ) : (
+                  <textarea
+                    className={s.editTextarea}
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Escape') cancelEdit(); }}
+                    autoFocus
+                    rows={entry.field === 'description' ? 8 : 4}
+                  />
+                )}
               </div>
             ) : (
-              <div className={s.resultCardBody}>{entry.value as string}</div>
+              <>
+                {isArray ? (
+                  <div className={s.resultCardBodyList}>
+                    {(entry.value as string[]).map((item, idx) => (
+                      <div key={idx} className={s.resultListItem}>{item}</div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={s.resultCardBody}>{entry.value as string}</div>
+                )}
+              </>
             )}
           </div>
         );

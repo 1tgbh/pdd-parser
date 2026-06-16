@@ -1,32 +1,32 @@
 .uploadZone {
-  border: 2px dashed var(--gray-300, #d1d5db);
+  border: 2px dashed var(--brand-border);
   border-radius: 12px;
   padding: 48px 24px;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
-  background: var(--gray-50, #f9fafb);
+  background: var(--brand-bg);
 }
 .uploadZone:hover,
 .uploadZone.dragOver {
-  border-color: var(--orange-500);
-  background: #fff7ed;
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
 }
 .uploadIcon {
   width: 48px;
   height: 48px;
   margin: 0 auto 12px;
-  color: var(--gray-400, #9ca3af);
+  color: var(--brand-text-muted);
 }
 .uploadText {
   font-size: 15px;
   font-weight: 500;
-  color: var(--gray-700, #374151);
+  color: var(--brand-text);
   margin-bottom: 4px;
 }
 .uploadHint {
   font-size: 13px;
-  color: var(--gray-400, #9ca3af);
+  color: var(--brand-text-muted);
 }
 .uploadInput {
   display: none;
@@ -34,7 +34,7 @@
 .previewTable {
   max-height: 400px;
   overflow: auto;
-  border: 1px solid var(--gray-200, #e5e7eb);
+  border: 1px solid var(--brand-border);
   border-radius: 8px;
   margin-top: 16px;
 }
@@ -46,23 +46,23 @@
 .previewTable th {
   position: sticky;
   top: 0;
-  background: var(--gray-50, #f9fafb);
+  background: var(--brand-bg);
   padding: 8px 10px;
   text-align: left;
   font-weight: 600;
-  border-bottom: 2px solid var(--gray-200, #e5e7eb);
+  border-bottom: 2px solid var(--brand-border);
   white-space: nowrap;
 }
 .previewTable td {
   padding: 6px 10px;
-  border-bottom: 1px solid var(--gray-100, #f3f4f6);
+  border-bottom: 1px solid var(--brand-border);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .previewTable tr:hover td {
-  background: var(--gray-50, #f9fafb);
+  background: var(--brand-bg);
 }
 .mappingGrid {
   display: grid;
@@ -77,21 +77,21 @@
   font-size: 13px;
 }
 .mappingLabel {
-  color: var(--gray-600, #4b5563);
+  color: var(--brand-text-secondary);
   min-width: 80px;
   font-weight: 500;
 }
 .mappingArrow {
-  color: var(--gray-400, #9ca3af);
+  color: var(--brand-text-muted);
   flex-shrink: 0;
 }
 .mappingSelect {
   flex: 1;
   padding: 6px 8px;
-  border: 1px solid var(--gray-300, #d1d5db);
+  border: 1px solid var(--brand-border);
   border-radius: 6px;
   font-size: 12px;
-  background: #fff;
+  background: var(--brand-surface);
 }
 .resultBox {
   padding: 20px;
@@ -99,12 +99,12 @@
   margin-top: 16px;
 }
 .resultBox.success {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  background: var(--brand-green-light);
+  border: 1px solid var(--brand-green);
 }
 .resultBox.error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--brand-red-light);
+  border: 1px solid var(--brand-red);
 }
 .resultStat {
   display: flex;
@@ -121,7 +121,7 @@
 }
 .statLabel {
   font-size: 12px;
-  color: var(--gray-500, #6b7280);
+  color: var(--brand-text-secondary);
 }
 .errorList {
   list-style: none;
@@ -132,7 +132,7 @@
 }
 .errorList li {
   font-size: 12px;
-  color: #dc2626;
+  color: var(--brand-red);
   padding: 2px 0;
 }
 .btnRow {
@@ -142,15 +142,15 @@
 }
 .fileName {
   font-size: 13px;
-  color: var(--gray-600, #4b5563);
+  color: var(--brand-text-secondary);
   margin-top: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 .fileTag {
-  background: var(--orange-100, #ffedd5);
-  color: var(--orange-700, #c2410c);
+  background: var(--brand-accent-light);
+  color: var(--brand-accent);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;

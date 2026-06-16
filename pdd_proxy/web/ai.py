@@ -437,4 +437,111 @@ def generate_copywriting(goods_info: dict, copy_type: str = "all", style: str = 
         return {"error": "AI 返回格式异常", "raw": content}
 
 
+# ============ AI 提示词生成（多模态） ============
+
+def suggest_prompt(image_url: str) -> dict:
+    """根据商品图片生成 AI 生图提示词"""
+    cfg = load_config().get("text_api", {})
+    api_key = cfg.get("api_key", "")
+    base_url = cfg.get("base_url", "").rstrip("/")
+    model = cfg.get("model", "")
+
+    if not api_key or not base_url:
+        return {"error": "请先在设置中配置文本模型 API"}
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    is_external = "pddpic.com" in image_url or "yangkeduo.com" in image_url
+    if is_external:
+        image_input = image_url
+    else:
+        data_url = _fetch_image_as_data_url(image_url)
+        if not data_url:
+            return {"error": "无法读取图片，请检查图片路径"}
+        image_input = data_url
+
+    describe_body = {
+        "model": model,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "用一句话描述这张商品图片中的商品是什么，包括类型、颜色、材质。例如：浅棕色真皮斜挎包、白色陶瓷咖啡杯带木盖。只输出商品描述，不要其他内容。"},
+                    {"type": "image_url", "image_url": {"url": image_input}},
+                ],
+            }
+        ],
+        "max_tokens": 2000,
+    }
+
+    try:
+        resp = requests.post(
+            f"{base_url}/chat/completions",
+            headers=headers,
+            json=describe_body,
+            timeout=60,
+            verify=False,
+        )
+        if resp.status_code != 200:
+            return {"error": f"图片理解失败: {resp.text[:200]}"}
+        data = resp.json()
+        msg = data.get("choices", [{}])[0].get("message", {})
+        description = msg.get("content", "") or msg.get("reasoning_content", "")
+        if not description:
+            return {"error": "模型未能理解图片内容"}
+    except Exception as e:
+        return {"error": f"图片理解请求失败: {str(e)}"}
+
+    prompt_body = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "你是电商商品 AI 生图提示词专家。根据商品图片描述，生成一段简洁的中文提示词。\n\n"
+                    "核心规则：\n"
+                    "- 提示词控制在 30-80 字，越简洁越好\n"
+                    "- 语序权重：主体商品 > 背景场景 > 光线 > 风格 > 约束\n"
+                    "- 第一句必须写清楚是什么商品（如：白色陶瓷马克杯、真皮手提包）\n"
+                    "- 背景用简洁描述（白底、浅灰渐变背景、原木桌面）\n"
+                    "- 光线用具体词（柔光棚拍、自然光、侧逆光）\n"
+                    "- 风格用成熟关键词（商业产品摄影、极简 ins 风、日系清新）\n"
+                    "- 末尾加约束：无文字、无水印、无杂物\n"
+                    "- 不要用逗号分隔的关键词堆砌，用自然流畅的中文短句\n\n"
+                    "好的示例：\n"
+                    "白色陶瓷马克杯，摆放在原木桌面上，浅米色背景，柔光棚拍，极简风格，无文字无水印\n"
+                    "真皮手提包正面展示，白色背景，柔和阴影，商业产品摄影，高清细节，无杂物"
+                ),
+            },
+            {"role": "user", "content": description},
+        ],
+        "max_tokens": 16000,
+    }
+
+    try:
+        resp2 = requests.post(
+            f"{base_url}/chat/completions",
+            headers=headers,
+            json=prompt_body,
+            timeout=60,
+            verify=False,
+        )
+        if resp2.status_code != 200:
+            return {"error": f"提示词生成失败: {resp2.text[:200]}"}
+        data2 = resp2.json()
+        msg2 = data2.get("choices", [{}])[0].get("message", {})
+        prompt = (msg2.get("content", "") or "").strip()
+        prompt = re.sub(r"^```.*?\n?", "", prompt)
+        prompt = re.sub(r"\n?```$", "", prompt)
+        prompt = prompt.strip('"').strip("'").strip()
+        if not prompt:
+            return {"error": "提示词生成为空"}
+        return {"prompt": prompt}
+    except Exception as e:
+        return {"error": f"提示词生成请求失败: {str(e)}"}
+
+
 

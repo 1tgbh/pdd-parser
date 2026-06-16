@@ -278,21 +278,38 @@ export default function Monitor() {
 
       <div className={s.statsRow}>
         <div className={s.statCard}>
-          <div className={`${s.statIcon} ${s.statIconBlue}`}>📦</div>
+          <div className={`${s.statIcon} ${s.statIconBlue}`}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}>
+              <path d="M10 2L3 6v8l7 4 7-4V6l-7-4z"/>
+              <path d="M3 6l7 4 7-4"/>
+              <path d="M10 10v8"/>
+            </svg>
+          </div>
           <div>
             <div className={s.statLabel}>监控商品</div>
             <div className={s.statValue}>{stats.total}</div>
           </div>
         </div>
         <div className={s.statCard}>
-          <div className={`${s.statIcon} ${s.statIconGreen}`}>📉</div>
+          <div className={`${s.statIcon} ${s.statIconGreen}`}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}>
+              <polyline points="3,5 8,10 12,8 17,14"/>
+              <polyline points="13,14 17,14 17,10"/>
+            </svg>
+          </div>
           <div>
             <div className={s.statLabel}>降价商品</div>
             <div className={s.statValue}>{stats.priceDrops}</div>
           </div>
         </div>
         <div className={s.statCard}>
-          <div className={`${s.statIcon} ${s.statIconOrange}`}>⚠️</div>
+          <div className={`${s.statIcon} ${s.statIconOrange}`}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:20,height:20}}>
+              <path d="M10 3L2 17h16L10 3z"/>
+              <line x1="10" y1="9" x2="10" y2="13"/>
+              <circle cx="10" cy="15" r="0.7" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
           <div>
             <div className={s.statLabel}>库存预警</div>
             <div className={s.statValue}>{stats.stockAlerts}</div>
@@ -304,7 +321,13 @@ export default function Monitor() {
         <div className={s.loadingWrap}>加载中...</div>
       ) : monitorList.length === 0 ? (
         <div className={s.emptyState}>
-          <div className={s.emptyIcon}>📊</div>
+          <div className={s.emptyIcon}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:28,height:28}}>
+              <rect x="3" y="10" width="3" height="6" rx="0.5"/>
+              <rect x="8.5" y="6" width="3" height="10" rx="0.5"/>
+              <rect x="14" y="3" width="3" height="13" rx="0.5"/>
+            </svg>
+          </div>
           <div className={s.emptyText}>暂无监控商品，点击「添加商品」开始监控</div>
         </div>
       ) : (

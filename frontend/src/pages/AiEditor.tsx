@@ -3,9 +3,10 @@ import axios from 'axios';
 import {
   useAiGenerateImage, useAiEditImage, useAiUseImage,
   useUploadEditorImage, useSearchProductsForEditor, useAiHistory,
-  useAiPresets, useSettings, useTags, useGroups, useRemoveBackground, useDeleteAiHistory,
+  useAiPresets, useSettings, useTags, useGroups, useRemoveBackground, useDeleteAiHistory, useAiSuggestPrompt,
 } from '../hooks/useApi';
 import { proxyImage } from '../api/index';
+import { useToast } from '../components/Toast';
 import type { AiEditorProduct, AiHistoryItem } from '../types';
 import s from '../styles/modules/AiEditor.module.css';
 
@@ -69,7 +70,7 @@ const LABEL_TEMPLATES: Omit<LabelItem, 'id' | 'x' | 'y'>[] = [
   { type: 'price', text: '¥9.9', fontSize: 32, color: '#ffffff', bgColor: '#ff4d4f', borderRadius: 4, width: 120, height: 50, rotation: 0 },
   { type: 'price', text: '¥19.9', fontSize: 32, color: '#ffffff', bgColor: '#ff4d4f', borderRadius: 4, width: 130, height: 50, rotation: 0 },
   { type: 'price', text: '限时特价', fontSize: 18, color: '#ffffff', bgColor: '#ff7a45', borderRadius: 20, width: 100, height: 36, rotation: 0 },
-  { type: 'promo', text: '🔥热卖', fontSize: 16, color: '#ffffff', bgColor: '#ff4d4f', borderRadius: 4, width: 80, height: 32, rotation: 0 },
+  { type: 'promo', text: '热卖', fontSize: 16, color: '#ffffff', bgColor: '#ff4d4f', borderRadius: 4, width: 80, height: 32, rotation: 0 },
   { type: 'promo', text: '新品上市', fontSize: 16, color: '#ffffff', bgColor: '#1890ff', borderRadius: 4, width: 80, height: 32, rotation: 0 },
   { type: 'promo', text: '买一送一', fontSize: 16, color: '#ffffff', bgColor: '#52c41a', borderRadius: 4, width: 88, height: 32, rotation: 0 },
   { type: 'promo', text: '限时秒杀', fontSize: 16, color: '#ffffff', bgColor: '#ff4d4f', borderRadius: 4, width: 88, height: 32, rotation: -5 },
@@ -130,6 +131,7 @@ function extractAxiosError(err: unknown): string {
 }
 
 export default function AiEditor() {
+  const toast = useToast();
   const [sourceImage, setSourceImage] = useState<{ url: string; goodsId?: string } | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -261,6 +263,7 @@ export default function AiEditor() {
   const useImageMut = useAiUseImage();
   const removeBgMut = useRemoveBackground();
   const deleteHistMut = useDeleteAiHistory();
+  const suggestPromptMut = useAiSuggestPrompt();
 
   const isApiReady = settings?.image_api?.api_key_set;
   const generating = editMut.isPending || generateMut.isPending || removeBgMut.isPending;
@@ -274,6 +277,16 @@ export default function AiEditor() {
     });
     setHistoryIndex(prev => Math.min(prev + 1, 49));
   }, [historyIndex]);
+
+  const handleSuggestPrompt = useCallback(async () => {
+    const imageUrl = sourceImage?.url || (selectedProduct?.main_images?.[0] || '');
+    if (!imageUrl) { toast.info('请先选择或上传一张图片'); return; }
+    try {
+      const result = await suggestPromptMut.mutateAsync(imageUrl);
+      if (result.prompt) { setCustomPrompt(result.prompt); toast.success('提示词已生成'); }
+      else { toast.error(result.error || '生成失败'); }
+    } catch { toast.error('提示词生成失败'); }
+  }, [sourceImage, selectedProduct, suggestPromptMut]);
 
   const handleRemoveBg = useCallback(async () => {
     if (!sourceImage) return;
@@ -334,7 +347,7 @@ export default function AiEditor() {
     const fileArray = Array.from(files);
     const validFiles = fileArray.filter(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
     if (validFiles.length === 0) {
-      alert('仅支持 JPG、PNG、WebP 格式的图片');
+      toast.error('仅支持 JPG、PNG、WebP 格式的图片');
       return;
     }
     try {
@@ -352,7 +365,7 @@ export default function AiEditor() {
         }
       }
     } catch {
-      alert('上传失败');
+      toast.error('上传失败');
     }
   }, [uploadMut, batchMode]);
 
@@ -416,7 +429,7 @@ export default function AiEditor() {
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
     } catch {
-      alert('下载失败');
+      toast.error('下载失败');
     }
   }, []);
 
@@ -435,7 +448,7 @@ export default function AiEditor() {
       setHistorySelected(new Set());
       setHistoryDeleteConfirm(false);
     } catch {
-      alert('删除失败');
+      toast.error('删除失败');
     }
   }, [historySelected, deleteHistMut]);
 
@@ -458,7 +471,7 @@ export default function AiEditor() {
       });
       setBatchResults(resp.data.results || {});
     } catch {
-      alert('批量生成失败');
+      toast.error('批量生成失败');
     } finally {
       setBatchGenerating(false);
       setBatchProgress({ current: 0, total: 0 });
@@ -565,9 +578,9 @@ export default function AiEditor() {
       setApplyModal({ open: false, imagePath: '' });
       setResults(prev => prev.filter(p => p !== applyModal.imagePath));
       setSelectedResults(new Set());
-      alert('应用成功');
+      toast.success('应用成功');
     } catch {
-      alert('应用失败');
+      toast.error('应用失败');
     }
   }, [applyGoodsId, applyModal.imagePath, applyTarget, useImageMut]);
 
@@ -607,10 +620,10 @@ export default function AiEditor() {
         setResults(prev => [...paths, ...prev]);
       }
       if (errors.length > 0 && paths.length === 0) {
-        alert(errors[0]);
+        toast.error(errors[0]);
       }
     } catch (err: unknown) {
-      alert(extractAxiosError(err));
+      toast.error(extractAxiosError(err));
     }
   }, [canGenerate, sourceImage, effectivePrompt, selectedPreset, aspectRatio, imageCount, editMut, generateMut]);
 
@@ -808,7 +821,7 @@ export default function AiEditor() {
       setFlipH(false);
       setFlipV(false);
     } catch {
-      alert('变换应用失败');
+      toast.error('变换应用失败');
     }
   }, [sourceImage, hasTransform, rotation, flipH, flipV, uploadMut]);
 
@@ -921,7 +934,7 @@ export default function AiEditor() {
       setCropMode(false);
       setCropRect({ x: 0, y: 0, w: 0, h: 0 });
     } catch {
-      alert('裁剪上传失败');
+      toast.error('裁剪上传失败');
     }
   }, [sourceImage, cropRect, uploadMut, saveToHistory]);
 
@@ -1170,7 +1183,7 @@ export default function AiEditor() {
       }
     } catch (e) {
       console.error('Apply labels failed:', e);
-      alert('应用标签失败，请重试');
+      toast.error('应用标签失败，请重试');
     }
   }, [sourceImage, labels, uploadMut, saveToHistory]);
 
@@ -1191,7 +1204,7 @@ export default function AiEditor() {
       }
     } catch (e) {
       console.error('Fill background failed:', e);
-      alert('背景填充失败，请检查图片和后端服务');
+      toast.error('背景填充失败，请检查图片和后端服务');
     } finally {
       setBgFillLoading(false);
     }
@@ -1517,7 +1530,13 @@ export default function AiEditor() {
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
             >
-              <div className={s.uploadIcon}>📤</div>
+              <div className={s.uploadIcon}>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:32,height:32}}>
+                  <path d="M10 14V3"/>
+                  <path d="M6 7l4-4 4 4"/>
+                  <path d="M3 13v2a2 2 0 002 2h10a2 2 0 002-2v-2"/>
+                </svg>
+              </div>
               <div>点击或拖拽图片到此处</div>
               <div className={s.uploadHint}>支持 JPG、PNG、WebP 格式</div>
             </div>
@@ -1535,7 +1554,7 @@ export default function AiEditor() {
                       <button className="btn btn-outline btn-sm" onClick={handleHistoryExport}>
                         导出 ({historySelected.size})
                       </button>
-                      <button className="btn btn-outline btn-sm" style={{ color: 'var(--red-500)' }} onClick={() => setHistoryDeleteConfirm(true)}>
+                      <button className="btn btn-outline btn-sm" style={{ color: 'var(--brand-red)' }} onClick={() => setHistoryDeleteConfirm(true)}>
                         删除 ({historySelected.size})
                       </button>
                     </>
@@ -1580,18 +1599,18 @@ export default function AiEditor() {
               disabled={historyIndex <= 0}
               title="撤销 (Ctrl+Z)"
               style={historyIndex <= 0 ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-            >↩ 撤销</button>
+            ><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M4 8h8a4 4 0 010 8H8"/><path d="M7 5L4 8l3 3"/></svg> 撤销</button>
             <button
               className="btn btn-outline btn-sm"
               onClick={handleRedo}
               disabled={historyIndex >= history.length - 1}
               title="重做 (Ctrl+Y)"
               style={historyIndex >= history.length - 1 ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-            >↪ 重做</button>
-            <button className="btn btn-outline btn-sm" onClick={handleRotateLeft} title="向左旋转90°">↺ 左旋</button>
-            <button className="btn btn-outline btn-sm" onClick={handleRotateRight} title="向右旋转90°">↻ 右旋</button>
-            <button className="btn btn-outline btn-sm" onClick={handleFlipH} title="水平翻转">↔ 翻转H</button>
-            <button className="btn btn-outline btn-sm" onClick={handleFlipV} title="垂直翻转">↕ 翻转V</button>
+            ><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M16 8H8a4 4 0 000 8h4"/><path d="M13 5l3 3-3 3"/></svg> 重做</button>
+            <button className="btn btn-outline btn-sm" onClick={handleRotateLeft} title="向左旋转90°"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M3 10a7 7 0 0112-5"/><path d="M3 3v4h4"/><path d="M17 10a7 7 0 01-12 5"/><path d="M17 17v-4h-4"/></svg> 左旋</button>
+            <button className="btn btn-outline btn-sm" onClick={handleRotateRight} title="向右旋转90°"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M17 10a7 7 0 00-12-5"/><path d="M17 3v4h-4"/><path d="M3 10a7 7 0 0012 5"/><path d="M3 17v-4h4"/></svg> 右旋</button>
+            <button className="btn btn-outline btn-sm" onClick={handleFlipH} title="水平翻转"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M4 10h12"/><path d="M4 6l-2 4 2 4"/><path d="M16 6l2 4-2 4"/></svg> 翻转H</button>
+            <button className="btn btn-outline btn-sm" onClick={handleFlipV} title="垂直翻转"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M10 4v12"/><path d="M6 4l4-2 4 2"/><path d="M6 16l4 2 4-2"/></svg> 翻转V</button>
             {hasTransform && (
               <button className="btn btn-primary btn-sm" onClick={handleApplyTransform}>确认应用</button>
             )}
@@ -1612,11 +1631,11 @@ export default function AiEditor() {
               }}
               onMouseUp={() => setCompareMode(false)}
               onMouseLeave={() => { if (compareMode) setCompareMode(false); }}>
-              👁 对比
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="3"/></svg> 对比
             </button>
             <span className={s.zoomBadge}>{Math.round(zoom * 100)}%</span>
             <button className="btn btn-primary btn-sm" onClick={() => handleOpenExport('single')} style={{ marginLeft: 'auto' }}>
-              💾 导出
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M13 2H5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7l-5-5z"/><path d="M13 2v5h5"/><path d="M7 13h6"/><path d="M7 16h4"/></svg> 导出
             </button>
           </div>
         )}
@@ -1731,7 +1750,7 @@ export default function AiEditor() {
                         style={{ position: 'absolute', right: -4, top: -4, width: 14, height: 14, background: '#ff4d4f', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', lineHeight: 1 }}
                         onClick={(e) => { e.stopPropagation(); handleDeleteLabel(label.id); }}
                       >
-                        ✕
+                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:8,height:8}}><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
                       </div>
                     </>
                   )}
@@ -1740,7 +1759,13 @@ export default function AiEditor() {
             </div>
           ) : (
             <div className={s.canvasEmpty}>
-              <div className={s.canvasEmptyIcon}>🖼️</div>
+              <div className={s.canvasEmptyIcon}>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:48,height:48}}>
+                  <rect x="2" y="3" width="16" height="14" rx="2"/>
+                  <path d="M2 13l4-4 3 3 4-5 5 6"/>
+                  <circle cx="7" cy="7" r="1.5"/>
+                </svg>
+              </div>
               <div className={s.canvasEmptyText}>
                 {batchMode
                   ? '在左侧搜索商品，展开后勾选需要批量编辑的图片'
@@ -1828,7 +1853,7 @@ export default function AiEditor() {
                     />
                     <span style={{ fontSize: 12, color: 'var(--gray-500)' }}>{truncated}</span>
                     <span style={{ fontSize: 11, color: 'var(--gray-400)', marginLeft: 'auto' }}>×{items.length} 张结果</span>
-                    {result.error && <span style={{ color: 'var(--red-500)', marginLeft: 8, fontWeight: 400 }}>{result.error}</span>}
+                    {result.error && <span style={{ color: 'var(--brand-red)', marginLeft: 8, fontWeight: 400 }}>{result.error}</span>}
                   </div>
                   {items.length > 0 ? (
                     <div className={s.batchResultImages}>
@@ -1881,7 +1906,7 @@ export default function AiEditor() {
           <div style={{ marginBottom: 16 }}>
             <button className="btn btn-outline btn-sm" style={{ width: '100%' }}
               onClick={handleRemoveBg} disabled={removeBgMut.isPending}>
-              {removeBgMut.isPending ? '处理中…' : '🖼️ 移除背景'}
+              {removeBgMut.isPending ? '处理中…' : <><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><rect x="2" y="3" width="16" height="14" rx="2"/><path d="M2 13l4-4 3 3 4-5 5 6"/><circle cx="7" cy="7" r="1.5"/></svg> 移除背景</>}
             </button>
           </div>
         )}
@@ -1906,7 +1931,7 @@ export default function AiEditor() {
             onClick={() => setAdjustExpanded(!adjustExpanded)}
             style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}
           >
-            <span>🎨 调整</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><circle cx="10" cy="10" r="8"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> 调整</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{adjustExpanded ? '▲' : '▼'}</span>
           </div>
           {adjustExpanded && sourceImage && (
@@ -1951,7 +1976,7 @@ export default function AiEditor() {
 
         <div style={{ marginBottom: 16 }}>
           <div onClick={() => setFilterExpanded(!filterExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}>
-            <span>✨ 滤镜</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M10 2l1.5 4.5L16 8l-4.5 1.5L10 14l-1.5-4.5L4 8l4.5-1.5L10 2z"/><path d="M14 13l.75 2.25L17 16l-2.25.75L14 19l-.75-2.25L11 16l2.25-.75L14 13z"/></svg> 滤镜</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{filterExpanded ? '▲' : '▼'}</span>
           </div>
           {filterExpanded && sourceImage && (
@@ -1983,7 +2008,7 @@ export default function AiEditor() {
 
         <div style={{ marginBottom: 16 }}>
           <div onClick={() => setCanvasPresetExpanded(!canvasPresetExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}>
-            <span>📐 画布</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M3 17l14-14"/><path d="M3 3h4v4"/><path d="M17 17h-4v-4"/></svg> 画布</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{canvasPresetExpanded ? '▲' : '▼'}</span>
           </div>
           {canvasPresetExpanded && (
@@ -2017,7 +2042,7 @@ export default function AiEditor() {
         {sourceImage && (
         <div style={{ marginBottom: 16 }}>
           <div onClick={() => setTextExpanded(!textExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}>
-            <span>✏️ 水印</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M4 17l2-6L14.5 2.5a1 1 0 011.4 0l1.6 1.6a1 1 0 010 1.4L9 15l-5 2z"/><line x1="12.5" y1="4.5" x2="15.5" y2="7.5"/></svg> 水印</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{textExpanded ? '▲' : '▼'}</span>
           </div>
           {textExpanded && (
@@ -2055,7 +2080,7 @@ export default function AiEditor() {
 
         <div style={{ marginBottom: 16 }}>
           <div onClick={() => setLabelsExpanded(!labelsExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}>
-            <span>🏷️ 标签</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><path d="M2 4l8-2 8 8-6 6-8-8V4z"/><circle cx="6" cy="6" r="1"/></svg> 标签</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{labelsExpanded ? '▲' : '▼'}</span>
           </div>
           {labelsExpanded && (
@@ -2110,7 +2135,7 @@ export default function AiEditor() {
 
         <div style={{ marginBottom: 16 }}>
           <div onClick={() => setBgFillExpanded(!bgFillExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}>
-            <span>🎨 换底色</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><circle cx="10" cy="10" r="8"/><path d="M10 6v8"/><path d="M6 10h8"/></svg> 换底色</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{bgFillExpanded ? '▲' : '▼'}</span>
           </div>
           {bgFillExpanded && sourceImage && (
@@ -2142,7 +2167,7 @@ export default function AiEditor() {
 
         <div style={{ marginBottom: 16 }}>
           <div onClick={() => setPlatformExpanded(!platformExpanded)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontWeight: 600, fontSize: 13 }}>
-            <span>📱 适配</span>
+            <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:14,height:14,marginRight:4,verticalAlign:'middle'}}><rect x="5" y="1" width="10" height="18" rx="2"/><line x1="8" y1="16" x2="12" y2="16"/></svg> 适配</span>
             <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>{platformExpanded ? '▲' : '▼'}</span>
           </div>
           {platformExpanded && sourceImage && (
@@ -2174,6 +2199,14 @@ export default function AiEditor() {
                 onChange={e => setCustomPrompt(e.target.value)}
                 placeholder={selectedPreset ? `当前使用预设：${PRESET_LABELS[selectedPreset]}` : '描述你想要的图片效果...'}
               />
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={handleSuggestPrompt}
+                disabled={suggestPromptMut.isPending}
+                style={{ marginTop: 6, width: '100%', fontSize: 12 }}
+              >
+                {suggestPromptMut.isPending ? '正在分析图片...' : 'AI 帮我写提示词'}
+              </button>
             </div>
 
             <div className={s.toolSection}>
@@ -2215,7 +2248,7 @@ export default function AiEditor() {
                 {generating ? '生成中...' : `开始生成${imageCount > 1 ? ` (${imageCount}张)` : ''}`}
               </button>
               {!isApiReady && (
-                <div style={{ fontSize: 11, color: 'var(--red-500)', marginTop: 6, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--brand-red)', marginTop: 6, textAlign: 'center' }}>
                   请先在设置中配置图片 API Key
                 </div>
               )}
@@ -2236,7 +2269,7 @@ export default function AiEditor() {
               {batchGenerating ? '批量生成中...' : `批量生成 (${batchSelected.size} 张)`}
             </button>
             {!isApiReady && (
-              <div style={{ fontSize: 11, color: 'var(--red-500)', marginTop: 6, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, color: 'var(--brand-red)', marginTop: 6, textAlign: 'center' }}>
                 请先在设置中配置图片 API Key
               </div>
             )}
@@ -2254,7 +2287,7 @@ export default function AiEditor() {
           <div className={s.modalContent} onClick={e => e.stopPropagation()}>
             <div className={s.modalHeader}>
               <span>图片预览</span>
-              <button className={s.modalClose} onClick={() => setPreviewImage(null)}>✕</button>
+              <button className={s.modalClose} onClick={() => setPreviewImage(null)}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:12,height:12}}><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
             </div>
             <div className={s.modalBody}>
               <img className={s.previewImage} src={previewImage} alt="预览" />
@@ -2268,7 +2301,7 @@ export default function AiEditor() {
           <div className={s.modalContent} onClick={e => e.stopPropagation()}>
             <div className={s.modalHeader}>
               <span>应用到商品</span>
-              <button className={s.modalClose} onClick={() => setApplyModal({ open: false, imagePath: '' })}>✕</button>
+              <button className={s.modalClose} onClick={() => setApplyModal({ open: false, imagePath: '' })}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:12,height:12}}><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
             </div>
             <div className={s.modalBody}>
               <div className={s.applyModalBody}>
@@ -2343,7 +2376,7 @@ export default function AiEditor() {
         }}>
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>编辑标签</span>
-            <span style={{ cursor: 'pointer', fontSize: 18, color: 'var(--gray-400)', lineHeight: 1 }} onClick={() => setEditingLabelId(null)}>✕</span>
+            <span style={{ cursor: 'pointer', fontSize: 18, color: 'var(--gray-400)', lineHeight: 1 }} onClick={() => setEditingLabelId(null)}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:14,height:14}}><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></span>
           </div>
           <div style={{ marginBottom: 8 }}>
             <label style={{ fontSize: 11, color: 'var(--gray-500)', display: 'block', marginBottom: 3 }}>文字内容</label>
@@ -2409,8 +2442,8 @@ export default function AiEditor() {
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           }} onClick={e => e.stopPropagation()}>
             <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>💾 导出图片</span>
-              <span style={{ cursor: 'pointer', fontSize: 20, color: 'var(--gray-400)', lineHeight: 1 }} onClick={() => setExportModal(false)}>✕</span>
+              <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:16,height:16,marginRight:6,verticalAlign:'middle'}}><path d="M13 2H5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7l-5-5z"/><path d="M13 2v5h5"/><path d="M7 13h6"/><path d="M7 16h4"/></svg> 导出图片</span>
+              <span style={{ cursor: 'pointer', fontSize: 20, color: 'var(--gray-400)', lineHeight: 1 }} onClick={() => setExportModal(false)}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:16,height:16}}><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></span>
             </div>
 
             <div style={{ marginBottom: 12 }}>
@@ -2479,13 +2512,13 @@ export default function AiEditor() {
           <div className={s.modalContent} onClick={e => e.stopPropagation()}>
             <div className={s.modalHeader}>
               <span>确认删除</span>
-              <button className={s.modalClose} onClick={() => setHistoryDeleteConfirm(false)}>✕</button>
+              <button className={s.modalClose} onClick={() => setHistoryDeleteConfirm(false)}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{width:12,height:12}}><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
             </div>
             <div className={s.modalBody}>
               <p>确定要删除选中的 {historySelected.size} 张历史图片吗？此操作不可撤销。</p>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
                 <button className="btn btn-outline" onClick={() => setHistoryDeleteConfirm(false)}>取消</button>
-                <button className="btn btn-primary" style={{ background: 'var(--red-500)' }} onClick={handleHistoryDelete} disabled={deleteHistMut.isPending}>
+                <button className="btn btn-primary" style={{ background: 'var(--brand-red)' }} onClick={handleHistoryDelete} disabled={deleteHistMut.isPending}>
                   {deleteHistMut.isPending ? '删除中...' : '确认删除'}
                 </button>
               </div>

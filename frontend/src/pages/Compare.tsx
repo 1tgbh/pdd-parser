@@ -328,7 +328,13 @@ export default function Compare() {
 
       {selectedIds.length < 2 && (
         <div className={s.emptyHint}>
-          <div className={s.emptyIcon}>📊</div>
+          <div className={s.emptyIcon}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:28,height:28}}>
+              <rect x="3" y="10" width="3" height="6" rx="0.5"/>
+              <rect x="8.5" y="6" width="3" height="10" rx="0.5"/>
+              <rect x="14" y="3" width="3" height="13" rx="0.5"/>
+            </svg>
+          </div>
           <div>请至少添加 2 个商品以开始对比</div>
           <div style={{ fontSize: 12, marginTop: 8, color: 'var(--gray-400)' }}>
             在上方搜索框中输入商品关键词，从下拉列表中选择商品
@@ -338,7 +344,7 @@ export default function Compare() {
 
       {selectedIds.length >= 2 && (
         <div className={s.compareArea}>
-          {error && <div style={{ textAlign: 'center', color: 'var(--red-500)', padding: 16, fontSize: 13 }}>{error}</div>}
+          {error && <div style={{ textAlign: 'center', color: 'var(--brand-red)', padding: 16, fontSize: 13 }}>{error}</div>}
           {loading ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--gray-400)' }}>加载中...</div>
           ) : (
