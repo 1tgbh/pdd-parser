@@ -40,7 +40,7 @@ export async function fetchGroups(): Promise<GroupInfo[]> {  const { data } = aw
 export async function createGroup(name: string, parentId?: number): Promise<GroupInfo> {  const { data } = await client.post('/groups', { name, parent_id: parentId });  return data;}
 export async function updateGroup(id: number, fields: Partial<GroupInfo>): Promise<{ ok: boolean }> {  const { data } = await client.put(`/groups/${id}`, fields);  return data;}
 export async function deleteGroup(id: number): Promise<{ ok: boolean }> {  const { data } = await client.delete(`/groups/${id}`);  return data;}// Batch
-export async function batchUpdate(ids: string[], updates: Record<string, unknown>): Promise<{ ok: boolean; updated: number }
+export async function batchUpdate(ids: string[], updates: Record<string, unknown>): Promise<{ ok: boolean; updated: number }> {  const { data } = await client.post('/products/batch-update', { ids, updates });  return data;}
 
 export async function batchPriceSingle(
   goodsId: string, multiplier: number, fixedAmount: number
@@ -50,7 +50,7 @@ export async function batchPriceSingle(
   });
   return data;
 }
-> {  const { data } = await client.post('/products/batch-update', { ids, updates });  return data;}// AI
+// AI
 export async function fetchAiPresets(): Promise<Record<string, string>> {  const { data } = await client.get('/ai/presets');  return data;}
 export async function aiGenerateImage(prompt: string, goodsId: string, size?: string): Promise<{ paths?: string[]; error?: string }> {  const { data } = await aiClient.post('/ai/generate-image', { prompt, goods_id: goodsId, size });  return data;}
 export async function aiEditImage(imageUrl: string, prompt: string, goodsId: string, preset?: string, size?: string): Promise<{ paths?: string[]; urls?: string[]; error?: string }> {  const { data } = await aiClient.post('/ai/edit-image', { image_url: imageUrl, prompt, goods_id: goodsId, preset, size });  return data;}
@@ -136,3 +136,4 @@ export async function dismissRiskCheck(): Promise<{ ok: boolean }> {
   const { data } = await client.post('/risk-check/dismiss');
   return data;
 }
+
