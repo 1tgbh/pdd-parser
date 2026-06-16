@@ -674,6 +674,188 @@ def import_raw_json_directory(dir_path: str) -> dict:
     
     return import_raw_json_files(json_files)
 
+# ---- import_goods_json: 本系统 JSON 格式导入 ----
+
+def import_goods_json(file_path: str) -> dict:
+    """导入本系统导出的JSON格式文件，支持更新已有商品。
+    修正：同步更新 price_min/price_max/sku_items/price_modified。"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    now = datetime.now().isoformat()
+    imported = 0
+    updated = 0
+    errors = []
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            goods_list = json.load(f)
+
+        if isinstance(goods_list, dict):
+            goods_list = [goods_list]
+
+        for goods in goods_list:
+            goods_id = goods.get("goods_id", "")
+            if not goods_id:
+                continue
+
+            try:
+                existing = conn.execute(
+                    "SELECT 1 FROM goods WHERE goods_id = ?", (goods_id,)
+                ).fetchone()
+
+                price = goods.get("price", 0) or 0
+                original_price = goods.get("original_price", 0) or 0
+                min_group_price = goods.get("min_group_price", 0) or 0
+                title = goods.get("title", "")
+                subtitle = goods.get("subtitle", "")
+                selling_points = goods.get("selling_points", [])
+                sales = goods.get("sales", 0) or 0
+                sold_quantity = goods.get("sold_quantity", 0) or 0
+                shop_name = goods.get("shop_name", "")
+                shop_id = goods.get("shop_id", "")
+                main_images = goods.get("main_images", [])
+                detail_images = goods.get("detail_images", [])
+                sku_images = goods.get("sku_images", [])
+                specs = goods.get("specs", {})
+                skus = goods.get("skus", [])
+                description = goods.get("description", "")
+                attributes = goods.get("attributes", {})
+                source_url = goods.get("source_url", "")
+                crawl_time = goods.get("crawl_time", now)
+
+                # 计算 price_min / price_max
+                all_prices = [
+                    s.get("price", 0)
+                    for s in skus
+                    if isinstance(s, dict) and (s.get("price", 0) or 0) > 0
+                ]
+                if not all_prices and price > 0:
+                    all_prices = [price]
+                price_min = min(all_prices) if all_prices else 0
+                price_max = max(all_prices) if all_prices else 0
+
+                if existing:
+                    conn.execute(
+                        """UPDATE goods SET
+                           title=?, subtitle=?, selling_points=?, price=?, original_price=?,
+                           min_group_price=?, sales=?, sold_quantity=?, shop_name=?, shop_id=?,
+                           main_images=?, detail_images=?, sku_images=?, specs=?, skus=?,
+                           description=?, attributes=?, source_url=?,
+                           price_min=?, price_max=?, price_modified=1, updated_at=?
+                           WHERE goods_id=?""",
+                        (
+                            title, subtitle,
+                            json.dumps(selling_points, ensure_ascii=False),
+                            price, original_price, min_group_price,
+                            sales, sold_quantity, shop_name, shop_id,
+                            json.dumps(main_images, ensure_ascii=False),
+                            json.dumps(detail_images, ensure_ascii=False),
+                            json.dumps(sku_images, ensure_ascii=False),
+                            json.dumps(specs, ensure_ascii=False),
+                            json.dumps(skus, ensure_ascii=False),
+                            description,
+                            json.dumps(attributes, ensure_ascii=False),
+                            source_url,
+                            price_min, price_max, now,
+                            goods_id,
+                        ),
+                    )
+                    # 同步 sku_items 表
+                    _sync_sku_items(conn, goods_id, skus, now)
+                    updated += 1
+                else:
+                    conn.execute(
+                        """INSERT INTO goods
+                           (goods_id, title, subtitle, selling_points, price, original_price,
+                            min_group_price, sales, sold_quantity, shop_name, shop_id, shop_logo,
+                            main_images, detail_images, sku_images, specs, skus, description,
+                            attributes, source_url, crawl_time, updated_at, raw_data,
+                            price_min, price_max, price_modified)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        (
+                            goods_id, title, subtitle,
+                            json.dumps(selling_points, ensure_ascii=False),
+                            price, original_price, min_group_price,
+                            sales, sold_quantity, shop_name, shop_id, "",
+                            json.dumps(main_images, ensure_ascii=False),
+                            json.dumps(detail_images, ensure_ascii=False),
+                            json.dumps(sku_images, ensure_ascii=False),
+                            json.dumps(specs, ensure_ascii=False),
+                            json.dumps(skus, ensure_ascii=False),
+                            description,
+                            json.dumps(attributes, ensure_ascii=False),
+                            source_url, crawl_time, now, "{}",
+                            price_min, price_max, 1,
+                        ),
+                    )
+                    _sync_sku_items(conn, goods_id, skus, now)
+                    imported += 1
+            except Exception as e:
+                errors.append(f"{goods_id}: {str(e)}")
+    except Exception as e:
+        errors.append(f"文件解析失败: {str(e)}")
+
+    conn.commit()
+    conn.close()
+    return {"imported": imported, "updated": updated, "skipped": 0, "errors": errors}
+
+
+def _sync_sku_items(conn, goods_id: str, skus: list, now: str):
+    """根据导入的 skus 列表同步 sku_items 表的价格"""
+    if not skus:
+        return
+    # 先查出现有的 sku_items
+    existing_rows = conn.execute(
+        "SELECT id, sku_id FROM sku_items WHERE goods_id=?", (goods_id,)
+    ).fetchall()
+
+    if existing_rows:
+        # 按 sku_id 匹配更新价格
+        sku_by_id = {}
+        for s in skus:
+            if isinstance(s, dict):
+                sid = str(s.get("sku_id", ""))
+                if sid:
+                    sku_by_id[sid] = s
+
+        for row in existing_rows:
+            matched = sku_by_id.get(row["sku_id"], {})
+            if matched:
+                conn.execute(
+                    "UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
+                    (matched.get("price", 0) or 0,
+                     matched.get("original_price", 0) or 0,
+                     now, row["id"])
+                )
+    else:
+        # 没有 sku_items 则从 skus 新建
+        for s in skus:
+            if not isinstance(s, dict):
+                continue
+            specs = s.get("specs", {})
+            if isinstance(specs, list):
+                specs_dict = {}
+                for sp in specs:
+                    if isinstance(sp, dict):
+                        specs_dict[sp.get("name", sp.get("spec_key", ""))] = sp.get("value", sp.get("spec_value", ""))
+                specs = specs_dict
+            conn.execute(
+                """INSERT INTO sku_items
+                   (goods_id, sku_id, specs, price, original_price, stock, image, created_at, updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                (
+                    goods_id,
+                    str(s.get("sku_id", "")),
+                    json.dumps(specs, ensure_ascii=False),
+                    s.get("price", 0) or 0,
+                    s.get("original_price", 0) or 0,
+                    s.get("stock", 0) or 0,
+                    s.get("image", ""),
+                    now, now,
+                ),
+            )
+
+
 
 if __name__ == "__main__":
     import sys

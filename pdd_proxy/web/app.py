@@ -657,12 +657,24 @@ def api_import() -> Any:
     if not f.filename:
         return jsonify({"error": "文件名为空"}), 400
     suffix = Path(f.filename).suffix.lower()
-    if suffix not in (".csv", ".xlsx", ".xls"):
-        return jsonify({"error": "仅支持 CSV 和 XLSX 格式"}), 400
+    if suffix not in (".csv", ".xlsx", ".xls", ".json"):
+        return jsonify({"error": "仅支持 CSV、XLSX 和 JSON 格式"}), 400
     tmp_dir = DATA_DIR / "imports"
     tmp_dir.mkdir(parents=True, exist_ok=True)
     tmp_path = tmp_dir / f"import_{f.filename}"
     f.save(str(tmp_path))
+    # JSON 格式走专门的导入函数
+    if suffix == ".json":
+        try:
+            result = import_goods_json(str(tmp_path))
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        finally:
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
     column_mapping = None
     mapping_raw = request.form.get("column_mapping")
     if mapping_raw:
@@ -921,7 +933,7 @@ import base64
 import requests as _requests
 from storage import get_sku_items, upsert_sku_items, update_goods_price_range
 from exporter import export_json, export_csv, export_excel, export_for_taobao, export_txt, export_with_template, export_dawang, export_dawang_raw, generate_goods_txt, _safe_filename
-from importer import preview_file, import_file, import_raw_json_files, import_raw_json_directory
+from importer import preview_file, import_file, import_raw_json_files, import_raw_json_directory, import_goods_json
 from wechat_export import export_for_wechat, match_category, check_forbidden_words, auto_fix_forbidden, _load_categories
 from web.ai import load_config, save_config, generate_image, edit_image, rewrite_text, generate_copywriting, remove_background, PRESET_PROMPTS
 from service import set_capture_enabled, get_capture_enabled
