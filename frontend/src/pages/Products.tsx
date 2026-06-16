@@ -338,7 +338,7 @@ export default function Products() {
                     <span className={s.stockBadge}>仅剩 {totalStock}</span>
                   )}
                   {g.price_modified === 1 && (
-                    <span style={{ position: 'absolute', top: 8, right: totalStock > 0 && totalStock <= 5 ? 70 : 8, background: '#f59e0b', color: '#fff', fontSize: 11, padding: '2px 6px', borderRadius: 4, zIndex: 1, fontWeight: 600 }}>已改价</span>
+                    <span style={{ position: 'absolute', bottom: 8, right: totalStock > 0 && totalStock <= 5 ? 70 : 8, background: '#f59e0b', color: '#fff', fontSize: 11, padding: '2px 6px', borderRadius: 4, zIndex: 1, fontWeight: 600 }}>已改价</span>
                   )}
                   <div className={s.cardActions}>
                     <button className={s.actionBtn} title="复制链接" onClick={(e) => { e.stopPropagation(); handleCopyLink(g.goods_id); }}>

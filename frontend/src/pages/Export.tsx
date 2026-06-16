@@ -327,7 +327,7 @@ export default function Export() {
               <p className={s.desc}>
                 {templateId
                   ? `使用模板「${templates?.find((t) => t.id === templateId)?.name || ''}」导出 Excel`
-                  : format === "txt" ? "TXT商品说明 + 实际图片打包（推荐）" : format === "dawang_raw" ? "导出原始数据包（与大王解析格式一致，每个商品一个JSON文件）" : `选中 ${selected.size} 件商品，导出为 ${FORMATS.find((f) => f.key === format)?.label} 格式`}
+                  : format === "txt" ? "TXT商品说明 + 实际图片打包（推荐）" : format === "dawang_raw" ? "导出原始数据包（每个商品一个JSON文件）" : `选中 ${selected.size} 件商品，导出为 ${FORMATS.find((f) => f.key === format)?.label} 格式`}
               </p>
               <button className={`btn btn-primary ${s.btnFull}`} disabled={selected.size === 0} onClick={handleExport} aria-label="导出选中商品数据">
                 {DOWNLOAD_ICON_SVG}

@@ -295,8 +295,8 @@ export default function Import() {
       )}
       {/* Raw JSON Import Section */}
       <div className="page-header" style={{ marginTop: 32 }}>
-        <h2>大王解析数据导入</h2>
-        <small>直接导入大王解析原始 JSON 文件（.txt/.json），自动提取完整商品数据</small>
+        <h2>数据导入</h2>
+        <small>直接导入原始 JSON 文件（.txt/.json），自动提取完整商品数据</small>
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -309,7 +309,7 @@ export default function Import() {
             multiple
             className={s.uploadInput}
             onChange={(e) => handleRawJsonFiles(e.target.files)}
-            aria-label="选择大王解析JSON文件"
+            aria-label="选择JSON文件"
           />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <button
@@ -344,7 +344,7 @@ export default function Import() {
               type="text"
               value={rawJsonDir}
               onChange={(e) => setRawJsonDir(e.target.value)}
-              placeholder="输入大王解析数据目录路径，如 D:\大王解析数据"
+              placeholder="输入数据目录路径，如 D:\数据目录"
               style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--gray-200)', borderRadius: 6, fontSize: 14 }}
             />
             <button
