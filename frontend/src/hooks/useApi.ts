@@ -372,7 +372,6 @@ export function useAllProductIds(keyword = '') {
   return useQuery({
     queryKey: ['allProductIds', keyword],
     queryFn: () => fetchProductIds(keyword),
-    enabled: false,
   });
 }
 

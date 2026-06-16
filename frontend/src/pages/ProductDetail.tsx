@@ -651,7 +651,7 @@ export default function ProductDetail() {
                   await batchPriceMut.mutateAsync({ goodsId: product.goods_id, multiplier: batchMultiplier, fixedAmount: batchFixedAmount });
                   setShowBatchPrice(false);
                   alert('改价成功');
-                } catch { alert('改价失败'); }
+                } catch (e: any) { alert('改价失败: ' + (e?.response?.data?.error || e?.message || '未知错误')); }
               }}>{batchPriceMut.isPending ? '处理中...' : '确认改价'}</button>
             </div>
             <button style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}

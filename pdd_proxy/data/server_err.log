@@ -552,3 +552,58 @@ Traceback (most recent call last):
 ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
 2026-06-16 15:31:39 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
 2026-06-16 15:31:40 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. Certificate verify failed: unable to get local issuer certificate
+2026-06-16 22:40:21 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:40:22 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:40:25 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:46:48 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. connection closed
+2026-06-16 22:47:38 [ERROR] web.app: Exception on /api/product/644893156503/batch-price [POST]
+Traceback (most recent call last):
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\pdd_proxy\web\app.py", line 1324, in api_batch_price_single
+    conn.execute(
+sqlite3.OperationalError: no such column: price_modified
+2026-06-16 22:47:49 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. connection closed
+2026-06-16 22:47:51 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:47:51 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:11 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:21 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:26 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:30 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:38 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:48:39 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:48:40 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)

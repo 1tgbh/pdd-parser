@@ -31419,3 +31419,1172 @@ ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有�
 2026-06-16 15:41:13 [INFO] mitmproxy.proxy.server: server disconnect edge.microsoft.com:443 ([2620:1ec:33::11]:443)
 2026-06-16 15:41:13 [INFO] mitmproxy.proxy.server: server disconnect cn.bing.com:443 (202.89.233.101:443)
 2026-06-16 15:41:13 [INFO] mitmproxy.proxy.server: server disconnect ta.yangkeduo.com:443 (49.234.252.165:443)
+2026-06-16 22:38:27 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-16 22:38:27 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.mode_servers: HTTP(S) proxy listening at 127.0.0.1:8080.
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: server connect static.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c030:1b00::63]:443)
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: server connect funimg.pddpic.com:443 ([2409:8c62:e10:6::b7dc:9729]:443)
+2026-06-16 22:38:29 [INFO] mitmproxy.proxy.server: server connect cn.bing.com:443 (202.89.233.101:443)
+2026-06-16 22:38:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:30 [INFO] mitmproxy.proxy.server: server connect avatar3.pddpic.com:443 ([2409:8c10:c00:602:0:5:0:34]:443)
+2026-06-16 22:38:30 [INFO] mitmproxy.proxy.server: server connect th-b.yangkeduo.com:443 (117.144.229.250:443)
+2026-06-16 22:38:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:30 [INFO] mitmproxy.proxy.server: server connect img-1.pddpic.com:443 ([2409:8c44:3d01:102::1ba]:443)
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: server connect xg.pinduoduo.com:443 ([2409:8c20:5022:2000:0:4:0:1f5]:443)
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: server connect apm.pinduoduo.com:443 ([2409:8c1e:75b0:4f::65]:443)
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:31 [INFO] mitmproxy.proxy.server: server connect xg.pinduoduo.com:443 ([2409:8c20:5022:2000:0:4:0:1f5]:443)
+2026-06-16 22:38:32 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:32 [INFO] mitmproxy.proxy.server: server connect th.yangkeduo.com:443 (117.144.229.251:443)
+2026-06-16 22:38:33 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:38:33 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:38:33 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:38:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:33] "GET /monitor HTTP/1.1" 200 -
+2026-06-16 22:38:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:33] "GET /assets/index-CQ7oPWyU.js HTTP/1.1" 200 -
+2026-06-16 22:38:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:33] "GET /assets/index-09Z95Ir1.css HTTP/1.1" 200 -
+2026-06-16 22:38:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:33] "GET /assets/Monitor-BhZ2_38w.js HTTP/1.1" 200 -
+2026-06-16 22:38:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:33] "GET /assets/Monitor-3UCzxpDN.css HTTP/1.1" 200 -
+2026-06-16 22:38:34 [INFO] web.app: GET /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:38:34 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:34] "GET /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:38:34 [INFO] web.app: GET /api/monitor 127.0.0.1 200 3ms
+2026-06-16 22:38:34 [INFO] web.app: GET /api/settings 127.0.0.1 200 2ms
+2026-06-16 22:38:34 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:34] "GET /api/monitor HTTP/1.1" 200 -
+2026-06-16 22:38:34 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:34] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:38:34 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:38:34 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:34] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /assets/Products-CsPXF0Dc.js HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /assets/SafeImage-_clXZ9_U.js HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /assets/Products-BW-GTBLk.css HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] web.app: GET /api/shops 127.0.0.1 200 1ms
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /api/shops HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] web.app: GET /api/tags 127.0.0.1 200 3ms
+2026-06-16 22:38:35 [INFO] web.app: GET /api/groups 127.0.0.1 200 4ms
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /api/tags HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /api/groups HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] web.app: GET /api/products 127.0.0.1 200 25ms
+2026-06-16 22:38:35 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:35] "GET /api/products?page=1&page_size=20&keyword= HTTP/1.1" 200 -
+2026-06-16 22:38:35 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:38:35 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:38:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:38] "GET /assets/Settings-qAz8g5bE.js HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /assets/Dashboard-CvYYwtKo.js HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /assets/Dashboard-CsEnnD9p.css HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] web.app: GET /api/dashboard/price-alerts 127.0.0.1 200 2ms
+2026-06-16 22:38:49 [INFO] web.app: GET /api/dashboard/top-sales 127.0.0.1 200 2ms
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /api/dashboard/price-alerts HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] web.app: GET /api/dashboard/price-distribution 127.0.0.1 200 6ms
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /api/dashboard/top-sales HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] web.app: GET /api/dashboard/tag-stats 127.0.0.1 200 2ms
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /api/dashboard/price-distribution HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /api/dashboard/tag-stats HTTP/1.1" 200 -
+2026-06-16 22:38:49 [INFO] web.app: GET /api/dashboard 127.0.0.1 200 19ms
+2026-06-16 22:38:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:49] "GET /api/dashboard HTTP/1.1" 200 -
+2026-06-16 22:38:50 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:50] "GET /assets/ProductDetail-B5F7vH4E.js HTTP/1.1" 200 -
+2026-06-16 22:38:50 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:50] "GET /assets/ProductDetail-iONXmqSZ.css HTTP/1.1" 200 -
+2026-06-16 22:38:50 [INFO] web.app: GET /api/ai/presets 127.0.0.1 200 0ms
+2026-06-16 22:38:50 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:50] "GET /api/ai/presets HTTP/1.1" 200 -
+2026-06-16 22:38:50 [INFO] web.app: GET /api/product/644893156503/ai-images 127.0.0.1 200 2ms
+2026-06-16 22:38:50 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:50] "GET /api/product/644893156503/ai-images HTTP/1.1" 200 -
+2026-06-16 22:38:50 [INFO] web.app: GET /api/product/644893156503/tags 127.0.0.1 200 2ms
+2026-06-16 22:38:50 [INFO] web.app: GET /api/product/644893156503 127.0.0.1 200 7ms
+2026-06-16 22:38:50 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:50] "GET /api/product/644893156503/tags HTTP/1.1" 200 -
+2026-06-16 22:38:50 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:38:50] "GET /api/product/644893156503 HTTP/1.1" 200 -
+2026-06-16 22:39:04 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:39:04 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:04] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:39:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:39:21 [INFO] web.app: GET /api/settings 127.0.0.1 200 1ms
+2026-06-16 22:39:21 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:21] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:39:21 [INFO] web.app: GET /api/tags 127.0.0.1 200 2ms
+2026-06-16 22:39:21 [INFO] web.app: GET /api/groups 127.0.0.1 200 2ms
+2026-06-16 22:39:21 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:21] "GET /api/tags HTTP/1.1" 200 -
+2026-06-16 22:39:21 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:21] "GET /api/groups HTTP/1.1" 200 -
+2026-06-16 22:39:21 [INFO] web.app: GET /api/products 127.0.0.1 200 25ms
+2026-06-16 22:39:21 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:21] "GET /api/products?page=1&page_size=20&keyword= HTTP/1.1" 200 -
+2026-06-16 22:39:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:39:24 [INFO] mitmproxy.proxy.server: server connect xiaoruan.top:443 (106.54.229.18:443)
+2026-06-16 22:39:29 [INFO] web.app: PUT /api/settings 127.0.0.1 200 1ms
+2026-06-16 22:39:29 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:29] "PUT /api/settings HTTP/1.1" 200 -
+2026-06-16 22:39:29 [INFO] web.app: GET /api/settings 127.0.0.1 200 17ms
+2026-06-16 22:39:29 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:29] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: server disconnect cn.bing.com:443 (202.89.233.101:443)
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: server disconnect funimg.pddpic.com:443 ([2409:8c62:e10:6::b7dc:9729]:443)
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: server disconnect static.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: server connect cn.bing.com:443 (202.89.233.100:443)
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: server disconnect xg.pinduoduo.com:443 ([2409:8c20:5022:2000:0:4:0:1f5]:443)
+2026-06-16 22:39:31 [INFO] mitmproxy.proxy.server: server disconnect xg.pinduoduo.com:443 ([2409:8c20:5022:2000:0:4:0:1f5]:443)
+2026-06-16 22:39:32 [INFO] mitmproxy.proxy.server: server disconnect apm.pinduoduo.com:443 ([2409:8c1e:75b0:4f::65]:443)
+2026-06-16 22:39:34 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:39:34 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:34] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /products HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "[36mGET /assets/index-CQ7oPWyU.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "[36mGET /assets/index-09Z95Ir1.css HTTP/1.1[0m" 304 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "[36mGET /assets/Products-CsPXF0Dc.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "[36mGET /assets/Products-BW-GTBLk.css HTTP/1.1[0m" 304 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "[36mGET /assets/SafeImage-_clXZ9_U.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /favicon.svg HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] web.app: GET /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] web.app: GET /api/settings 127.0.0.1 200 3ms
+2026-06-16 22:39:36 [INFO] web.app: GET /api/shops 127.0.0.1 200 7ms
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] web.app: GET /api/tags 127.0.0.1 200 4ms
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/shops HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] web.app: GET /api/groups 127.0.0.1 200 4ms
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/tags HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/groups HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 2ms
+2026-06-16 22:39:36 [INFO] web.app: GET /api/products 127.0.0.1 200 27ms
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:39:36 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:36] "GET /api/products?page=1&page_size=20&keyword= HTTP/1.1" 200 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /products HTTP/1.1[0m" 304 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /assets/index-CQ7oPWyU.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /assets/index-09Z95Ir1.css HTTP/1.1[0m" 304 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /assets/Products-BW-GTBLk.css HTTP/1.1[0m" 304 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /assets/Products-CsPXF0Dc.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /assets/SafeImage-_clXZ9_U.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:37 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:37] "[36mGET /favicon.svg HTTP/1.1[0m" 304 -
+2026-06-16 22:39:38 [INFO] web.app: GET /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:39:38 [INFO] web.app: GET /api/settings 127.0.0.1 200 1ms
+2026-06-16 22:39:38 [INFO] web.app: GET /api/shops 127.0.0.1 200 6ms
+2026-06-16 22:39:38 [INFO] web.app: GET /api/tags 127.0.0.1 200 5ms
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:39:38 [INFO] web.app: GET /api/groups 127.0.0.1 200 3ms
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/shops HTTP/1.1" 200 -
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/tags HTTP/1.1" 200 -
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/groups HTTP/1.1" 200 -
+2026-06-16 22:39:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 2ms
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:39:38 [INFO] web.app: GET /api/products 127.0.0.1 200 35ms
+2026-06-16 22:39:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:38] "GET /api/products?page=1&page_size=20&keyword= HTTP/1.1" 200 -
+2026-06-16 22:39:41 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c030:1b00::63]:443)
+2026-06-16 22:39:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:39:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:39:48 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:48] "[36mGET /assets/ProductDetail-iONXmqSZ.css HTTP/1.1[0m" 304 -
+2026-06-16 22:39:48 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:48] "[36mGET /assets/ProductDetail-B5F7vH4E.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:48 [INFO] web.app: GET /api/ai/presets 127.0.0.1 200 0ms
+2026-06-16 22:39:48 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:48] "GET /api/ai/presets HTTP/1.1" 200 -
+2026-06-16 22:39:48 [INFO] web.app: GET /api/product/644893156503/ai-images 127.0.0.1 200 2ms
+2026-06-16 22:39:48 [INFO] web.app: GET /api/product/644893156503 127.0.0.1 200 6ms
+2026-06-16 22:39:48 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:48] "GET /api/product/644893156503/ai-images HTTP/1.1" 200 -
+2026-06-16 22:39:48 [INFO] web.app: GET /api/product/644893156503/tags 127.0.0.1 200 2ms
+2026-06-16 22:39:48 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:48] "GET /api/product/644893156503 HTTP/1.1" 200 -
+2026-06-16 22:39:48 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:48] "GET /api/product/644893156503/tags HTTP/1.1" 200 -
+2026-06-16 22:39:50 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:39:51 [INFO] web.app: POST /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:39:51 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:51] "POST /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:39:51 [INFO] web.app: GET /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:39:51 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:51] "GET /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:39:54 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:39:54] "[36mGET /assets/Settings-qAz8g5bE.js HTTP/1.1[0m" 304 -
+2026-06-16 22:39:59 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:40:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:40:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:40:13 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:20 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:20 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:40:21 [INFO] mitmproxy.proxy.server: server connect mcp.cloudflare.com:443 ([2606:4700::6812:189f]:443)
+2026-06-16 22:40:21 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:40:21 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:21 [INFO] mitmproxy.proxy.server: server disconnect mcp.cloudflare.com:443 ([2606:4700::6812:189f]:443)
+2026-06-16 22:40:21 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:22 [INFO] mitmproxy.proxy.server: server connect mcp.cloudflare.com:443 ([2606:4700::6812:189f]:443)
+2026-06-16 22:40:22 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:40:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:22 [INFO] mitmproxy.proxy.server: server disconnect mcp.cloudflare.com:443 ([2606:4700::6812:189f]:443)
+2026-06-16 22:40:23 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:23 [INFO] mitmproxy.proxy.server: server connect mcp.cloudflare.com:443 ([2606:4700::6812:189f]:443)
+2026-06-16 22:40:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:25 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:40:25 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:25 [INFO] mitmproxy.proxy.server: server disconnect mcp.cloudflare.com:443 ([2606:4700::6812:189f]:443)
+2026-06-16 22:40:28 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:28 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:40:29 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:29 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:40:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 0ms
+2026-06-16 22:40:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:40:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:40:43 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:43 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:40:44 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:40:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:40:54 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:40:54 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:41:02 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:41:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:41:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:41:14 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:14 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:41:16 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:31 [INFO] mitmproxy.proxy.server: server connect ipv6.msftconnecttest.com:80 ([2600:140b:2c00:28::172e:9b2e]:80)
+2026-06-16 22:41:31 [INFO] mitmproxy.proxy.server: server connect ipv6.msftconnecttest.com:80 ([2600:140b:2c00:28::172e:9b2e]:80)
+2026-06-16 22:41:31 [INFO] mitmproxy.proxy.server: server disconnect ipv6.msftconnecttest.com:80 ([2600:140b:2c00:28::172e:9b2e]:80)
+2026-06-16 22:41:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:31 [INFO] mitmproxy.proxy.server: server disconnect ipv6.msftconnecttest.com:80 ([2600:140b:2c00:28::172e:9b2e]:80)
+2026-06-16 22:41:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:32 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:32 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:41:34 [INFO] mitmproxy.proxy.server: server connect www.msftconnecttest.com:80 (2.19.252.80:80)
+2026-06-16 22:41:34 [INFO] mitmproxy.proxy.server: server connect www.msftconnecttest.com:80 (2.19.252.80:80)
+2026-06-16 22:41:34 [INFO] mitmproxy.proxy.server: server disconnect www.msftconnecttest.com:80 (2.19.252.80:80)
+2026-06-16 22:41:34 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 0ms
+2026-06-16 22:41:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:41:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:41:38 [INFO] mitmproxy.proxy.server: server disconnect www.msftconnecttest.com:80 (2.19.252.80:80)
+2026-06-16 22:41:38 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:46 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:46 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:41:48 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:41:48 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:51 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:55 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:56 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:41:56 [INFO] mitmproxy.proxy.server: server connect get.sogou.com:443 (120.233.17.222:443)
+2026-06-16 22:41:58 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:41:58 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:42:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:42:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:42:08 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:08 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:42:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:10 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:18 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:18 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:18 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:18 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:21 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:21 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:23 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:23 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:42:25 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:25 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:25 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:25 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:42:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:34 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:34 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:42:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:35 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:42:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 0ms
+2026-06-16 22:42:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:42:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:42:39 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:39 [INFO] mitmproxy.proxy.server: server connect get.sogou.com:443 (120.241.139.215:443)
+2026-06-16 22:42:39 [INFO] mitmproxy.proxy.server: server disconnect get.sogou.com:443 (120.241.139.215:443)
+2026-06-16 22:42:39 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:43 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:43 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:42:44 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:44 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:42:44 [INFO] mitmproxy.proxy.server: server disconnect xiaoruan.top:443 (106.54.229.18:443)
+2026-06-16 22:42:44 [INFO] mitmproxy.proxy.server: server connect xiaoruan.top:443 (106.54.229.18:443)
+2026-06-16 22:42:48 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:48 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:42:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:49 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:49 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:42:50 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:52 [INFO] mitmproxy.proxy.server: server connect get.sogou.com:443 (120.233.17.222:443)
+2026-06-16 22:42:52 [INFO] mitmproxy.proxy.server: server disconnect get.sogou.com:443 (120.233.17.222:443)
+2026-06-16 22:42:52 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:53 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:53 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:42:54 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:54 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:42:55 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:42:58 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:58 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:42:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:42:59 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:43:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:01 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:43:06 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:06 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:43:08 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:08 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:43:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 0ms
+2026-06-16 22:43:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:43:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:43:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:10 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:11 [INFO] mitmproxy.proxy.server: server disconnect get.sogou.com:443 (120.233.17.222:443)
+2026-06-16 22:43:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:18 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:18 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:20 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:20 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:21 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:25 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:25 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:31 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:43:33 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:33 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:43:37 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:37 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:43:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:43:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:43:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:43:38 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:38 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:43:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:45 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:43:45 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:45 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:43:46 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:48 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:50 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:50 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:51 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: server connect www.msftncsi.com:80 (23.220.68.30:80)
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: server connect ipv6.msftncsi.com:80 ([2600:140b:2c00:28::172e:9b30]:80)
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: server connect ipv6.msftncsi.com:80 ([2600:140b:2c00:28::172e:9b30]:80)
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: server disconnect www.msftncsi.com:80 (23.220.68.30:80)
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: server disconnect ipv6.msftncsi.com:80 ([2600:140b:2c00:28::172e:9b30]:80)
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: server disconnect ipv6.msftncsi.com:80 ([2600:140b:2c00:28::172e:9b30]:80)
+2026-06-16 22:43:52 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:53 [INFO] mitmproxy.proxy.server: server connect www.msftncsi.com:80 (23.220.68.30:80)
+2026-06-16 22:43:53 [INFO] mitmproxy.proxy.server: server disconnect www.msftncsi.com:80 (23.220.68.30:80)
+2026-06-16 22:43:53 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:55 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:43:58 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:58 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:43:58 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:43:58 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:00 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:00 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:44:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:06 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:06 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:44:07 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:07 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:44:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:44:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:44:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:44:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:10 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:13 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:20 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:20 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:20 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:20 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:22 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:25 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:25 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:27 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:28 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:28 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:44:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:29 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:44:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:31 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:35 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:35 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:35 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:35 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:44:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:44:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:44:42 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:43 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:43 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:45 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:49 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:51 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:44:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:52 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:44:54 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:54 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:54 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:54 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:54 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:44:57 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:44:57 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:44:58 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:00 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:00 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:01 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:02 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:04 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:04 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:04 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:04 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:05 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:05 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:45:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:45:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:45:12 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:12 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:12 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:12 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:13 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:13 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:14 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:15 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:15 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:18 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:18 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:19 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:19 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:19 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:24 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:24 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:26 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:26 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:28 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:28 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:28 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:32 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:32 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:34 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:35 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:35 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:35 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:36 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:36 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:45:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:45:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:45:44 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:44 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:45:48 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:48 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:48 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:50 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:50 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:55 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:55 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:45:57 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:45:57 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:45:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:45:59 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:00 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:00 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:46:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:01 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:46:02 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:05 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:05 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:07 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:07 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:46:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:46:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:46:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:46:14 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:18 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:18 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:22 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:32 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:32 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:38 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:46:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:46:38] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:46:44 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:44 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:48 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:48 [INFO] mitmproxy.proxy.server: server connect chat.openai.com:443 ([2606:4700:4402::6812:25e4]:443)
+2026-06-16 22:46:48 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. connection closed
+2026-06-16 22:46:48 [INFO] mitmproxy.proxy.server: Unable to establish TLS connection with server (connection closed). Trying to establish TLS with client anyway. If you plan to redirect requests away from this server, consider setting `connection_strategy` to `lazy` to suppress early connections.
+2026-06-16 22:46:48 [INFO] mitmproxy.proxy.server: server disconnect chat.openai.com:443 ([2606:4700:4402::6812:25e4]:443)
+2026-06-16 22:46:49 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:49 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:46:58 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:58 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:46:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:46:59 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:47:00 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:02 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:08 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:47:08 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:08] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: server disconnect th-b.yangkeduo.com:443 (117.144.229.250:443)
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: server disconnect img-1.pddpic.com:443 ([2409:8c44:3d01:102::1ba]:443)
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: server disconnect xiaoruan.top:443 (106.54.229.18:443)
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: server disconnect avatar3.pddpic.com:443 ([2409:8c10:c00:602:0:5:0:34]:443)
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: error establishing server connection: connection cancelled
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: server disconnect cn.bing.com:443 (202.89.233.100:443)
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: server disconnect th.yangkeduo.com:443 (117.144.229.251:443)
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: error establishing server connection: connection cancelled
+2026-06-16 22:47:09 [INFO] mitmproxy.proxy.server: error establishing server connection: connection cancelled
+2026-06-16 22:47:16 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-06-16 22:47:16 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.mode_servers: HTTP(S) proxy listening at 127.0.0.1:8080.
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: server connect static.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::a8]:443)
+2026-06-16 22:47:18 [INFO] mitmproxy.proxy.server: server connect cn.bing.com:443 (202.89.233.100:443)
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: server connect img.pddpic.com:443 ([2409:8087:6c08:12:100::bd]:443)
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: server connect avatar3.pddpic.com:443 ([2409:8c54:2030:205::c]:443)
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: server connect th-b.yangkeduo.com:443 (117.144.229.250:443)
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: server connect xg.pinduoduo.com:443 ([2409:8c1e:75b0:4d::2d]:443)
+2026-06-16 22:47:19 [INFO] mitmproxy.proxy.server: server connect apm.pinduoduo.com:443 ([2409:8c1e:75b0:4f::65]:443)
+2026-06-16 22:47:20 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:21 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:21 [INFO] mitmproxy.proxy.server: server connect th.yangkeduo.com:443 (117.144.229.96:443)
+2026-06-16 22:47:22 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:22 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:22 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:22] "GET /settings HTTP/1.1" 200 -
+2026-06-16 22:47:22 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:22] "GET /assets/index-CiO8Ghap.js HTTP/1.1" 200 -
+2026-06-16 22:47:22 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:22] "GET /assets/index-09Z95Ir1.css HTTP/1.1" 200 -
+2026-06-16 22:47:22 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:22] "GET /assets/Settings-DxtReeki.js HTTP/1.1" 200 -
+2026-06-16 22:47:22 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:22] "[36mGET /favicon.svg HTTP/1.1[0m" 304 -
+2026-06-16 22:47:23 [INFO] web.app: GET /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:47:23 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:23] "GET /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:47:23 [INFO] web.app: GET /api/settings 127.0.0.1 200 1ms
+2026-06-16 22:47:23 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:23] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:47:23 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:47:23 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:23] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:47:24 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:24 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:24 [INFO] mitmproxy.proxy.server: server connect xiaoruan.top:443 (106.54.229.18:443)
+2026-06-16 22:47:27 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /assets/Products-DJLp9YX6.js HTTP/1.1" 200 -
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /assets/SafeImage-BYUQ27zt.js HTTP/1.1" 200 -
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /assets/Products-BW-GTBLk.css HTTP/1.1" 200 -
+2026-06-16 22:47:31 [INFO] web.app: GET /api/shops 127.0.0.1 200 3ms
+2026-06-16 22:47:31 [INFO] web.app: GET /api/tags 127.0.0.1 200 2ms
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /api/shops HTTP/1.1" 200 -
+2026-06-16 22:47:31 [INFO] web.app: GET /api/groups 127.0.0.1 200 3ms
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /api/tags HTTP/1.1" 200 -
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /api/groups HTTP/1.1" 200 -
+2026-06-16 22:47:31 [INFO] web.app: GET /api/products 127.0.0.1 200 20ms
+2026-06-16 22:47:31 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:31] "GET /api/products?page=1&page_size=20&keyword= HTTP/1.1" 200 -
+2026-06-16 22:47:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:33] "GET /assets/ProductDetail-x_XKJ7Rc.js HTTP/1.1" 200 -
+2026-06-16 22:47:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:33] "GET /assets/ProductDetail-iONXmqSZ.css HTTP/1.1" 200 -
+2026-06-16 22:47:33 [INFO] web.app: GET /api/ai/presets 127.0.0.1 200 1ms
+2026-06-16 22:47:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:33] "GET /api/ai/presets HTTP/1.1" 200 -
+2026-06-16 22:47:33 [INFO] web.app: GET /api/product/644893156503/ai-images 127.0.0.1 200 2ms
+2026-06-16 22:47:33 [INFO] web.app: GET /api/product/644893156503 127.0.0.1 200 7ms
+2026-06-16 22:47:33 [INFO] web.app: GET /api/product/644893156503/tags 127.0.0.1 200 2ms
+2026-06-16 22:47:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:33] "GET /api/product/644893156503/ai-images HTTP/1.1" 200 -
+2026-06-16 22:47:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:33] "GET /api/product/644893156503 HTTP/1.1" 200 -
+2026-06-16 22:47:33 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:33] "GET /api/product/644893156503/tags HTTP/1.1" 200 -
+2026-06-16 22:47:38 [ERROR] web.app: Exception on /api/product/644893156503/batch-price [POST]
+Traceback (most recent call last):
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\jiexi\pdd_parser_1.1.22\pdd_proxy\web\app.py", line 1324, in api_batch_price_single
+    conn.execute(
+sqlite3.OperationalError: no such column: price_modified
+2026-06-16 22:47:38 [INFO] web.app: POST /api/product/644893156503/batch-price 127.0.0.1 500 8ms
+2026-06-16 22:47:38 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:38] "[35m[1mPOST /api/product/644893156503/batch-price HTTP/1.1[0m" 500 -
+2026-06-16 22:47:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:41 [INFO] mitmproxy.proxy.server: server connect msedgedevtools.microsoft.com:443 ([2603:1061:14:184::1]:443)
+2026-06-16 22:47:46 [INFO] mitmproxy.proxy.server: server disconnect msedgedevtools.microsoft.com:443 ([2603:1061:14:184::1]:443)
+2026-06-16 22:47:48 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:48 [INFO] mitmproxy.proxy.server: server connect chat.openai.com:443 ([2606:4700:4402::6812:25e4]:443)
+2026-06-16 22:47:49 [WARNING] mitmproxy.proxy.server: Server TLS handshake failed. connection closed
+2026-06-16 22:47:49 [INFO] mitmproxy.proxy.server: Unable to establish TLS connection with server (connection closed). Trying to establish TLS with client anyway. If you plan to redirect requests away from this server, consider setting `connection_strategy` to `lazy` to suppress early connections.
+2026-06-16 22:47:49 [INFO] mitmproxy.proxy.server: server disconnect chat.openai.com:443 ([2606:4700:4402::6812:25e4]:443)
+2026-06-16 22:47:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:49] "[36mGET /assets/index-09Z95Ir1.css HTTP/1.1[0m" 304 -
+2026-06-16 22:47:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:49] "[36mGET /assets/Products-BW-GTBLk.css HTTP/1.1[0m" 304 -
+2026-06-16 22:47:49 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:49] "[36mGET /assets/ProductDetail-iONXmqSZ.css HTTP/1.1[0m" 304 -
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:51 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:51 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:51 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:47:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:47:53 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:47:53 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:53] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:47:58 [INFO] web.app: GET /api/settings 127.0.0.1 200 1ms
+2026-06-16 22:47:58 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:47:58] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:48:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:05 [INFO] mitmproxy.proxy.server: server connect img-1.pddpic.com:443 ([2409:8c44:3d01:102::1ba]:443)
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: server connect ta.yangkeduo.com:443 (49.234.252.165:443)
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: server connect apm-a.pinduoduo.com:443 ([2409:8c1e:8ff0:d::]:443)
+2026-06-16 22:48:06 [INFO] root: [JS Inject] Injected, proxy={'goods_id': '952242762229', 'title': '无版印刷速食卤味食品包装袋透明窗可开窗三边封自立袋阴阳袋定制'}
+2026-06-16 22:48:06 [INFO] root: [DetailFetch] Fetching detail for 952242762229
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:06 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server connect commimg.pddpic.com:443 ([2409:8087:6c02:12:200::96]:443)
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:07 [INFO] web.app: OPTIONS /api/ingest 127.0.0.1 204 0ms
+2026-06-16 22:48:07 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:07] "[35m[1mOPTIONS /api/ingest HTTP/1.1[0m" 204 -
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:07 [INFO] web.app: POST /api/ingest 127.0.0.1 200 34ms
+2026-06-16 22:48:07 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:07] "POST /api/ingest HTTP/1.1" 200 -
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:07 [INFO] mitmproxy.proxy.server: server connect avatar3-1.pddpic.com:443 ([2409:8c28:6c07:802:47::2d]:443)
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:09 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:11 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:11 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:11 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:11 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:13 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:13 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: server connect funimg.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:48:16 [INFO] root: [JS Inject] Injected, proxy={'goods_id': '962650241866', 'title': '即食芝麻海苔夹心脆片袋装儿童紫菜孕妇休闲零食小吃健康非油炸'}
+2026-06-16 22:48:16 [INFO] root: [DetailFetch] Fetching detail for 962650241866
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:16 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server connect promotion.pddpic.com:443 ([2409:8c6c:550:1624:5e::1]:443)
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:17 [INFO] web.app: OPTIONS /api/ingest 127.0.0.1 204 0ms
+2026-06-16 22:48:17 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:17] "[35m[1mOPTIONS /api/ingest HTTP/1.1[0m" 204 -
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:17 [INFO] web.app: POST /api/ingest 127.0.0.1 200 44ms
+2026-06-16 22:48:17 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:17] "POST /api/ingest HTTP/1.1" 200 -
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server connect video-snapshot01.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:17 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:18 [INFO] web.app: POST /api/ingest 127.0.0.1 200 36ms
+2026-06-16 22:48:18 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:18] "POST /api/ingest HTTP/1.1" 200 -
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: server disconnect cn.bing.com:443 (202.89.233.100:443)
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: server disconnect static.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: server connect commimg-1.pddpic.com:443 ([2409:8c6c:550:1203::2782:832c]:443)
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: server connect cn.bing.com:443 (202.89.233.101:443)
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:19 [INFO] web.app: POST /api/ingest 127.0.0.1 200 30ms
+2026-06-16 22:48:19 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:19] "POST /api/ingest HTTP/1.1" 200 -
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:19 [INFO] mitmproxy.proxy.server: server connect static.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:20 [INFO] mitmproxy.proxy.server: server connect funimg-1.pddpic.com:443 ([2409:8087:6c08:12:100::ba]:443)
+2026-06-16 22:48:21 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:21 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:21 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:22 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:22 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:23 [INFO] root: [JS Inject] Injected, proxy={'goods_id': '965084887336', 'title': '蜡笔小新ad钙奶饮品联名款含乳饮料100ml*12瓶送同学朋友礼物'}
+2026-06-16 22:48:23 [INFO] root: [DetailFetch] Fetching detail for 965084887336
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: server connect video-snapshot.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:23 [INFO] web.app: OPTIONS /api/ingest 127.0.0.1 204 0ms
+2026-06-16 22:48:23 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:23] "[35m[1mOPTIONS /api/ingest HTTP/1.1[0m" 204 -
+2026-06-16 22:48:23 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:23 [INFO] web.app: POST /api/ingest 127.0.0.1 200 43ms
+2026-06-16 22:48:23 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:23] "POST /api/ingest HTTP/1.1" 200 -
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:25 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:25 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:26 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:26 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:26 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:26 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:26 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::22]:443)
+2026-06-16 22:48:26 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "[36mGET /settings HTTP/1.1[0m" 304 -
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "[36mGET /assets/index-CiO8Ghap.js HTTP/1.1[0m" 304 -
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "[36mGET /assets/index-09Z95Ir1.css HTTP/1.1[0m" 304 -
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "[36mGET /assets/Settings-DxtReeki.js HTTP/1.1[0m" 304 -
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "[36mGET /favicon.svg HTTP/1.1[0m" 304 -
+2026-06-16 22:48:27 [INFO] web.app: GET /api/capture-toggle 127.0.0.1 200 0ms
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "GET /api/capture-toggle HTTP/1.1" 200 -
+2026-06-16 22:48:27 [INFO] web.app: GET /api/settings 127.0.0.1 200 0ms
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "GET /api/settings HTTP/1.1" 200 -
+2026-06-16 22:48:27 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 2ms
+2026-06-16 22:48:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:27] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:48:28 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:28 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:30 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:30 [ERROR] mitmproxy.master: Unhandled error in task.
+Traceback (most recent call last):
+  File "asyncio\events.py", line 88, in _run
+  File "asyncio\proactor_events.py", line 165, in _call_connection_lost
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-16 22:48:30 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "[36mGET /assets/Products-DJLp9YX6.js HTTP/1.1[0m" 304 -
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "[36mGET /assets/Products-BW-GTBLk.css HTTP/1.1[0m" 304 -
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "[36mGET /assets/SafeImage-BYUQ27zt.js HTTP/1.1[0m" 304 -
+2026-06-16 22:48:30 [INFO] web.app: GET /api/shops 127.0.0.1 200 3ms
+2026-06-16 22:48:30 [INFO] web.app: GET /api/tags 127.0.0.1 200 3ms
+2026-06-16 22:48:30 [INFO] web.app: GET /api/groups 127.0.0.1 200 1ms
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "GET /api/shops HTTP/1.1" 200 -
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "GET /api/tags HTTP/1.1" 200 -
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "GET /api/groups HTTP/1.1" 200 -
+2026-06-16 22:48:30 [INFO] web.app: GET /api/products 127.0.0.1 200 22ms
+2026-06-16 22:48:30 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:30] "GET /api/products?page=1&page_size=20&keyword= HTTP/1.1" 200 -
+2026-06-16 22:48:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:30 [INFO] mitmproxy.proxy.server: server connect img.pddpic.com:443 ([2409:8087:6c08:12:100::bd]:443)
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: server connect persistent.oaistatic.com:443 ([2606:4700:440c::6812:299e]:443)
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:35 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:37 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:37 [INFO] mitmproxy.proxy.server: server connect mcp.cloudflare.com:443 ([2606:4700::6812:199f]:443)
+2026-06-16 22:48:38 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:48:38 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:38 [INFO] mitmproxy.proxy.server: server disconnect mcp.cloudflare.com:443 ([2606:4700::6812:199f]:443)
+2026-06-16 22:48:38 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:38 [INFO] mitmproxy.proxy.server: server connect mcp.cloudflare.com:443 ([2606:4700::6812:199f]:443)
+2026-06-16 22:48:39 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:48:39 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:39 [INFO] mitmproxy.proxy.server: server disconnect mcp.cloudflare.com:443 ([2606:4700::6812:199f]:443)
+2026-06-16 22:48:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:40 [INFO] mitmproxy.proxy.server: server connect mcp.cloudflare.com:443 ([2606:4700::6812:199f]:443)
+2026-06-16 22:48:40 [WARNING] mitmproxy.proxy.server: Client TLS handshake failed. The client does not trust the proxy's certificate for mcp.cloudflare.com (tlsv1 alert unknown ca)
+2026-06-16 22:48:40 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:40 [INFO] mitmproxy.proxy.server: server disconnect mcp.cloudflare.com:443 ([2606:4700::6812:199f]:443)
+2026-06-16 22:48:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:48:46 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:46 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:48:53 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:48:54 [INFO] mitmproxy.proxy.server: error establishing server connection: [WinError 121] 信号灯超时时间已到
+2026-06-16 22:48:54 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:57 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:48:57 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:48:57] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:48:59 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:48:59 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:48:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:03 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:49:03 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:49:03 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:03 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:49:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:49:17 [INFO] mitmproxy.proxy.server: server disconnect video-snapshot01.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:49:19 [INFO] mitmproxy.proxy.server: server disconnect commimg-1.pddpic.com:443 ([2409:8c6c:550:1203::2782:832c]:443)
+2026-06-16 22:49:19 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:49:19 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:23 [INFO] mitmproxy.proxy.server: server disconnect funimg.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:49:23 [INFO] mitmproxy.proxy.server: server disconnect video-snapshot.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:49:26 [INFO] mitmproxy.proxy.server: server disconnect xg.pinduoduo.com:443 ([2409:8c1e:75b0:4d::2d]:443)
+2026-06-16 22:49:26 [INFO] mitmproxy.proxy.server: error establishing server connection: Multiple exceptions: [WinError 121] 信号灯超时时间已到, [WinError 1225] 远程计算机拒绝网络连接。
+2026-06-16 22:49:26 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:26 [INFO] mitmproxy.proxy.server: server disconnect apm-a.pinduoduo.com:443 ([2409:8c1e:8ff0:d::]:443)
+2026-06-16 22:49:27 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:49:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:49:27] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:49:28 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c032:200::a8]:443)
+2026-06-16 22:49:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:49:33 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:33 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:49:35 [INFO] mitmproxy.proxy.server: server disconnect apm.pinduoduo.com:443 ([2409:8c1e:75b0:4f::65]:443)
+2026-06-16 22:49:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:49:53 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:49:57 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:49:57 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:49:57] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:49:59 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:49:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:49:59 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:03 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:19 [INFO] mitmproxy.proxy.server: server disconnect static.pddpic.com:443 ([2409:8c6c:550:1203::2782:8329]:443)
+2026-06-16 22:50:23 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:23 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:26 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:26 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:50:26 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:26 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:27 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:50:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:50:27] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:50:29 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:29 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:32 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:32 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:50:33 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:33 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:52 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:50:56 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:56 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:56 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:50:56 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:50:57 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:50:57 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:50:57] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:50:58 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:00 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:00 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:51:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:03 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:03 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:03 [INFO] mitmproxy.proxy.server: server connect update.wps.cn:443 (1.92.66.95:443)
+2026-06-16 22:51:04 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:04 [INFO] mitmproxy.proxy.server: server disconnect update.wps.cn:443 (1.92.66.95:443)
+2026-06-16 22:51:11 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:11 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:17 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:17 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:19 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:22 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:51:25 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:25 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:27 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 2ms
+2026-06-16 22:51:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:51:27] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:51:28 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:28 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:51:28 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:28 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:29 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:31 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:51:33 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:33 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:51:35 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:35 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:36 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:36 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:41 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:41 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:43 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:43 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:51:46 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:46 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:47 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:47 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:52 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:52 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:53 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:53 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:53 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:51:56 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:51:57 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:51:57 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:51:57] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:51:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:59 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:51:59 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:51:59 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:00 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:00 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:00 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:00 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:52:03 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: server connect c.pki.goog:80 (120.253.253.34:80)
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: server connect x1.c.lencr.org:80 ([2600:140b:2c00:a9c::21cc]:80)
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: server disconnect x1.c.lencr.org:80 ([2600:140b:2c00:a9c::21cc]:80)
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: server disconnect c.pki.goog:80 (120.253.253.34:80)
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:04 [INFO] mitmproxy.proxy.server: server connect x2.c.lencr.org:80 ([2600:140b:2c00:a9c::21cc]:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server disconnect x2.c.lencr.org:80 ([2600:140b:2c00:a9c::21cc]:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server connect ye.c.lencr.org:80 ([2600:140b:2c00:ba::17d7:d453]:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server disconnect ye.c.lencr.org:80 ([2600:140b:2c00:ba::17d7:d453]:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server connect c.pki.goog:80 (120.253.253.34:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server connect yr.c.lencr.org:80 ([2600:140b:2c00:ba::17d7:d453]:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server disconnect yr.c.lencr.org:80 ([2600:140b:2c00:ba::17d7:d453]:80)
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:05 [INFO] mitmproxy.proxy.server: server disconnect c.pki.goog:80 (120.253.253.34:80)
+2026-06-16 22:52:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:10 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:52:12 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:12 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:52:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:17 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:17 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:52:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:19 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:52:22 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:22 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:52:23 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:23 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:24 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:52:26 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:26 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:27 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:27 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:27 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:27 [INFO] mitmproxy.proxy.server: server disconnect cn.bing.com:443 (202.89.233.101:443)
+2026-06-16 22:52:27 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:27 [INFO] mitmproxy.proxy.server: server connect cn.bing.com:443 (202.89.233.101:443)
+2026-06-16 22:52:29 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:29 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:52:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:31 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:52:33 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:33 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:34 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:34 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:52:45 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:53 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:52:53 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:52:53 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:52:53 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:01 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:01 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:03 [INFO] mitmproxy.proxy.server: server connect mobile.yangkeduo.com:443 ([2402:4e00:c030:1b00::63]:443)
+2026-06-16 22:53:03 [INFO] mitmproxy.proxy.server: server connect apm.pinduoduo.com:443 ([2409:8c1e:75b0:4f::65]:443)
+2026-06-16 22:53:06 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:06 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:07 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:07 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:10 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:10 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:11 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:13 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:13 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:14 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:14 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:15 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:15 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:15 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:19 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:19 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:19 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:19 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:23 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:23 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:24 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:24 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:27 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 1ms
+2026-06-16 22:53:27 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:53:27] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:53:28 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:28 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:30 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:30 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:31 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:31 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:31 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:36 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:40 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:40 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:40 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:41 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:42 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:42 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:42 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:42 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:45 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:45 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:53:45 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:50 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:56 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:53:56 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:53:57 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:53:57 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:53:58 [INFO] web.app: GET /api/risk-check 127.0.0.1 200 2ms
+2026-06-16 22:53:58 [INFO] werkzeug: 127.0.0.1 - - [16/Jun/2026 22:53:58] "GET /api/risk-check HTTP/1.1" 200 -
+2026-06-16 22:53:59 [INFO] mitmproxy.proxy.server: server disconnect xiaoruan.top:443 (106.54.229.18:443)
+2026-06-16 22:54:01 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:54:01 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:54:01 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:54:04 [INFO] mitmproxy.proxy.server: server disconnect apm.pinduoduo.com:443 ([2409:8c1e:75b0:4f::65]:443)
+2026-06-16 22:54:04 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:54:04 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:54:05 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:54:05 [INFO] mitmproxy.proxy.server: server connect 127.0.0.1:53682
+2026-06-16 22:54:06 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:54:06 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:54:06 [INFO] mitmproxy.proxy.server: server disconnect mobile.yangkeduo.com:443 ([2402:4e00:c030:1b00::63]:443)
+2026-06-16 22:54:08 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:54:08 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:54:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:54:10 [INFO] mitmproxy.proxy.server: server disconnect 127.0.0.1:53682
+2026-06-16 22:54:10 [INFO] mitmproxy.proxy.server: client disconnect
+2026-06-16 22:54:10 [INFO] mitmproxy.proxy.server: error establishing server connection: client disconnected
+2026-06-16 22:54:10 [INFO] mitmproxy.proxy.server: client connect
+2026-06-16 22:54:10 [INFO] mitmproxy.proxy.server: client connect
