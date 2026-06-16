@@ -75,6 +75,7 @@ def init_db() -> None:
         "ALTER TABLE goods ADD COLUMN price_min REAL DEFAULT 0.0",
         "ALTER TABLE goods ADD COLUMN price_max REAL DEFAULT 0.0",
         "ALTER TABLE goods ADD COLUMN total_stock INTEGER DEFAULT 0",
+        "ALTER TABLE goods ADD COLUMN price_modified INTEGER DEFAULT 0",
     ]:
         try:
             conn.execute(col_sql)

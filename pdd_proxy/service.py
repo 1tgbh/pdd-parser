@@ -53,7 +53,8 @@ def init_db():
             shop_name TEXT, shop_id TEXT, shop_logo TEXT,
             main_images TEXT, detail_images TEXT, sku_images TEXT,
             specs TEXT, skus TEXT, description TEXT, attributes TEXT,
-            source_url TEXT, crawl_time TEXT, updated_at TEXT, raw_data TEXT
+            source_url TEXT, crawl_time TEXT, updated_at TEXT, raw_data TEXT,
+            price_modified INTEGER DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_goods_title ON goods(title);
         CREATE INDEX IF NOT EXISTS idx_goods_shop ON goods(shop_name);

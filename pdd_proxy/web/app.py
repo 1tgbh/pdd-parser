@@ -172,7 +172,27 @@ def _row_to_goods(r: sqlite3.Row) -> dict[str, Any]:
         "attributes": json.loads(r["attributes"] or "{}"),
         "source_url": r["source_url"] or "",
         "crawl_time": r["crawl_time"] or "",
+        "price_modified": r["price_modified"] if "price_modified" in r.keys() else 0,
     }
+
+
+
+def _apply_markup(price: float, multiplier: float, fixed_amount: float) -> float:
+    """对单个价格应用改价公式，价格<=0不改"""
+    if price <= 0:
+        return price
+    return round(price * multiplier + fixed_amount, 2)
+
+
+def _apply_markup_to_skus(skus: list, multiplier: float, fixed_amount: float) -> list:
+    """对SKU列表的所有价格应用改价公式"""
+    for sku in skus:
+        if isinstance(sku, dict):
+            if sku.get("price", 0) > 0:
+                sku["price"] = _apply_markup(sku["price"], multiplier, fixed_amount)
+            if sku.get("original_price", 0) > 0:
+                sku["original_price"] = _apply_markup(sku["original_price"], multiplier, fixed_amount)
+    return skus
 
 
 @app.route("/api/proxy-image")
@@ -927,6 +947,7 @@ def api_settings():
                 del safe[section]["api_key"]
         risk_monitor = cfg.get("risk_monitor", {"enabled": False, "interval": 30})
         safe["risk_monitor"] = risk_monitor
+        safe["price_markup"] = cfg.get("price_markup", {"enabled": False, "multiplier": 1.5, "fixed_amount": 3.0})
         return jsonify(safe)
     
     data = request.get_json() or {}
@@ -956,6 +977,9 @@ def api_settings():
 
     if "risk_monitor" in data:
         cfg["risk_monitor"] = data["risk_monitor"]
+
+    if "price_markup" in data:
+        cfg["price_markup"] = data["price_markup"]
 
     save_config(cfg)
     return jsonify({"ok": True})
@@ -1264,6 +1288,56 @@ def api_product_groups(goods_id):
     return jsonify({"ok": True})
 
 
+
+
+@app.route("/api/product/<goods_id>/batch-price", methods=["POST"])
+def api_batch_price_single(goods_id: str):
+    """对单个商品永久批量改价（写入DB），更新所有价格字段+SKU"""
+    data = request.get_json() or {}
+    multiplier = float(data.get("multiplier", 1.5))
+    fixed_amount = float(data.get("fixed_amount", 3.0))
+
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM goods WHERE goods_id = ?", (goods_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "商品不存在"}), 404
+
+    now = datetime.now().isoformat()
+
+    # 主价格字段
+    price = _apply_markup(row["price"] or 0, multiplier, fixed_amount)
+    original_price = _apply_markup(row["original_price"] or 0, multiplier, fixed_amount)
+    min_group_price = _apply_markup(row["min_group_price"] or 0, multiplier, fixed_amount)
+
+    # goods.skus JSON
+    skus = json.loads(row["skus"] or "[]")
+    _apply_markup_to_skus(skus, multiplier, fixed_amount)
+
+    # 重算 price_min / price_max
+    all_prices = [s.get("price", 0) for s in skus if isinstance(s, dict) and s.get("price", 0) > 0]
+    if not all_prices and price > 0:
+        all_prices = [price]
+    price_min = min(all_prices) if all_prices else 0
+    price_max = max(all_prices) if all_prices else 0
+
+    conn.execute(
+        "UPDATE goods SET price=?, original_price=?, min_group_price=?, skus=?, price_min=?, price_max=?, price_modified=1, updated_at=? WHERE goods_id=?",
+        (price, original_price, min_group_price, json.dumps(skus, ensure_ascii=False), price_min, price_max, now, goods_id)
+    )
+
+    # sku_items 表
+    sku_rows = conn.execute("SELECT id, price, original_price FROM sku_items WHERE goods_id=?", (goods_id,)).fetchall()
+    for sr in sku_rows:
+        new_p = _apply_markup(sr["price"] or 0, multiplier, fixed_amount)
+        new_op = _apply_markup(sr["original_price"] or 0, multiplier, fixed_amount)
+        conn.execute("UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
+                     (new_p, new_op, now, sr["id"]))
+
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "price": price, "skus_count": len(skus)})
+
 # ==================== 批量操作 ====================
 
 @app.route("/api/products/batch-update", methods=["POST"])
@@ -1277,16 +1351,41 @@ def api_batch_update():
     conn = get_conn()
     placeholders = ",".join(["?"] * len(ids))
     
-    # 批量改价
+    # 批量改价（全量：主价格+SKU+sku_items，跳过已改价商品）
     if "price_multiply" in updates or "price_add" in updates:
         multiply = float(updates.get("price_multiply", 1.0))
         add = float(updates.get("price_add", 0))
+        skip_modified = updates.get("price_modified_check", True)
+        skipped = 0
+        now = datetime.now().isoformat()
         for gid in ids:
-            row = conn.execute("SELECT price FROM goods WHERE goods_id = ?", (gid,)).fetchone()
-            if row:
-                new_price = round(row["price"] * multiply + add, 2)
-                conn.execute("UPDATE goods SET price = ?, updated_at = ? WHERE goods_id = ?",
-                           (new_price, datetime.now().isoformat(), gid))
+            row = conn.execute("SELECT * FROM goods WHERE goods_id = ?", (gid,)).fetchone()
+            if not row:
+                continue
+            if skip_modified and (row["price_modified"] if "price_modified" in row.keys() else 0):
+                skipped += 1
+                continue
+            # 主价格
+            new_price = _apply_markup(row["price"] or 0, multiply, add)
+            new_original = _apply_markup(row["original_price"] or 0, multiply, add)
+            new_group = _apply_markup(row["min_group_price"] or 0, multiply, add)
+            # skus JSON
+            skus = json.loads(row["skus"] or "[]")
+            _apply_markup_to_skus(skus, multiply, add)
+            # price_min / price_max
+            all_p = [s.get("price", 0) for s in skus if isinstance(s, dict) and s.get("price", 0) > 0]
+            if not all_p and new_price > 0:
+                all_p = [new_price]
+            pmin = min(all_p) if all_p else 0
+            pmax = max(all_p) if all_p else 0
+            conn.execute(
+                "UPDATE goods SET price=?, original_price=?, min_group_price=?, skus=?, price_min=?, price_max=?, price_modified=1, updated_at=? WHERE goods_id=?",
+                (new_price, new_original, new_group, json.dumps(skus, ensure_ascii=False), pmin, pmax, now, gid))
+            # sku_items
+            for sr in conn.execute("SELECT id, price, original_price FROM sku_items WHERE goods_id=?", (gid,)).fetchall():
+                conn.execute("UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
+                             (_apply_markup(sr["price"] or 0, multiply, add),
+                              _apply_markup(sr["original_price"] or 0, multiply, add), now, sr["id"]))
         conn.commit()
     
     # 批量打标签
@@ -1316,7 +1415,7 @@ def api_batch_update():
         conn.commit()
     
     conn.close()
-    return jsonify({"ok": True, "updated": len(ids)})
+    return jsonify({"ok": True, "updated": len(ids) - skipped if "price_multiply" in updates or "price_add" in updates else len(ids), "skipped": skipped if "price_multiply" in updates or "price_add" in updates else 0})
 
 
 @app.route("/api/products/batch-delete", methods=["POST"])
