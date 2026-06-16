@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSettings, useSaveSettings, useTestApi } from '../hooks/useApi';
+import { useSettings, useSaveSettings, useTestApi, useBatchUpdate, useAllProductIds } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
 import type { WechatExportSettings } from '../types';
 
@@ -12,6 +12,8 @@ export default function Settings() {
   const saveMut = useSaveSettings();
   const testMut = useTestApi();
   const toast = useToast();
+  const batchMut = useBatchUpdate();
+  const { data: allIds } = useAllProductIds();
 
   const [imgKey, setImgKey] = useState('');
   const [imgBase, setImgBase] = useState('https://grsai.dakka.com.cn');
@@ -269,6 +271,26 @@ export default function Settings() {
             <p style={{ fontSize: 12, color: 'var(--brand-text-muted)', margin: 0 }}>
               公式：新价格 = 原价 x {priceMarkup.multiplier} + {priceMarkup.fixed_amount} 元
             </p>
+            {priceMarkup.enabled && (
+              <button className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: 8 }}
+                onClick={async () => {
+                  if (!allIds || allIds.total === 0) { toast.error('没有商品可改价'); return; }
+                  try {
+                    const result = await batchMut.mutateAsync({
+                      ids: allIds.ids,
+                      updates: { price_multiply: priceMarkup.multiplier, price_add: priceMarkup.fixed_amount }
+                    });
+                    const skipped = (result as any)?.skipped || 0;
+                    if (skipped > 0) {
+                      toast.success(`已改价 ${allIds.total - skipped} 件商品，跳过 ${skipped} 件已改价商品`);
+                    } else {
+                      toast.success(`已改价 ${allIds.total} 件商品`);
+                    }
+                  } catch { toast.error('改价失败'); }
+                }}>
+                确定改价（全部 {allIds?.total || 0} 件商品）
+              </button>
+            )}
           </div>
         </div>
 
