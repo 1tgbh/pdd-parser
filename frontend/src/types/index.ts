@@ -37,6 +37,7 @@ export interface GoodsInfo {
   attributes: Record<string, string>;
   source_url: string;
   crawl_time: string;
+  price_modified?: number;
   tags?: TagInfo[];
   groups?: GroupInfo[];
 }
@@ -115,6 +116,7 @@ export interface SettingsData {
   proxy_url?: string;
   wechat_export?: WechatExportSettings;
   risk_monitor?: { enabled: boolean; interval: number };
+  price_markup?: { enabled: boolean; multiplier: number; fixed_amount: number };
 }
 
 export interface DuplicateGroup {

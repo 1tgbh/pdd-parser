@@ -7,6 +7,7 @@ import {
   fetchTags, createTag, updateTag, deleteTag, fetchProductTags, setProductTags,
   fetchGroups, createGroup, updateGroup, deleteGroup,
   batchUpdate,
+  batchPriceSingle,
   fetchAiPresets, aiGenerateImage, aiEditImage, aiUseImage, fetchProductAiImages, aiRewrite,
   uploadEditorImage, searchProductsForEditor, fetchAiHistory, deleteAiHistory, removeBackground,
   uploadImage, reorderImages,
@@ -186,6 +187,21 @@ export function useBatchUpdate() {
   });
 }
 
+
+
+export function useBatchPriceSingle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ goodsId, multiplier, fixedAmount }: {
+      goodsId: string; multiplier: number; fixedAmount: number;
+    }) => batchPriceSingle(goodsId, multiplier, fixedAmount),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ['product', v.goodsId] });
+      qc.invalidateQueries({ queryKey: ['products'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
 // AI
 export function useAiPresets() {
   return useQuery({ queryKey: ['aiPresets'], queryFn: fetchAiPresets });
