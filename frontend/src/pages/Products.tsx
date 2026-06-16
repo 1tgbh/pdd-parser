@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useProducts, useDeleteProducts, useTags, useGroups, useCreateTag, useDeleteTag,
   useCreateGroup, useDeleteGroup, useBatchUpdate, useDuplicates, useShops,
+  useSettings,
 } from '../hooks/useApi';
 import SafeImage from '../components/SafeImage';
 import { useConfirm } from '../components/Confirm';
@@ -34,8 +35,8 @@ export default function Products() {
   });
 
   const [batchModal, setBatchModal] = useState<string | null>(null);
-  const [priceMultiply, setPriceMultiply] = useState('1.3');
-  const [priceAdd, setPriceAdd] = useState('0');
+  const [priceMultiply, setPriceMultiply] = useState('1.5');
+  const [priceAdd, setPriceAdd] = useState('3');
   const [tagName, setTagName] = useState('');
   const [tagColor, setTagColor] = useState('#FF9500');
   const [groupName, setGroupName] = useState('');
@@ -62,6 +63,8 @@ export default function Products() {
   useKeyboard({ 'r': handleRefreshKey, '/': handleSearchKey });
   const deleteMut = useDeleteProducts();
   const batchMut = useBatchUpdate();
+  const { data: settings } = useSettings();
+  useEffect(() => { if (settings?.price_markup) { setPriceMultiply(String(settings.price_markup.multiplier)); setPriceAdd(String(settings.price_markup.fixed_amount)); } }, [settings]);
   const { data: tags, refetch: refetchTags } = useTags();
   const { data: groups, refetch: refetchGroups } = useGroups();
   const createTagMut = useCreateTag();
@@ -137,8 +140,14 @@ export default function Products() {
   const handleBatchPrice = useCallback(async () => {
     const ids = [...selected]; if (ids.length === 0) return;
     try {
-      await batchMut.mutateAsync({ ids, updates: { price_multiply: parseFloat(priceMultiply) || 1, price_add: parseFloat(priceAdd) || 0 } });
-      setBatchModal(null); toast.success(`已更新 ${ids.length} 件商品价格`);
+      const result = await batchMut.mutateAsync({ ids, updates: { price_multiply: parseFloat(priceMultiply) || 1, price_add: parseFloat(priceAdd) || 0 } });
+      setBatchModal(null);
+      const skipped = (result as any)?.skipped || 0;
+      if (skipped > 0) {
+        toast.success(`已更新 ${ids.length - skipped} 件商品价格，跳过 ${skipped} 件已改价商品`);
+      } else {
+        toast.success(`已更新 ${ids.length} 件商品价格`);
+      }
     } catch { toast.error('改价失败'); }
   }, [selected, priceMultiply, priceAdd, batchMut]);
 
@@ -385,6 +394,7 @@ export default function Products() {
         <div style={overlayStyle} onClick={() => setBatchModal(null)}>
           <div style={modalStyle} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 16px' }}>批量改价（{selected.size} 件商品）</h3>
+              <p style={{ fontSize: 12, color: 'var(--brand-text-muted)', margin: '0 0 8px' }}>已改价的商品将自动跳过。公式来源：设置页改价公式配置。</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>倍数（如 1.3 表示加价 30%）</label>

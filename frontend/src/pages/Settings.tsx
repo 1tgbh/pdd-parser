@@ -32,6 +32,7 @@ export default function Settings() {
   const [imgTestResult, setImgTestResult] = useState('');
   const [txtTestResult, setTxtTestResult] = useState('');
   const [riskMonitor, setRiskMonitor] = useState({ enabled: false, interval: 30 });
+  const [priceMarkup, setPriceMarkup] = useState({ enabled: false, multiplier: 1.5, fixed_amount: 3.0 });
   const [saving, setSaving] = useState(false);
   const [imgKeySet, setImgKeySet] = useState(false);
   const [imgKeyMasked, setImgKeyMasked] = useState('');
@@ -58,6 +59,9 @@ export default function Settings() {
       if (settings.risk_monitor) {
         setRiskMonitor(prev => ({ ...prev, ...settings.risk_monitor }));
       }
+      if (settings.price_markup) {
+        setPriceMarkup(prev => ({ ...prev, ...settings.price_markup }));
+      }
     }
   }, [settings]);
 
@@ -75,6 +79,7 @@ export default function Settings() {
       }
       payload.wechat_export = wechatCfg;
       payload.risk_monitor = riskMonitor;
+      payload.price_markup = priceMarkup;
       await saveMut.mutateAsync(payload);
       if (imgKey) {
         const len = imgKey.length;
@@ -226,6 +231,43 @@ export default function Settings() {
             </div>
             <p style={{ fontSize: 12, color: 'var(--brand-text-muted)', margin: 0 }}>
               以上参数在导出"微信小店"格式时生效，控制导出数据包的默认商品属性。
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">批量改价公式</div>
+          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0 }}>
+              设置默认改价公式，商品详情页和列表页的「批量改价」按钮将使用此公式。
+            </p>
+            <label style={{ fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="checkbox" checked={priceMarkup.enabled}
+                onChange={e => setPriceMarkup(prev => ({ ...prev, enabled: e.target.checked }))}
+                style={{ width: 16, height: 16 }} />
+              启用改价公式
+            </label>
+            {priceMarkup.enabled && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>倍率</label>
+                  <input type="number" step="0.01" min="0.01" value={priceMarkup.multiplier}
+                    onChange={e => setPriceMarkup(prev => ({ ...prev, multiplier: parseFloat(e.target.value) || 1 }))}
+                    style={{ width: 80, padding: '8px 12px', border: '1px solid var(--brand-border)', borderRadius: 6, fontSize: 14, marginTop: 4, background: 'var(--brand-surface)' }} />
+                </div>
+                <span style={{ fontSize: 16, marginTop: 16 }}>x</span>
+                <span style={{ fontSize: 13, color: 'var(--brand-text-muted)', marginTop: 16 }}>原价 +</span>
+                <div>
+                  <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>附加金额</label>
+                  <input type="number" step="0.01" value={priceMarkup.fixed_amount}
+                    onChange={e => setPriceMarkup(prev => ({ ...prev, fixed_amount: parseFloat(e.target.value) || 0 }))}
+                    style={{ width: 80, padding: '8px 12px', border: '1px solid var(--brand-border)', borderRadius: 6, fontSize: 14, marginTop: 4, background: 'var(--brand-surface)' }} />
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--brand-text-muted)', marginTop: 16 }}>元</span>
+              </div>
+            )}
+            <p style={{ fontSize: 12, color: 'var(--brand-text-muted)', margin: 0 }}>
+              公式：新价格 = 原价 x {priceMarkup.multiplier} + {priceMarkup.fixed_amount} 元
             </p>
           </div>
         </div>

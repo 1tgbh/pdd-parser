@@ -4,6 +4,7 @@ import {
   useProduct, useUpdateProduct, usePackageGoods, useProductAiImages, useTags,
   useProductTags, useAiPresets, useAiEditImage, useAiUseImage, useAiRewrite,
   useUploadImage, useSetProductTags, useAddMonitor,
+  useSettings, useBatchPriceSingle,
 } from '../hooks/useApi';
 import type { GoodsInfo, SkuItem } from '../types';
 import s from '../styles/modules/ProductDetail.module.css';
@@ -39,6 +40,11 @@ export default function ProductDetail() {
   const [deletedMainIdx, setDeletedMainIdx] = useState<Set<number>>(new Set());
   const [deletedDetailIdx, setDeletedDetailIdx] = useState<Set<number>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
+  const [showBatchPrice, setShowBatchPrice] = useState(false);
+  const [batchMultiplier, setBatchMultiplier] = useState(1.5);
+  const [batchFixedAmount, setBatchFixedAmount] = useState(3.0);
+  const batchPriceMut = useBatchPriceSingle();
+  const { data: settings } = useSettings();
   const [aiEditModal, setAiEditModal] = useState<{ open: boolean; imageUrl: string }>({ open: false, imageUrl: '' });
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiPreset, setAiPreset] = useState('');
@@ -354,6 +360,14 @@ export default function ProductDetail() {
           )}
           <button className="btn btn-outline btn-sm" onClick={toggleEdit}>{isEdit ? '取消' : '编辑'}</button>
           {isEdit && <button className="btn btn-primary btn-sm" onClick={handleSave}>保存</button>}
+          {isEdit && (
+            <button className="btn btn-outline btn-sm" onClick={() => setShowBatchPrice(true)}
+              disabled={product?.price_modified === 1}
+              title={product?.price_modified === 1 ? '该商品已改价' : ''}
+              style={product?.price_modified === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}>
+              批量改价
+            </button>
+          )}
         </div>
       </div>
 
