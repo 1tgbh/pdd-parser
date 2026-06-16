@@ -24,6 +24,45 @@ DB_PATH: Path = DATA_DIR / "goods.db"
 
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
+# ---- 导出时自动改价支持 ----
+
+def _get_export_markup():
+    """读取 config.json 中的 price_markup 配置"""
+    try:
+        cfg_path = DATA_DIR / "config.json"
+        if cfg_path.exists():
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            markup = cfg.get("price_markup", {})
+            if markup.get("enabled"):
+                return markup
+    except Exception:
+        pass
+    return None
+
+
+def _apply_export_markup(price, markup):
+    """对单个价格应用改价公式"""
+    if not markup or price <= 0:
+        return price
+    return round(price * markup.get("multiplier", 1) + markup.get("fixed_amount", 0), 2)
+
+
+def _apply_markup_to_goods(goods, markup):
+    """对一个商品字典的所有价格字段应用改价"""
+    for field in ("price", "original_price", "min_group_price", "price_min", "price_max"):
+        v = goods.get(field, 0) or 0
+        if v > 0:
+            goods[field] = _apply_export_markup(v, markup)
+    # SKU 价格
+    for sku in goods.get("skus", []):
+        if isinstance(sku, dict):
+            if (sku.get("price") or 0) > 0:
+                sku["price"] = _apply_export_markup(sku["price"], markup)
+            if (sku.get("original_price") or 0) > 0:
+                sku["original_price"] = _apply_export_markup(sku["original_price"], markup)
+
+
 _IMG_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     "Referer": "https://mobile.yangkeduo.com/",
@@ -135,6 +174,11 @@ def _load_goods(rows) -> list:
             except Exception:
                 pass
         goods_list.append(goods)
+    # 导出时应用改价公式（AOP自动改价）
+    _markup = _get_export_markup()
+    if _markup:
+        for _g in goods_list:
+            _apply_markup_to_goods(_g, _markup)
     return goods_list
 
 
