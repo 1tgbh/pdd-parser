@@ -1,0 +1,96 @@
+.productGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.productCard { background: var(--brand-surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: box-shadow 0.2s; cursor: pointer; position: relative; }
+.productCard:hover { box-shadow: var(--shadow-md); }
+.productCardImg { width: 100%; height: 180px; object-fit: cover; background: var(--brand-gray-5); }
+.productCardBody { padding: 12px 14px; }
+.productCardTitle { font-size: 13px; font-weight: 500; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 8px; }
+.productCardMeta { display: flex; align-items: baseline; justify-content: space-between; }
+.productCardPrice { font-size: 18px; font-weight: 700; color: var(--brand-orange); }
+.productCardSales { font-size: 11px; color: var(--brand-text-secondary); }
+.pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+.paginationInfo { line-height: 28px; font-size: 13px; color: var(--brand-text-secondary); }
+.skeletonProduct { height: 180px; background: var(--brand-gray-5); }
+.skeletonProductBody { padding: 12px; height: 80px; background: var(--brand-bg); }
+
+.toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; padding: 12px 16px; background: var(--brand-surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+.toolbarSearch { display: flex; gap: 6px; align-items: center; }
+.toolbarSearch input { padding: 6px 12px; border: 1px solid var(--brand-border); border-radius: 6px; font-size: 13px; width: 200px; transition: border-color 0.2s; }
+.toolbarSearch input:focus { border-color: var(--brand-accent); outline: none; box-shadow: 0 0 0 3px var(--brand-accent-ring); }
+
+.filterBar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.filterGroup { display: flex; align-items: center; gap: 6px; }
+.filterLabel { font-size: 12px; color: var(--brand-text-secondary); white-space: nowrap; }
+.filterPills { display: flex; gap: 4px; flex-wrap: wrap; }
+.filterPill { padding: 4px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; border: 1px solid var(--brand-border); background: var(--brand-surface); color: var(--brand-text-secondary); transition: all 0.15s; white-space: nowrap; }
+.filterPill:hover { border-color: var(--brand-accent); color: var(--brand-accent); background: var(--brand-accent-light); }
+.filterPill.active { background: var(--brand-accent); border-color: var(--brand-accent); color: var(--brand-surface); }
+.filterDot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.filterCreate { display: flex; gap: 4px; align-items: center; margin-left: 4px; }
+.filterCreate input { padding: 3px 8px; border: 1px solid var(--brand-border); border-radius: 4px; font-size: 12px; width: 80px; transition: border-color 0.2s; }
+.filterCreate input:focus { border-color: var(--brand-accent); outline: none; }
+.filterColorPick { width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; border-radius: 50%; }
+.filterDel { background: none; border: none; color: var(--brand-text-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; transition: color 0.15s; }
+.filterDel:hover { color: var(--brand-red); }
+
+.batchBar { background: var(--brand-accent-light); border: 1px solid var(--brand-border); border-radius: var(--radius); padding: 8px 16px; margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.deleteBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--brand-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 2;
+}
+.productCard:hover .deleteBtn { opacity: 1; }
+.deleteBtn:hover { background: var(--brand-red); }
+
+.cardActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+.productCard:hover .cardActions { opacity: 1; }
+.actionBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--brand-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.actionBtn:hover { background: var(--brand-accent); }
+
+.productGridCompact { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.productGridRelaxed { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.stockBadge { position: absolute; top: 8px; right: 8px; background: var(--brand-red); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; z-index: 1; }
+.cardTime { font-size: 11px; color: var(--brand-text-muted); margin-top: 6px; }
+.copyBtn { background: none; border: none; color: var(--brand-text-muted); cursor: pointer; font-size: 11px; padding: 2px 0; transition: color 0.15s; }
+.copyBtn:hover { color: var(--brand-accent); }
+.densityGroup { display: flex; gap: 2px; background: var(--brand-gray-6); border-radius: 6px; padding: 2px; }
+.densityBtn { border: none; background: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; color: var(--brand-text-muted); font-size: 11px; transition: all 0.15s; }
+.densityBtn.active { background: var(--brand-surface); color: var(--brand-text); box-shadow: var(--shadow); }
+.searchHistory { position: absolute; top: 100%; left: 0; right: 0; background: var(--brand-surface); border: 1px solid var(--brand-border); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 100; margin-top: 4px; max-height: 200px; overflow: auto; }
+.searchHistoryItem { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--brand-text-secondary); transition: background 0.1s; display: flex; align-items: center; gap: 8px; }
+.searchHistoryItem:hover { background: var(--brand-gray-6); color: var(--brand-text); }
+.searchHistoryItem svg { flex-shrink: 0; opacity: 0.4; }

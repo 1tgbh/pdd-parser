@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none">
+  <!-- 图标：简约数据图表 + 购物袋 -->
+  <rect x="0" y="4" width="32" height="32" rx="7" fill="#1d1d1f"/>
+  <!-- 购物袋 -->
+  <path d="M10 16h12v12a3 3 0 01-3 3H13a3 3 0 01-3-3V16z" stroke="#fff" stroke-width="1.5" fill="none"/>
+  <path d="M13 16v-3a5 5 0 0110 0v3" stroke="#fff" stroke-width="1.5" fill="none"/>
+  <!-- 数据柱 -->
+  <rect x="13" y="22" width="2" height="5" rx="1" fill="#fff" opacity="0.5"/>
+  <rect x="16" y="20" width="2" height="7" rx="1" fill="#fff" opacity="0.7"/>
+  <rect x="19" y="18" width="2" height="9" rx="1" fill="#fff"/>
+  <!-- 文字 -->
+  <text x="40" y="17" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="15" font-weight="600" fill="#1d1d1f" letter-spacing="-0.3">多多采集</text>
+  <text x="40" y="31" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif" font-size="10" fill="#86868b" letter-spacing="0.2">PDD Data Collector</text>
+</svg>

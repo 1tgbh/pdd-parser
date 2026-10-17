@@ -1,0 +1,696 @@
+.container {
+  display: flex;
+  height: calc(100vh - 68px);
+  background: var(--brand-bg);
+  margin: -24px -28px;
+  overflow: hidden;
+}
+
+.leftPanel {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--brand-surface);
+  border-right: 1px solid var(--brand-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvasArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.rightPanel {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--brand-surface);
+  border-left: 1px solid var(--brand-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.tabBar {
+  display: flex;
+  border-bottom: 1px solid var(--brand-border);
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--brand-text-secondary);
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.tab:hover {
+  color: var(--brand-accent);
+}
+
+.tabActive {
+  color: var(--brand-accent);
+  border-bottom-color: var(--brand-accent);
+}
+
+.panelBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.searchBox {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.searchBox input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.searchBox input:focus {
+  border-color: var(--brand-accent);
+}
+
+.filterRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.filterSelect {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--brand-text-secondary);
+  background: var(--brand-surface);
+  outline: none;
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  border-color: var(--brand-accent);
+}
+
+.productList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.productItem {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--brand-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.productItem:hover {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
+}
+
+.productItemActive {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
+}
+
+.productThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--brand-gray-5);
+}
+
+.productInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.productTitle {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.productImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--brand-border);
+}
+
+.productImg {
+  width: 52px;
+  height: 52px;
+  border-radius: 4px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.productImg:hover {
+  border-color: var(--brand-accent);
+}
+
+.productImgActive {
+  border-color: var(--brand-accent);
+}
+
+.uploadZone {
+  border: 2px dashed var(--brand-border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--brand-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadZone:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+}
+
+.uploadZoneDragOver {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent-light);
+  color: var(--brand-accent);
+}
+
+.uploadIcon {
+  font-size: 36px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.uploadHint {
+  font-size: 11px;
+  color: var(--brand-text-muted);
+  margin-top: 6px;
+}
+
+.historyGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.historyImg {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.historyImg:hover {
+  border-color: var(--brand-accent);
+}
+
+.canvasContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  min-height: 300px;
+  background: var(--brand-bg);
+  overflow: hidden;
+  user-select: none;
+}
+
+.canvasEmpty {
+  text-align: center;
+  color: var(--brand-text-muted);
+}
+
+.canvasEmptyIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.canvasEmptyText {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.canvasImage {
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  background: var(--brand-surface);
+  pointer-events: none;
+}
+
+.resultSection {
+  padding: 16px 24px;
+  border-top: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+}
+
+.resultHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.resultItem {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+  background: var(--brand-bg);
+}
+
+.resultItem:hover {
+  border-color: var(--brand-border);
+}
+
+.resultImg {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+.resultActions {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--brand-surface);
+  border-top: 1px solid var(--brand-border);
+}
+
+.resultCheckbox {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--brand-accent);
+  cursor: pointer;
+}
+
+.resultLabel {
+  font-size: 11px;
+  color: var(--brand-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolSection {
+  padding: 16px;
+  border-bottom: 1px solid var(--brand-border);
+}
+
+.toolLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-text);
+  margin-bottom: 8px;
+}
+
+.toolMode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.toolModeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-green);
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.presetBtn {
+  padding: 7px 4px;
+  font-size: 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
+}
+
+.presetBtn:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+}
+
+.presetBtnActive {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
+}
+
+.promptArea {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 10px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.promptArea:focus {
+  border-color: var(--brand-accent);
+}
+
+.ratioGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.ratioBtn {
+  padding: 6px 0;
+  font-size: 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
+}
+
+.ratioBtn:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+}
+
+.ratioBtnActive {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
+}
+
+.generateBtn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  justify-content: center;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--brand-border);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modalClose {
+  font-size: 18px;
+  color: var(--brand-text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  color: var(--brand-text);
+}
+
+.modalBody {
+  padding: 18px;
+}
+
+.previewImage {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.applyModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.applySearchResults {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+}
+
+.applySearchItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--brand-border);
+}
+
+.applySearchItem:last-child {
+  border-bottom: none;
+}
+
+.applySearchItem:hover {
+  background: var(--brand-bg);
+}
+
+.applySearchItemActive {
+  background: var(--brand-accent-light);
+}
+
+.applySearchThumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.applySearchTitle {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.targetRadios {
+  display: flex;
+  gap: 16px;
+}
+
+.targetRadio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.targetRadio input {
+  accent-color: var(--brand-accent);
+}
+
+.editToolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--brand-surface);
+  border-bottom: 1px solid var(--brand-border);
+  flex-shrink: 0;
+}
+
+.zoomBadge {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-text-secondary);
+  background: var(--brand-bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.canvasImgWrapper {
+  position: relative;
+  transform-origin: center center;
+  line-height: 0;
+}
+
+.cropCursor {
+  cursor: crosshair;
+}
+
+.panningCursor {
+  cursor: grabbing;
+}
+
+.cropOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cropRect {
+  position: absolute;
+  border: 2px dashed var(--brand-accent);
+  background: rgba(217, 119, 87, 0.15);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+}
+
+.batchProgressBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--brand-bg);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--brand-text);
+}
+
+.batchProgressBarInner {
+  flex: 1;
+  height: 6px;
+  background: var(--brand-gray-5);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.batchProgressBarFill {
+  height: 100%;
+  background: var(--brand-accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.batchResultGroup {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.batchResultTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-text-secondary);
+  margin-bottom: 8px;
+}
+
+.batchResultImages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.batchResultImg {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.batchCheckbox {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}

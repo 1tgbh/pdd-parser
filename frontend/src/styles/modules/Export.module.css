@@ -1,0 +1,19 @@
+/* Export 页面特定样式 */
+.left { max-height: 500px; overflow-y: auto; }
+.left > label { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--brand-border); }
+.left > label:hover { background: var(--brand-bg); }
+.selectAll { font-size: 12px; color: var(--brand-text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.checkbox { accent-color: var(--brand-accent); flex-shrink: 0; }
+.itemCover { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.itemTitle { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.itemPrice { color: var(--brand-accent); font-weight: 600; font-size: 13px; flex-shrink: 0; white-space: nowrap; }
+.formatBar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.desc { font-size: 13px; color: var(--brand-text-secondary); margin-bottom: 12px; }
+.btnFull { width: 100%; justify-content: center; padding: 12px; font-size: 14px; border-radius: 8px; }
+.gridStart { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: flex-start; }
+.templateRow { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.templateSelect { flex: 1; padding: 6px 10px; border: 1px solid var(--brand-border); border-radius: 6px; font-size: 13px; background: var(--brand-surface); cursor: pointer; }
+.tplItem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: 1px solid var(--brand-border); border-radius: 6px; }
+.tplItem:hover { background: var(--brand-bg); }
+.tplName { font-size: 13px; font-weight: 500; display: flex; align-items: center; }
+.tplActions { display: flex; gap: 4px; }

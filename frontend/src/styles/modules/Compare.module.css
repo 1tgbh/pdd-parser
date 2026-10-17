@@ -1,0 +1,193 @@
+.container { display: flex; flex-direction: column; gap: 16px; }
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+.searchInput:focus-visible { border-color: var(--brand-accent); box-shadow: 0 0 0 2px var(--brand-accent-ring); }
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--brand-accent-light);
+  border: 1px solid var(--brand-accent);
+  border-radius: 14px;
+  font-size: 12px;
+  color: var(--brand-accent-hover);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand-accent);
+  color: var(--brand-surface);
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.chipRemove:hover { background: var(--brand-accent-hover); }
+.searchDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 50;
+}
+.searchDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.1s;
+}
+.searchDropdownItem:hover { background: var(--brand-bg); }
+.searchDropdownThumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: var(--brand-gray-5);
+}
+.searchDropdownTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.searchWrapper { position: relative; flex: 1; min-width: 200px; }
+
+.compareArea {
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: auto;
+}
+.compareTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 600px;
+}
+.compareTable th,
+.compareTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--brand-gray-5);
+  vertical-align: top;
+}
+.compareTable th {
+  background: var(--brand-bg);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--brand-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.attrCell {
+  min-width: 120px;
+  max-width: 160px;
+  font-weight: 600;
+  color: var(--brand-text-secondary);
+  background: var(--brand-bg);
+  white-space: nowrap;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.productCell {
+  min-width: 200px;
+  max-width: 280px;
+}
+.productCell a {
+  color: var(--brand-blue);
+  text-decoration: none;
+}
+.productCell a:hover { text-decoration: underline; }
+.productImage {
+  width: 100%;
+  max-width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--brand-gray-5);
+}
+.priceValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brand-text);
+}
+.originalPrice {
+  font-size: 12px;
+  color: var(--brand-text-muted);
+  text-decoration: line-through;
+  margin-left: 6px;
+}
+.salesValue { font-weight: 600; }
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--brand-gray-5);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--brand-blue);
+}
+.emptyHint {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--brand-text-muted);
+  font-size: 14px;
+}
+.emptyIcon { font-size: 48px; margin-bottom: 12px; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

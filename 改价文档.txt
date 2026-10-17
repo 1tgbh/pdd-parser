@@ -1,0 +1,324 @@
+## SKU 批量改价 + AOP 自动改价 实现方案
+
+### 概述
+
+两个功能：
+1. **商品编辑页批量改价** — 一键对当前商品所有 SKU 价格按公式 `price * 倍率 + 附加金额` 重算，点击后直接写入数据库。
+2. **设置页 AOP 自动改价** — 全局开关，开启后所有读取商品数据的接口（列表、详情、导出 JSON/CSV/Excel 等）自动应用改价公式，UI 上显示标记提示。
+
+公式：`new_price = round(original_price * multiplier + fixed_amount, 2)`
+
+---
+
+### 一、后端改动 (`pdd_proxy/web/app.py`)
+
+**1. 设置接口扩展**
+
+在 `api_settings` GET/PUT 中增加 `price_markup` 配置项：
+
+```python
+# 默认值
+{"enabled": False, "multiplier": 1.5, "fixed_amount": 3.0}
+```
+
+GET 时返回 `price_markup`，PUT 时保存用户设置。存储方式与 `risk_monitor` 一致（存入 config.json）。
+
+**2. 价格改写辅助函数**
+
+新增两个辅助函数，放在 `app.py` 顶部工具区：
+
+```python
+def _get_price_markup():
+    """读取当前 price_markup 配置"""
+    cfg = load_config()
+    return cfg.get("price_markup", {"enabled": False, "multiplier": 1.5, "fixed_amount": 3.0})
+
+def _apply_markup(price, markup):
+    """对单个价格应用改价公式"""
+    if not markup["enabled"] or price <= 0:
+        return price
+    return round(price * markup["multiplier"] + markup["fixed_amount"], 2)
+
+def _apply_markup_to_goods(goods_dict, markup):
+    """对一个商品字典的所有价格字段应用改价"""
+    if not markup["enabled"]:
+        return goods_dict
+    # 商品主价格
+    for field in ["price", "original_price", "min_group_price", "price_min", "price_max"]:
+        if goods_dict.get(field, 0) > 0:
+            goods_dict[field] = _apply_markup(goods_dict[field], markup)
+    # SKU 价格
+    if "skus" in goods_dict and isinstance(goods_dict["skus"], list):
+        for sku in goods_dict["skus"]:
+            if isinstance(sku, dict):
+                if sku.get("price", 0) > 0:
+                    sku["price"] = _apply_markup(sku["price"], markup)
+                if sku.get("original_price", 0) > 0:
+                    sku["original_price"] = _apply_markup(sku["original_price"], markup)
+    if "sku_items" in goods_dict and isinstance(goods_dict["sku_items"], list):
+        for sku in goods_dict["sku_items"]:
+            if isinstance(sku, dict):
+                if sku.get("price", 0) > 0:
+                    sku["price"] = _apply_markup(sku["price"], markup)
+                if sku.get("original_price", 0) > 0:
+                    sku["original_price"] = _apply_markup(sku["original_price"], markup)
+    return goods_dict
+```
+
+**3. 在读取接口中应用改价**
+
+在以下接口返回数据前调用 `_apply_markup_to_goods`：
+
+- `api_products` — 遍历 `items` 列表
+- `api_product_detail` GET — 单个商品
+- `api_product_skus` — SKU 列表
+- `api_dashboard` — recent 列表
+- `api_top_sales`
+- `api_price_alerts`
+- `api_monitor_list` / `api_monitor_history` — 价格字段
+
+**4. 在导出函数中应用改价**
+
+在 `exporter.py` 的 `_load_goods` 函数末尾，对每个 goods dict 调用改价。需要把 markup 配置传入：
+
+- 修改 `export_json`, `export_csv`, `export_excel`, `export_for_taobao`, `export_txt`, `export_dawang`, `export_dawang_raw` 等函数
+- 在函数开始处读取 markup 配置，遍历 goods_list 时应用
+- 保持方式简单：在 `exporter.py` 中增加 `apply_markup_to_goods_list(goods_list)` 函数，由 `app.py` 调用导出前传入 markup 参数
+
+或者更简洁：在 `app.py` 的 `api_export` 中，调用导出函数前先读取 markup 配置，然后遍历修改 goods_list（但这需要改导出函数签名）。
+
+**推荐方案**：在 `exporter.py` 增加 `_apply_markup_to_list(goods_list, markup)` 辅助函数，各 export 函数开头检查 markup 参数。
+
+**5. 批量改价 API 端点**
+
+新增 `POST /api/product/<goods_id>/batch-price`：
+
+```python
+@app.route("/api/product/<goods_id>/batch-price", methods=["POST"])
+def api_batch_price(goods_id):
+    data = request.get_json() or {}
+    multiplier = float(data.get("multiplier", 1.5))
+    fixed_amount = float(data.get("fixed_amount", 3.0))
+    
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM goods WHERE goods_id = ?", (goods_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "商品不存在"}), 404
+    
+    markup = {"enabled": True, "multiplier": multiplier, "fixed_amount": fixed_amount}
+    
+    # 修改 goods 表的所有价格字段
+    price = _apply_markup(row["price"] or 0, markup)
+    original_price = _apply_markup(row["original_price"] or 0, markup)
+    min_group_price = _apply_markup(row["min_group_price"] or 0, markup)
+    
+    # 修改 skus JSON
+    skus = json.loads(row["skus"] or "[]")
+    for sku in skus:
+        if sku.get("price", 0) > 0:
+            sku["price"] = _apply_markup(sku["price"], markup)
+        if sku.get("original_price", 0) > 0:
+            sku["original_price"] = _apply_markup(sku["original_price"], markup)
+    
+    now = datetime.now().isoformat()
+    conn.execute(
+        "UPDATE goods SET price=?, original_price=?, min_group_price=?, skus=?, updated_at=? WHERE goods_id=?",
+        (price, original_price, min_group_price, json.dumps(skus, ensure_ascii=False), now, goods_id)
+    )
+    
+    # 同步更新 sku_items 表
+    sku_rows = conn.execute("SELECT id, price, original_price FROM sku_items WHERE goods_id=?", (goods_id,)).fetchall()
+    for sr in sku_rows:
+        new_p = _apply_markup(sr["price"] or 0, markup)
+        new_op = _apply_markup(sr["original_price"] or 0, markup)
+        conn.execute("UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
+                     (new_p, new_op, now, sr["id"]))
+    
+    # 更新 price_min / price_max
+    all_prices = [s.get("price", 0) for s in skus if s.get("price", 0) > 0]
+    if all_prices:
+        conn.execute("UPDATE goods SET price_min=?, price_max=? WHERE goods_id=?",
+                     (min(all_prices), max(all_prices), goods_id))
+    
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "price": price, "skus_count": len(skus)})
+```
+
+---
+
+### 二、前端改动
+
+**1. 类型定义** (`frontend/src/types/index.ts`)
+
+在 `SettingsData` 接口中增加：
+
+```typescript
+price_markup?: {
+  enabled: boolean;
+  multiplier: number;
+  fixed_amount: number;
+};
+```
+
+**2. API 函数** (`frontend/src/api/index.ts`)
+
+增加：
+
+```typescript
+export async function batchPriceUpdate(
+  goodsId: string,
+  multiplier: number,
+  fixedAmount: number
+): Promise<{ ok: boolean; price: number; skus_count: number }> {
+  const { data } = await client.post(`/product/${goodsId}/batch-price`, {
+    multiplier, fixed_amount: fixedAmount,
+  });
+  return data;
+}
+```
+
+**3. Hook** (`frontend/src/hooks/useApi.ts`)
+
+增加：
+
+```typescript
+export function useBatchPriceUpdate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ goodsId, multiplier, fixedAmount }: {
+      goodsId: string; multiplier: number; fixedAmount: number;
+    }) => batchPriceUpdate(goodsId, multiplier, fixedAmount),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ['product', v.goodsId] });
+      qc.invalidateQueries({ queryKey: ['products'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+```
+
+**4. 设置页面** (`frontend/src/pages/Settings.tsx`)
+
+新增一个卡片，位于「风控检测」卡片之前：
+
+```tsx
+<div className="card">
+  <div className="card-header">批量价格修改（自动改价）</div>
+  <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0 }}>
+      开启后，系统自动对所有商品价格按公式「价格 × 倍率 + 附加金额」进行改价。
+      显示、导出、列表等所有读取场景均生效。
+    </p>
+    <label style={{ fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <input type="checkbox" checked={priceMarkup.enabled}
+        onChange={e => setPriceMarkup(prev => ({ ...prev, enabled: e.target.checked }))}
+        style={{ width: 16, height: 16 }} />
+      启用自动改价
+    </label>
+    {priceMarkup.enabled && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>倍率</label>
+          <input type="number" step="0.01" min="0.01" value={priceMarkup.multiplier}
+            onChange={e => setPriceMarkup(prev => ({ ...prev, multiplier: parseFloat(e.target.value) || 1 }))}
+            style={{ ...inputStyle, width: 80, marginTop: 0 }} />
+        </div>
+        <span style={{ fontSize: 16, marginTop: 16 }}>×</span>
+        <span style={{ fontSize: 13, color: 'var(--brand-text-muted)', marginTop: 16 }}>原价 +</span>
+        <div>
+          <label style={{ fontSize: 12, color: 'var(--brand-text-secondary)' }}>附加金额</label>
+          <input type="number" step="0.01" value={priceMarkup.fixed_amount}
+            onChange={e => setPriceMarkup(prev => ({ ...prev, fixed_amount: parseFloat(e.target.value) || 0 }))}
+            style={{ ...inputStyle, width: 80, marginTop: 0 }} />
+        </div>
+        <span style={{ fontSize: 13, color: 'var(--brand-text-muted)', marginTop: 16 }}>元</span>
+      </div>
+    )}
+    <p style={{ fontSize: 12, color: 'var(--brand-text-muted)', margin: 0 }}>
+      公式：新价格 = 原价 × {priceMarkup.multiplier} + {priceMarkup.fixed_amount} 元
+    </p>
+  </div>
+</div>
+```
+
+在 `useEffect` 中初始化 `priceMarkup` 从 settings 读取，在 `handleSave` 中将其加入 payload。
+
+**5. 商品详情页** (`frontend/src/pages/ProductDetail.tsx`)
+
+在编辑模式工具栏增加「批量改价」按钮：
+
+```tsx
+// 新增 state
+const [showBatchPrice, setShowBatchPrice] = useState(false);
+const [batchMultiplier, setBatchMultiplier] = useState(1.5);
+const [batchFixedAmount, setBatchFixedAmount] = useState(3);
+const batchPriceMut = useBatchPriceUpdate();
+
+// 在 isEdit 的工具栏中增加按钮
+{isEdit && (
+  <button className="btn btn-outline btn-sm" onClick={() => setShowBatchPrice(true)}>
+    批量改价
+  </button>
+)}
+```
+
+弹窗 UI：倍率输入 + 附加金额输入 + 公式预览 + 「应用」按钮。点击「应用」后调用 `batchPriceMut.mutateAsync()` 直接写入数据库，成功后刷新商品数据。
+
+**6. Layout 全局 AOP 提示** (`frontend/src/components/Layout.tsx`)
+
+在 main 内容区顶部增加一个提示条，当 `settings.price_markup.enabled` 为 true 时显示：
+
+```tsx
+{settings?.price_markup?.enabled && (
+  <div style={{
+    background: '#FFF7ED', border: '1px solid #FDBA74', borderRadius: 8,
+    padding: '8px 16px', margin: '0 0 12px', fontSize: 13, color: '#9A3412',
+    display: 'flex', alignItems: 'center', gap: 8,
+  }}>
+    <span style={{ fontSize: 16 }}>💰</span>
+    自动改价已开启：所有价格 = 原价 × {settings.price_markup.multiplier} + {settings.price_markup.fixed_amount} 元
+  </div>
+)}
+```
+
+---
+
+### 三、导出模块改动 (`pdd_proxy/exporter.py`)
+
+在 `_load_goods` 函数末尾，增加可选的 markup 参数：
+
+```python
+def _load_goods(rows, markup=None):
+    # ... 现有逻辑 ...
+    for g in goods_list:
+        # ... 现有 sku 补充逻辑 ...
+        if markup and markup.get("enabled"):
+            _apply_markup_to_goods(g, markup)
+    return goods_list
+```
+
+在 `app.py` 的 `api_export` 中，读取 markup 配置并传入各导出函数。
+
+---
+
+### 四、测试计划
+
+1. 设置页：保存 price_markup 配置，刷新页面确认持久化
+2. 开启 AOP 后：商品列表、详情页价格显示已改价，Layout 显示提示条
+3. 关闭 AOP 后：价格恢复原始值
+4. 编辑页批量改价：设置倍率 1.5 + 附加 3 元，确认所有 SKU 价格正确更新
+5. 导出 JSON：确认导出数据中的价格是改价后的值
+6. 导出 CSV/Excel：同上验证
+7. 边界情况：价格为 0 的 SKU 不改价；负数不改价
+
+---
+
+### 五、假设与默认值
+
+- 默认倍率：1.5，默认附加金额：3.0 元
+- 价格为 0 或负数时保持原值不改
+- AOP 改价在读取时动态应用，数据库中保持原始价格（批量改价端点除外，它直接修改 DB）
+- 批量改价端点是永久性修改，不可撤销
+- Layout 提示条使用橙色配色，与现有风格一致

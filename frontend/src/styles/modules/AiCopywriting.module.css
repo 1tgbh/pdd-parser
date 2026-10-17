@@ -1,0 +1,402 @@
+.container {
+  display: flex;
+  gap: 20px;
+  min-height: calc(100vh - 120px);
+}
+
+.leftCol {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rightCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--brand-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardBody {
+  padding: 16px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.searchInput:focus-visible {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+.productList {
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.productItem {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  align-items: center;
+}
+
+.productItem:hover {
+  background: var(--brand-bg);
+  border-color: var(--brand-border);
+}
+
+.productItemActive {
+  background: var(--brand-accent-light);
+  border-color: var(--brand-accent);
+}
+
+.productThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--brand-gray-5);
+}
+
+.productTitle {
+  font-size: 12px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.currentInfo {
+  margin-top: 12px;
+}
+
+.infoRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.infoLabel {
+  color: var(--brand-text-secondary);
+  white-space: nowrap;
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  color: var(--brand-text);
+  word-break: break-all;
+}
+
+.emptyHint {
+  text-align: center;
+  padding: 24px;
+  color: var(--brand-text-muted);
+  font-size: 13px;
+}
+
+.typeBar,
+.styleBar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.typeBtn,
+.styleBtn {
+  padding: 7px 16px;
+  font-size: 13px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.typeBtn:hover,
+.styleBtn:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+}
+
+.typeBtnActive,
+.styleBtnActive {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
+}
+
+.customPrompt {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 6px;
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.customPrompt:focus-visible {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-text);
+  margin-bottom: 8px;
+}
+
+.generateBtn {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.resultsArea {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultCard {
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.resultCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--brand-border);
+  background: var(--brand-bg);
+}
+
+.resultCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-text);
+}
+
+.resultCardActions {
+  display: flex;
+  gap: 6px;
+}
+
+.resultCardBody {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--brand-text);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.resultCardBodyList {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultListItem {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--brand-text);
+  padding: 6px 10px;
+  background: var(--brand-bg);
+  border-radius: 6px;
+}
+
+.copyBtn,
+.applyBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
+}
+
+.copyBtn:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+}
+
+.applyBtn {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
+}
+
+.applyBtn:hover {
+  opacity: 0.9;
+}
+
+.copied {
+  border-color: var(--brand-green);
+  color: var(--brand-green);
+}
+
+.editBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  border: 1px solid var(--brand-accent);
+  background: var(--brand-accent-light);
+  color: var(--brand-accent-hover);
+}
+
+.editBtn:hover {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-surface);
+}
+
+.editSaveBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--brand-green);
+  background: var(--brand-green);
+  color: var(--brand-surface);
+  transition: opacity 0.15s;
+}
+
+.editSaveBtn:hover {
+  opacity: 0.85;
+}
+
+.editCancelBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-surface);
+  color: var(--brand-text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.editCancelBtn:hover {
+  border-color: var(--brand-text-muted);
+  color: var(--brand-text);
+}
+
+.editArea {
+  padding: 12px 16px;
+}
+
+.editInput {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid var(--brand-accent);
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.editInput:focus-visible {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.15);
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid var(--brand-accent);
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.8;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.editTextarea:focus-visible {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.15);
+}
+
+.applyAllBtn {
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  margin-top: 8px;
+  align-self: flex-end;
+}
+
+.emptyResult {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--brand-text-muted);
+  font-size: 14px;
+  background: var(--brand-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.emptyResultIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}

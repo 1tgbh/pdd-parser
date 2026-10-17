@@ -1,0 +1,12 @@
+.priceCell { color: var(--brand-orange); font-weight: 600; }
+.timeCell { color: var(--brand-text-secondary); }
+.titleCell { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skeletonCard { height: 80px; background: var(--brand-gray-5); border-radius: 8px; }
+.fadeIn { animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.fadeInDelay1 { animation-delay: 0.05s; }
+.fadeInDelay2 { animation-delay: 0.1s; }
+.fadeInDelay3 { animation-delay: 0.15s; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,29 @@
+{
+  "image_api": {
+    "base_url": "https://grsai.dakka.com.cn",
+    "model": "gpt-image-2",
+    "api_key": ""
+  },
+  "text_api": {
+    "base_url": "https://api.openai.com/v1",
+    "model": "gpt-4o-mini",
+    "api_key": ""
+  },
+  "wechat_export": {
+    "deliver_method": 0,
+    "seven_day_return": 1,
+    "freight_insurance": 0,
+    "default_stock": 999,
+    "brand_id": "2100000000",
+    "listing": 0
+  },
+  "risk_monitor": {
+    "enabled": false,
+    "interval": 30
+  },
+  "price_markup": {
+    "enabled": false,
+    "multiplier": 1.5,
+    "fixed_amount": 3
+  }
+}

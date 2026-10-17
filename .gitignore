@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+venv/
+.venv/
+env/
+Lib/
+Scripts/
+python/
+
+# Runtime data (databases, logs, uploads, caches, exports)
+pdd_proxy/data/*.db
+pdd_proxy/data/*.log
+pdd_proxy/data/config.json
+pdd_proxy/data/exports/
+pdd_proxy/data/images/
+pdd_proxy/data/image_cache/
+pdd_proxy/data/ai_images/
+pdd_proxy/data/ai_uploads/
+pdd_proxy/data/imports/
+
+# Certificates (generated per-install, never commit)
+pdd_proxy/certs/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+*.map
+
+# IDE / OS
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Scratch files
+lint.txt
+lint.json
