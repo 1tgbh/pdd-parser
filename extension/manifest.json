@@ -1,8 +1,25 @@
 {
   "manifest_version": 3,
   "name": "PDD Parser 采集助手",
-  "version": "1.0.0",
-  "description": "拼多多商品数据采集 - 浏览器扩展模式（真实浏览器环境，无需代理/证书）",
+  "version": "1.1.0",
+  "description": "拼多多商品数据采集 - 浏览商品时自动捕获完整数据（真实浏览器环境，无需代理/证书）",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PDD Parser 采集助手"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "http://127.0.0.1:5000/*",
+    "http://localhost:5000/*"
+  ],
   "content_scripts": [
     {
       "matches": [
@@ -12,6 +29,15 @@
       "js": ["inject.js"],
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://*.yangkeduo.com/*",
+        "*://*.pinduoduo.com/*"
+      ],
+      "js": ["bridge.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED"
     }
   ]
 }

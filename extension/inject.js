@@ -32,6 +32,31 @@
   var priceMap = {};
   var skuPriceMap = {};
 
+  // ======== 采集开关（由扩展 bridge.js 通过 postMessage 下发） ========
+  if (typeof window.__PDD_CAPTURE_ENABLED === 'undefined') window.__PDD_CAPTURE_ENABLED = true;
+  window.addEventListener('message', function(ev) {
+    var d = ev.data;
+    if (d && d.type === 'PDD_CAPTURE_TOGGLE') window.__PDD_CAPTURE_ENABLED = !!d.enabled;
+  });
+
+  // ======== 页面内采集成功浮窗提示 ========
+  var _toastEl = null;
+  function showToast(gid, title) {
+    try {
+      if (!_toastEl || !_toastEl.parentNode) {
+        _toastEl = document.createElement('div');
+        _toastEl.style.cssText = 'position:fixed;top:12px;right:12px;z-index:2147483647;background:rgba(20,20,40,.92);color:#fff;padding:8px 14px;border-radius:8px;font:13px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none;transition:opacity .4s;max-width:300px;';
+        (document.documentElement || document.body || document).appendChild(_toastEl);
+      }
+      var s = (title || String(gid) || '');
+      if (s.length > 22) s = s.substring(0, 22) + '…';
+      _toastEl.textContent = '✓ 已采集 ' + s;
+      _toastEl.style.opacity = '1';
+      clearTimeout(_toastEl._tm);
+      _toastEl._tm = setTimeout(function() { if (_toastEl) _toastEl.style.opacity = '0'; }, 2500);
+    } catch(e) {}
+  }
+
   function toSkuSpecsArray(obj) {
     if (Array.isArray(obj)) return obj;
     if (obj && typeof obj === 'object') {
@@ -117,6 +142,7 @@
   function postGoods(data) {
     var gid = String(data.goods_id || '');
     if (!gid) return;
+    if (window.__PDD_CAPTURE_ENABLED === false) return;
     var t = (data.title || '').trim();
     if (!t || !isValidTitle(t)) {
       console.log('[PDD] Rejected bad/missing title: ' + gid + ' title=' + (t||'').substring(0, 50));
@@ -137,6 +163,16 @@
       var xhr = new XMLHttpRequest();
       xhr.open('POST', INGEST_URL, true);
       xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          showToast(gid, t);
+          try {
+            window.postMessage({type:'PDD_CAPTURED', goods_id: gid, title: t,
+              price: data.price || 0, skus: (data.skus || []).length,
+              images: (data.main_images || []).length}, '*');
+          } catch(e) {}
+        }
+      };
       var postData = Object.assign({}, data);
       delete postData.skuImageMap;
       if (capturedRawInitData) {
@@ -1472,5 +1508,26 @@
     setTimeout(function() { _mo.disconnect(); }, 45000);
   }
 
-  console.log('[PDD] Goods extraction v10 loaded - score-based dedup, early script scanning');
+  // ======== SPA 路由切换：重置捕获状态并重新扫描 ========
+  function onNav() {
+    capturedRaw = null;
+    capturedMall = null;
+    capturedRawInitData = null;
+    setTimeout(scanWindowGlobals, 300);
+    setTimeout(scanScriptTagsForGoods, 600);
+    setTimeout(scrapeDOMAndPost, 1500);
+  }
+  try {
+    ['pushState', 'replaceState'].forEach(function(m) {
+      var orig = history[m];
+      history[m] = function() {
+        var r = orig.apply(this, arguments);
+        setTimeout(onNav, 0);
+        return r;
+      };
+    });
+    window.addEventListener('popstate', onNav);
+  } catch(e) {}
+
+  console.log('[PDD] Goods extraction v11 loaded - score-based dedup, early script scanning, SPA nav, toggle support');
 })();

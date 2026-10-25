@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PDD Parser 采集助手</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 280px; padding: 16px;
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #f6f7fb; color: #222;
+  }
+  .header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .header img { width: 36px; height: 36px; }
+  .header h1 { font-size: 15px; font-weight: 600; }
+  .header .ver { font-size: 11px; color: #999; }
+  .card {
+    background: #fff; border-radius: 10px; padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 10px;
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  .row + .row { margin-top: 10px; }
+  .label { font-size: 13px; color: #555; }
+  .status { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.on { background: #4caf50; box-shadow: 0 0 4px #4caf5088; }
+  .dot.off { background: #e02e24; }
+  .count { font-size: 22px; font-weight: 700; color: #e02e24; }
+  .count-sub { font-size: 11px; color: #999; }
+  /* 开关 */
+  .switch { position: relative; width: 40px; height: 22px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; border-radius: 22px;
+    background: #ccc; transition: .2s; cursor: pointer;
+  }
+  .slider::before {
+    content: ""; position: absolute; width: 16px; height: 16px;
+    left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: .2s;
+  }
+  .switch input:checked + .slider { background: #e02e24; }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+  .btn {
+    display: block; width: 100%; padding: 9px 0; border: none; border-radius: 8px;
+    background: #e02e24; color: #fff; font-size: 13px; cursor: pointer;
+    text-align: center; text-decoration: none;
+  }
+  .btn:active { opacity: .85; }
+  .tip { font-size: 11px; color: #999; line-height: 1.6; margin-top: 2px; }
+  .warn { color: #b71c1c; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon48.png" alt="">
+    <div>
+      <h1>PDD Parser 采集助手</h1>
+      <span class="ver" id="ver"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <span class="label">后端服务 (127.0.0.1:5000)</span>
+      <span class="status"><span class="dot off" id="dot"></span><span id="statusText">检测中…</span></span>
+    </div>
+    <div class="row">
+      <span class="label">今日已采集</span>
+      <span><span class="count" id="count">0</span> <span class="count-sub">个商品</span></span>
+    </div>
+    <div class="row">
+      <span class="label">自动采集</span>
+      <label class="switch">
+        <input type="checkbox" id="toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <a class="btn" id="openAdmin" href="http://127.0.0.1:5000" target="_blank">打开管理后台</a>
+
+  <p class="tip" id="tip">浏览商品页时自动捕获数据，无需其他操作。</p>
+  <p class="tip">提示：建议单标签页浏览采集，勿多标签同时打开商品页。</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>
