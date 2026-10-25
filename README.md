@@ -55,7 +55,7 @@ cd pdd-spider
 cd pdd_proxy
 pip install -r requirements.txt
 
-# 安装 mitmproxy CA 证书（首次使用，需管理员权限）
+# 安装 mitmproxy CA 证书（仅 --proxy 代理模式需要；扩展模式可跳过）
 # 在项目根目录右键以管理员身份运行 install_cert.bat（证书不存在时会自动生成）
 ..\install_cert.bat
 
@@ -73,15 +73,20 @@ cp -r dist/* ../pdd_proxy/frontend/dist/
 ```bash
 cd pdd_proxy
 
-# 启动代理服务 + Web 后台
+# 启动 Web 后台（默认浏览器扩展模式，无需代理/证书）
 python start.py
+
+# 备选：MITM 代理模式（需管理员权限 + 已安装 CA 证书）
+python start.py --proxy
 ```
 
 启动后：
 
-1. 浏览器会自动打开拼多多，登录账号
-2. 正常浏览商品详情页，数据自动采集
-3. 访问 `http://127.0.0.1:5000` 查看采集结果
+1. 首次使用在 Chrome/Edge 的 `chrome://extensions` 开启开发者模式，
+   加载本仓库 `extension/` 目录（只需一次）
+2. 浏览器会自动打开拼多多，登录账号
+3. 正常浏览商品详情页，数据自动采集
+4. 访问 `http://127.0.0.1:5000` 查看采集结果
 
 ### 配置 AI 功能（可选）
 
@@ -97,7 +102,6 @@ pdd-spider/
 ├── pdd_proxy/
 │   ├── start.py              # 主启动入口
 │   ├── service.py            # MITM 代理拦截逻辑 + 数据库初始化
-│   ├── inject.js             # 注入到拼多多页面的 JS 采集脚本
 │   ├── exporter.py           # 数据导出模块
 │   ├── storage.py            # 数据存储模块
 │   ├── parser.py             # 数据解析模块
@@ -106,6 +110,9 @@ pdd-spider/
 │   │   └── ai.py             # AI 图片/文案服务模块
 │   ├── frontend/dist/        # React 前端构建产物
 │   └── data/                 # 运行时数据（数据库、图片等）
+├── extension/
+│   ├── manifest.json         # Chrome MV3 扩展清单
+│   └── inject.js             # 页面采集脚本（扩展 content script / 代理注入共用）
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/            # 页面组件

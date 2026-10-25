@@ -71,20 +71,36 @@ logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
 sys.path.insert(0, str(_BASE_DIR))
 
+from monitor_scheduler import start_scheduler
+
 DIST_DIR: Path = _BASE_DIR / "frontend" / "dist"
 DATA_DIR: Path = _BASE_DIR / "data"
 DB_PATH: Path = DATA_DIR / "goods.db"
 IMAGES_DIR: Path = DATA_DIR / "images"
 EXPORT_DIR: Path = DATA_DIR / "exports"
 
+_AI_IMAGE_DIRS = ("ai_images", "ai_uploads")
+_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+_IMAGE_TARGETS = {"main", "detail"}
+
 app = Flask(__name__, static_folder=None)
 
 
 @app.after_request
 def add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    # /api/ingest 由注入到商品页面的脚本跨域调用，必须允许任意来源；
+    # 其余 API 仅允许本机来源，防止任意网站读取本地数据/配置。
+    if request.path == "/api/ingest":
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    else:
+        origin = request.headers.get("Origin", "")
+        if _re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Vary"] = "Origin"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
 
@@ -577,6 +593,8 @@ def api_package() -> Any:
             zf.writestr("数据/goods.json", json.dumps(goods_list, ensure_ascii=False, indent=2))
             if include_images:
                 import requests as _req
+                import random as _rand
+                import time as _t
                 _dl_headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.pinduoduo.com/"}
                 for g in goods_list:
                     gid = g["goods_id"]
@@ -586,6 +604,7 @@ def api_package() -> Any:
                     for idx, url in enumerate(all_imgs):
                         if not url or not url.startswith("http"): continue
                         try:
+                            _t.sleep(_rand.uniform(0.2, 0.8))  # 随机间隔，降低风控风险
                             resp = _req.get(url, headers=_dl_headers, timeout=15, verify=False)
                             if resp.status_code == 200 and len(resp.content) > 100:
                                 fname = f"主图_{idx+1}.jpg" if idx < len(g["main_images"]) else f"详情图_{idx-len(g['main_images'])+1}.jpg"
@@ -635,7 +654,7 @@ def api_import_preview() -> Any:
         return jsonify({"error": "仅支持 CSV 和 XLSX 格式"}), 400
     tmp_dir = DATA_DIR / "imports"
     tmp_dir.mkdir(parents=True, exist_ok=True)
-    tmp_path = tmp_dir / f"preview_{f.filename}"
+    tmp_path = tmp_dir / f"preview_{int(time.time() * 1000)}{suffix}"
     f.save(str(tmp_path))
     try:
         result = preview_file(str(tmp_path))
@@ -661,7 +680,7 @@ def api_import() -> Any:
         return jsonify({"error": "仅支持 CSV、XLSX 和 JSON 格式"}), 400
     tmp_dir = DATA_DIR / "imports"
     tmp_dir.mkdir(parents=True, exist_ok=True)
-    tmp_path = tmp_dir / f"import_{f.filename}"
+    tmp_path = tmp_dir / f"import_{int(time.time() * 1000)}{suffix}"
     f.save(str(tmp_path))
     # JSON 格式走专门的导入函数
     if suffix == ".json":
@@ -726,10 +745,11 @@ def api_import_raw_json() -> Any:
     tmp_dir.mkdir(parents=True, exist_ok=True)
     
     file_paths = []
-    for f in files:
+    for i, f in enumerate(files):
         if not f.filename:
             continue
-        tmp_path = tmp_dir / f"import_{f.filename}"
+        suffix = Path(f.filename).suffix.lower() or ".json"
+        tmp_path = tmp_dir / f"import_{int(time.time() * 1000)}_{i}{suffix}"
         f.save(str(tmp_path))
         file_paths.append(str(tmp_path))
     
@@ -1526,7 +1546,9 @@ def api_ai_use_image():
     goods_id = data.get("goods_id", "")
     image_path = data.get("image_path", "")
     target = data.get("target", "main")  # main or detail
-    
+
+    if target not in _IMAGE_TARGETS:
+        return jsonify({"error": "target 只能是 main 或 detail"}), 400
     if not goods_id or not image_path:
         return jsonify({"error": "缺少参数"}), 400
     
@@ -1548,11 +1570,27 @@ def api_ai_use_image():
     return jsonify({"ok": True, "images": images})
 
 
+def _safe_data_path(base: Path, *parts: str) -> Path | None:
+    """将相对路径解析到 base 目录下，拒绝目录穿越。"""
+    try:
+        full = base.joinpath(*parts).resolve()
+        full.relative_to(base.resolve())
+    except (ValueError, OSError):
+        return None
+    return full
+
+
 @app.route("/api/ai-image/<path:filepath>")
 def serve_ai_image(filepath):
-    """提供 AI 生成图片的访问"""
-    full_path = DATA_DIR / filepath
-    if not full_path.exists():
+    """提供 AI 生成图片的访问（仅限 ai_images/ai_uploads 目录下的图片）"""
+    full_path = _safe_data_path(DATA_DIR, filepath)
+    if full_path is None:
+        return "Not found", 404
+    rel = full_path.relative_to(DATA_DIR.resolve())
+    if (len(rel.parts) < 2 or rel.parts[0] not in _AI_IMAGE_DIRS
+            or full_path.suffix.lower() not in _IMAGE_EXTENSIONS):
+        return "Not found", 404
+    if not full_path.is_file():
         return "Not found", 404
     return send_file(str(full_path))
 
@@ -1648,7 +1686,7 @@ def api_fill_background():
 
         return jsonify({
             "ok": True,
-            "url": f"/api/ai-image/{out_path.name}",
+            "url": f"/api/ai-image/ai_uploads/{out_path.name}",
         })
     except Exception as e:
         return jsonify({"error": f"Fill background failed: {e}"}), 500
@@ -2009,10 +2047,12 @@ def api_ai_upload_image():
     if "file" not in request.files:
         return jsonify({"error": "没有文件"}), 400
     file = request.files["file"]
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in _IMAGE_EXTENSIONS:
+        return jsonify({"error": "仅支持 jpg/png/webp/gif 图片"}), 400
     upload_dir = DATA_DIR / "ai_uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
-    ext = file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "jpg"
-    filename = f"upload_{int(time.time() * 1000)}.{ext}"
+    filename = f"upload_{int(time.time() * 1000)}{ext}"
     filepath = upload_dir / filename
     file.save(str(filepath))
     return jsonify({"ok": True, "url": f"/api/ai-image/ai_uploads/{filename}"})
@@ -2194,13 +2234,17 @@ def api_upload_image(goods_id):
     
     file = request.files["file"]
     target = request.form.get("target", "main")
-    
+    if target not in _IMAGE_TARGETS:
+        return jsonify({"error": "target 只能是 main 或 detail"}), 400
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in _IMAGE_EXTENSIONS:
+        return jsonify({"error": "仅支持 jpg/png/webp/gif 图片"}), 400
+
     # 保存文件
     img_dir = DATA_DIR / "images" / goods_id
     img_dir.mkdir(parents=True, exist_ok=True)
-    
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
-    filename = f"upload_{int(time.time() * 1000)}.{ext}"
+
+    filename = f"upload_{int(time.time() * 1000)}{ext}"
     filepath = img_dir / filename
     file.save(str(filepath))
     
@@ -2225,8 +2269,10 @@ def api_upload_image(goods_id):
 @app.route("/api/local-image/<goods_id>/<filename>")
 def serve_local_image(goods_id, filename):
     """提供本地上传图片的访问"""
-    path = DATA_DIR / "images" / goods_id / filename
-    if not path.exists():
+    images_root = DATA_DIR / "images"
+    path = _safe_data_path(images_root, goods_id, filename)
+    if (path is None or not path.is_file()
+            or path.suffix.lower() not in _IMAGE_EXTENSIONS):
         return "Not found", 404
     return send_file(str(path))
 
@@ -2237,7 +2283,11 @@ def api_reorder_images(goods_id):
     data = request.get_json() or {}
     target = data.get("target", "main")
     new_order = data.get("order", [])
-    
+    if target not in _IMAGE_TARGETS:
+        return jsonify({"error": "target 只能是 main 或 detail"}), 400
+    if not isinstance(new_order, list):
+        return jsonify({"error": "order 必须是数组"}), 400
+
     conn = get_conn()
     conn.execute(f"UPDATE goods SET {target}_images = ?, updated_at = ? WHERE goods_id = ?",
                 (json.dumps(new_order), datetime.now().isoformat(), goods_id))
@@ -2327,7 +2377,7 @@ if __name__ == "__main__":
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     start_scheduler()
-    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
+    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
 
 
 

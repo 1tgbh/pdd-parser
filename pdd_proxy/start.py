@@ -2,7 +2,12 @@
 """
 拼多多商品采集服务 - 一键启动版
 
-双击运行，自动完成：
+默认（扩展模式，推荐）：
+    1. 启动 Web 管理后台
+    2. 自动打开浏览器访问拼多多
+    3. 浏览器扩展捕获商品数据（真实浏览器环境，无需代理/证书）
+
+--proxy（MITM 代理模式，备选）：
     1. 设置系统代理
     2. 启动 mitmproxy 监听
     3. 自动打开浏览器访问拼多多
@@ -24,6 +29,13 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# 兼容 GBK 控制台（直接运行 start.py 而非经 start.bat 时）
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 if '| packaged by' in sys.version:
     _ver = sys.version
@@ -148,15 +160,10 @@ def open_browser(url: str):
 
 # ==================== 主流程 ====================
 
-async def run_proxy(port: int):
-    from service import init_db, PddInterceptor
-    init_db()
-    
-    print("\n" + "=" * 55)
-    print("    拼多多商品自动采集服务")
-    print("=" * 55)
-    
-    # 检查前端构建产物
+EXTENSION_DIR = Path(__file__).resolve().parent.parent / "extension"
+
+
+def _check_frontend_dist():
     if not DIST_DIR.is_dir() or not (DIST_DIR / "index.html").is_file():
         print("\n[0/4] 构建前端...")
         if FRONTEND_DIR.is_dir() and shutil.which("npm"):
@@ -164,18 +171,78 @@ async def run_proxy(port: int):
             print("  [OK] 前端构建完成")
         else:
             print("  [WARN] 前端未构建，管理后台可能无法访问")
-    
-    # 注册退出时恢复代理
-    atexit.register(restore_system_proxy)
-    
-    # Step 1: 启动 Web 管理后台
-    web_port = 5000
-    print(f"\n[1/5] 启动 Web 管理后台...")
+
+
+def _start_web_thread(web_port: int):
     def run_web():
+        from monitor_scheduler import start_scheduler
         from web.app import app
+        start_scheduler()
         app.run(host="127.0.0.1", port=web_port, debug=False, use_reloader=False)
     web_thread = threading.Thread(target=run_web, daemon=True)
     web_thread.start()
+    return web_thread
+
+
+async def run_server():
+    """扩展模式：只启动 Web 后台 + 打开浏览器，无需代理和证书。"""
+    from service import init_db
+    init_db()
+
+    print("\n" + "=" * 55)
+    print("    拼多多商品自动采集服务（浏览器扩展模式）")
+    print("=" * 55)
+
+    _check_frontend_dist()
+
+    web_port = 5000
+    print(f"\n[1/3] 启动 Web 管理后台...")
+    _start_web_thread(web_port)
+    await asyncio.sleep(0.5)
+    print(f"  [OK] 管理后台: http://127.0.0.1:{web_port}")
+
+    print(f"\n[2/3] 打开浏览器...")
+    open_browser(PDD_URL)
+
+    print(f"\n[3/3] 就绪!")
+    print(f"  管理后台: http://127.0.0.1:{web_port}")
+    print(f"  数据目录: {Path(__file__).resolve().parent / 'data'}")
+    print(f"\n  {'='*45}")
+    print(f"  首次使用请安装浏览器扩展（只需一次）：")
+    print(f"  1. Chrome/Edge 打开 chrome://extensions")
+    print(f"  2. 开启右上角「开发者模式」")
+    print(f"  3. 点「加载已解压的扩展程序」，选择目录：")
+    print(f"     {EXTENSION_DIR}")
+    print(f"  4. 然后登录拼多多，正常浏览商品即可自动采集")
+    print(f"  {'='*45}")
+    print(f"\n  按 Ctrl+C 停止服务\n")
+
+    try:
+        while True:
+            await asyncio.sleep(3600)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        print("服务已停止")
+
+
+async def run_proxy(port: int):
+    from service import init_db, PddInterceptor
+    init_db()
+
+    print("\n" + "=" * 55)
+    print("    拼多多商品自动采集服务（代理模式）")
+    print("=" * 55)
+
+    _check_frontend_dist()
+
+    # 注册退出时恢复代理
+    atexit.register(restore_system_proxy)
+
+    # Step 1: 启动 Web 管理后台
+    web_port = 5000
+    print(f"\n[1/5] 启动 Web 管理后台...")
+    _start_web_thread(web_port)
     await asyncio.sleep(0.5)
     print(f"  [OK] 管理后台: http://127.0.0.1:{web_port}")
     
@@ -183,11 +250,10 @@ async def run_proxy(port: int):
     print(f"\n[2/5] 启动代理监听...")
     print(f"  代理地址: 127.0.0.1:{port}")
     
-    # 便携模式：如果存在 bundled certs 目录，使用它作为 confdir
-    opts_kwargs = dict(listen_port=port, listen_host="127.0.0.1")
-    if CERTS_DIR.is_dir():
-        opts_kwargs["confdir"] = str(CERTS_DIR)
-        print(f"  [OK] 使用内置证书目录: {CERTS_DIR}")
+    # 使用项目内证书目录作为 mitmproxy confdir；
+    # 首次启动时 mitmproxy 会自动生成唯一的 CA 证书（私钥不随仓库分发）
+    CERTS_DIR.mkdir(parents=True, exist_ok=True)
+    opts_kwargs = dict(listen_port=port, listen_host="127.0.0.1", confdir=str(CERTS_DIR))
     
     opts = Options(**opts_kwargs)
     master = DumpMaster(opts)
@@ -244,19 +310,23 @@ async def run_proxy(port: int):
 
 
 def main():
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    
-    # 检查是否以管理员权限运行（Windows）
-    if get_os() == "Windows":
-        try:
-            import ctypes
-            if not ctypes.windll.shell32.IsUserAnAdmin():
-                print("  [WARN] 建议以管理员身份运行，以便自动设置系统代理")
-                print("  右键点击 -> 以管理员身份运行\n")
-        except Exception:
-            pass
-    
-    asyncio.run(run_proxy(port))
+    use_proxy = "--proxy" in sys.argv
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    port = int(args[0]) if args else 8080
+
+    if use_proxy:
+        # MITM 代理模式：需要管理员权限设置系统代理
+        if get_os() == "Windows":
+            try:
+                import ctypes
+                if not ctypes.windll.shell32.IsUserAnAdmin():
+                    print("  [WARN] 建议以管理员身份运行，以便自动设置系统代理")
+                    print("  右键点击 -> 以管理员身份运行\n")
+            except Exception:
+                pass
+        asyncio.run(run_proxy(port))
+    else:
+        asyncio.run(run_server())
 
 
 if __name__ == "__main__":

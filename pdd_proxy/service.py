@@ -11,7 +11,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 from mitmproxy import http, ctx
-from storage import get_conn, upsert_sku_items, update_goods_price_range
+from storage import get_conn, init_db as _storage_init_db, upsert_sku_items, update_goods_price_range
 
 
 def _cents_to_yuan(v):
@@ -31,135 +31,35 @@ DB_PATH = DATA_DIR / "goods.db"
 
 PDD_DOMAINS = ["pinduoduo.com", "yangkeduo.com", "pdd.com"]
 
-_INJECT_JS_PATH = Path(__file__).resolve().parent / "inject.js"
+_INJECT_JS_PATH = Path(__file__).resolve().parent.parent / "extension" / "inject.js"
+_LEGACY_INJECT_JS_PATH = Path(__file__).resolve().parent / "inject.js"
 
 
 def _get_inject_tag():
-    try:
-        js_content = _INJECT_JS_PATH.read_text(encoding="utf-8")
-        return "<script>" + js_content + "</script>"
-    except Exception:
-        return ""
+    for path in (_INJECT_JS_PATH, _LEGACY_INJECT_JS_PATH):
+        try:
+            js_content = path.read_text(encoding="utf-8")
+            return "<script>" + js_content + "</script>"
+        except Exception:
+            continue
+    return ""
 
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS goods (
-            goods_id TEXT PRIMARY KEY,
-            title TEXT, subtitle TEXT, selling_points TEXT,
-            price REAL, original_price REAL, min_group_price REAL,
-            sales INTEGER, sold_quantity INTEGER,
-            shop_name TEXT, shop_id TEXT, shop_logo TEXT,
-            main_images TEXT, detail_images TEXT, sku_images TEXT,
-            specs TEXT, skus TEXT, description TEXT, attributes TEXT,
-            source_url TEXT, crawl_time TEXT, updated_at TEXT, raw_data TEXT,
-            price_modified INTEGER DEFAULT 0
-        );
-        CREATE INDEX IF NOT EXISTS idx_goods_title ON goods(title);
-        CREATE INDEX IF NOT EXISTS idx_goods_shop ON goods(shop_name);
-        CREATE INDEX IF NOT EXISTS idx_goods_crawl ON goods(crawl_time);
-
-        CREATE TABLE IF NOT EXISTS tags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
-            color TEXT DEFAULT '#3b82f6'
-        );
-        CREATE TABLE IF NOT EXISTS groups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            parent_id INTEGER,
-            sort_order INTEGER DEFAULT 0
-        );
-        CREATE TABLE IF NOT EXISTS product_tags (
-            goods_id TEXT NOT NULL,
-            tag_id INTEGER NOT NULL,
-            PRIMARY KEY (goods_id, tag_id)
-        );
-        CREATE TABLE IF NOT EXISTS product_groups (
-            goods_id TEXT NOT NULL,
-            group_id INTEGER NOT NULL,
-            PRIMARY KEY (goods_id, group_id)
-        );
-        CREATE TABLE IF NOT EXISTS ai_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            goods_id TEXT NOT NULL,
-            source_url TEXT,
-            prompt TEXT,
-            result_path TEXT NOT NULL,
-            model TEXT,
-            created_at TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_product_tags_goods ON product_tags(goods_id);
-        CREATE INDEX IF NOT EXISTS idx_product_tags_tag ON product_tags(tag_id);
-        CREATE INDEX IF NOT EXISTS idx_product_groups_goods ON product_groups(goods_id);
-        CREATE INDEX IF NOT EXISTS idx_ai_images_goods ON ai_images(goods_id);
-
-        CREATE TABLE IF NOT EXISTS export_templates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            fields TEXT NOT NULL,
-            column_map TEXT DEFAULT '{}',
-            is_preset INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS monitor_list (
-            goods_id TEXT PRIMARY KEY,
-            frequency TEXT DEFAULT 'daily',
-            last_check TEXT,
-            next_check TEXT,
-            status TEXT DEFAULT 'active',
-            created_at TEXT DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS monitor_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            goods_id TEXT NOT NULL,
-            price REAL,
-            original_price REAL,
-            stock INTEGER,
-            sales INTEGER,
-            checked_at TEXT DEFAULT (datetime('now'))
-        );
-        CREATE INDEX IF NOT EXISTS idx_monitor_history ON monitor_history(goods_id, checked_at);
-    """)
-    # Migrate: add price_modified column to existing databases
-    for col_sql in [
-        "ALTER TABLE goods ADD COLUMN price_modified INTEGER DEFAULT 0",
-    ]:
-        try:
-            conn.execute(col_sql)
-        except Exception:
-            pass
-    conn.commit()
-    existing = conn.execute("SELECT COUNT(*) FROM export_templates").fetchone()[0]
-    if existing == 0:
-        presets = [
-            ("淘宝上架模板", json.dumps(["title","subtitle","selling_points","price","original_price","specs","attributes"]), json.dumps({"title":"商品标题","subtitle":"副标题","selling_points":"卖点","price":"价格","original_price":"原价","specs":"规格","attributes":"属性"})),
-            ("拼多多上架模板", json.dumps(["title","subtitle","selling_points","price","min_group_price","specs","main_images"]), json.dumps({"title":"商品标题","subtitle":"副标题","selling_points":"卖点","price":"原价","min_group_price":"团购价","specs":"规格","main_images":"主图"})),
-            ("抖音上架模板", json.dumps(["title","selling_points","price","original_price","description"]), json.dumps({"title":"商品标题","selling_points":"卖点","price":"价格","original_price":"原价","description":"详情描述"})),
-            ("通用数据模板", json.dumps(["goods_id","title","subtitle","price","original_price","min_group_price","sales","sold_quantity","shop_name"]), json.dumps({"goods_id":"商品ID","title":"标题","subtitle":"副标题","price":"价格","original_price":"原价","min_group_price":"团购价","sales":"销量","sold_quantity":"已拼件数","shop_name":"店铺"})),
-        ]
-        for name, fields, col_map in presets:
-            conn.execute("INSERT INTO export_templates (name, fields, column_map, is_preset) VALUES (?, ?, ?, 1)", (name, fields, col_map))
-        conn.commit()
-    conn.close()
-
-
-
+    """初始化数据库，统一由 storage.init_db 负责全量表结构。"""
+    _storage_init_db()
 
 
 def save_goods_from_api(goods_data, url):
-    """Update goods with full SKU data."""
+    """Update goods with full SKU data. Returns True if updated."""
     if not goods_data:
-        return
+        return False
     goods_id = str(goods_data.get("goods_id", goods_data.get("goodsID", "")))
     title = goods_data.get("title", "")
     if not goods_id:
-        return
+        return False
     if not title:
-        return
+        return False
     conn = get_conn()
     now_str = datetime.now().isoformat()
     price = float(goods_data.get("price", 0) or 0)
@@ -249,6 +149,7 @@ def save_goods_from_api(goods_data, url):
             c.close()
         except Exception:
             pass
+    return True
 
 
 def extract_title_from_html(html, url):
@@ -287,6 +188,18 @@ def extract_title_from_html(html, url):
             if t and len(t) > 3:
                 info["title"] = t
     return info
+
+
+def _detail_api_enabled():
+    """服务器端主动请求详情 API 默认关闭（额外请求会触发风控）。
+
+    如需开启，在 data/config.json 中设置 "fetch_detail_api": true。
+    """
+    try:
+        cfg = json.loads((DATA_DIR / "config.json").read_text("utf-8"))
+        return bool(cfg.get("fetch_detail_api"))
+    except Exception:
+        return False
 
 
 def _fetch_goods_detail(goods_id, page_url):
@@ -490,8 +403,9 @@ class PddInterceptor:
                         ctx.log.info("[JS Inject] Injected, proxy=" + str(proxy_info))
                         
                         # Server-side: fetch full goods detail from PDD API
+                        # (默认关闭：每次页面浏览都会向 PDD 发无会话 API 请求，易被风控识别)
                         goods_id_from_url = proxy_info.get("goods_id", "")
-                        if goods_id_from_url:
+                        if goods_id_from_url and _detail_api_enabled():
                             threading.Thread(target=_fetch_goods_detail, args=(goods_id_from_url, url), daemon=True).start()
 
         # Intercept consult_goods_price (unencrypted)

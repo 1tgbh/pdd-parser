@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "PDD Parser 采集助手",
+  "version": "1.0.0",
+  "description": "拼多多商品数据采集 - 浏览器扩展模式（真实浏览器环境，无需代理/证书）",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.yangkeduo.com/*",
+        "*://*.pinduoduo.com/*"
+      ],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

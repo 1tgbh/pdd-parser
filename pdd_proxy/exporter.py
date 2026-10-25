@@ -7,8 +7,10 @@ TXT 导出包含商品信息 + 实际图片（多线程并行下载），可直�
 import csv
 import json
 import os
+import random
 import sqlite3
 import tempfile
+import time
 import zipfile
 import requests as _req
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -84,6 +86,7 @@ def _download_image(task: tuple) -> tuple:
     arcname, url = task
     if not url or not url.startswith("http"):
         return (arcname, None)
+    time.sleep(random.uniform(0.2, 0.8))  # 随机间隔，降低请求突发
     sess = _get_img_session()
     for attempt in range(3):
         try:
@@ -92,7 +95,7 @@ def _download_image(task: tuple) -> tuple:
                 return (arcname, resp.content)
         except Exception:
             if attempt < 2:
-                import time; time.sleep(0.3 * (attempt + 1))
+                time.sleep(0.3 * (attempt + 1))
     return (arcname, None)
 
 
@@ -499,7 +502,7 @@ def export_txt(goods_ids: list = None) -> str:
     results = {}
     total_imgs = len(all_tasks)
     if total_imgs > 0:
-        workers = min(8, total_imgs)
+        workers = min(3, total_imgs)  # 低并发 + 随机间隔，降低风控风险
         print(f"Downloading {total_imgs} images with {workers} threads...")
         with ThreadPoolExecutor(max_workers=workers) as pool:
             futures = {pool.submit(_download_image, task): task for task in all_tasks}
