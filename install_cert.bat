@@ -8,11 +8,25 @@ echo  Installing mitmproxy CA certificate ...
 echo  (Administrator privileges required)
 echo.
 
-set "CERT_FILE=%~dp0pdd_proxy\certs\mitmproxy-ca-cert.cer"
+set "CERTS_DIR=%~dp0pdd_proxy\certs"
+set "CERT_FILE=%CERTS_DIR%\mitmproxy-ca-cert.cer"
+
+if not exist "%CERT_FILE%" (
+    echo  Certificate not found, generating ...
+    if exist "%~dp0.venv\Scripts\python.exe" (
+        "%~dp0.venv\Scripts\python.exe" -c "from mitmproxy.certs import CertStore; CertStore.from_store(r'%CERTS_DIR%', 'mitmproxy', 2048)" >nul 2>&1
+    ) else if exist "%~dp0python\python.exe" (
+        "%~dp0python\python.exe" -c "from mitmproxy.certs import CertStore; CertStore.from_store(r'%CERTS_DIR%', 'mitmproxy', 2048)" >nul 2>&1
+    ) else (
+        python -c "from mitmproxy.certs import CertStore; CertStore.from_store(r'%CERTS_DIR%', 'mitmproxy', 2048)" >nul 2>&1
+    )
+)
 
 if not exist "%CERT_FILE%" (
     echo  [ERROR] Certificate file not found: %CERT_FILE%
-    echo  Please run the proxy service once to generate certificates.
+    echo  Please run start.bat once to install dependencies and generate
+    echo  certificates, or install dependencies manually:
+    echo      pip install -r requirements.txt
     pause
     exit /b 1
 )
