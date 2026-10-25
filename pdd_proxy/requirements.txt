@@ -1,0 +1,6 @@
+mitmproxy>=11.0
+flask>=3.0
+requests>=2.31
+urllib3>=2.0
+openpyxl>=3.1
+Pillow>=10.0

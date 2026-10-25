@@ -55,8 +55,9 @@ cd pdd-spider
 cd pdd_proxy
 pip install -r requirements.txt
 
-# 安装 mitmproxy 证书（首次使用，需管理员权限）
-python -m mitmproxy.tools.certutil install
+# 安装 mitmproxy CA 证书（首次使用，需管理员权限）
+# 在项目根目录右键以管理员身份运行 install_cert.bat（证书不存在时会自动生成）
+..\install_cert.bat
 
 # 安装前端依赖并构建
 cd ../frontend
@@ -163,7 +164,7 @@ pdd-spider/
 ## 常见问题
 
 **Q: 浏览器提示证书错误？**
-A: 以管理员身份运行 `python -m mitmproxy.tools.certutil install` 安装 CA 证书。
+A: 以管理员身份运行 `install_cert.bat` 安装 CA 证书（证书文件不存在时脚本会自动生成）。macOS/Linux 可手动将 `pdd_proxy/certs/mitmproxy-ca-cert.pem` 导入系统受信任根证书。
 
 **Q: 采集不到商品数据？**
 A: 确保系统代理已设置为 `127.0.0.1:8080`，且浏览器使用系统代理。建议用无痕模式。
