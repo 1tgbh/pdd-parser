@@ -90,7 +90,7 @@ app = Flask(__name__, static_folder=None)
 def add_cors(response):
     # /api/ingest 由注入到商品页面的脚本跨域调用，必须允许任意来源；
     # 其余 API 仅允许本机来源，防止任意网站读取本地数据/配置。
-    if request.path == "/api/ingest":
+    if request.path in ("/api/ingest", "/api/list-ingest"):
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type"
@@ -945,6 +945,115 @@ def api_ingest() -> Any:
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
+
+
+# ==================== 浏览列表采集（店铺/搜索/推荐列表被动记录） ====================
+
+@app.route("/api/list-ingest", methods=["POST", "OPTIONS"])
+def api_list_ingest() -> Any:
+    """接收页面渲染过的商品列表卡（整店/搜索/推荐），被动记录，不发额外请求。"""
+    if request.method == "OPTIONS": return "", 204
+    data = request.get_json() or {}
+    items = data.get("items") or []
+    if not isinstance(items, list) or not items:
+        return jsonify({"error": "missing items"}), 400
+    source_url = str(data.get("source_url") or "")[:2000]
+    page_type = str(data.get("page_type") or "")[:30]
+    conn = get_conn()
+    now = datetime.now().isoformat()
+    saved = 0
+    try:
+        for it in items[:500]:
+            if not isinstance(it, dict):
+                continue
+            gid = str(it.get("goods_id") or "").strip()
+            if not gid or not gid.isdigit():
+                continue
+            title = str(it.get("title") or "")[:500]
+            price = float(it.get("price") or 0)
+            sales = int(it.get("sales") or 0)
+            image = str(it.get("image") or "")[:1000]
+            mall_id = str(it.get("mall_id") or "")[:50]
+            mall_name = str(it.get("mall_name") or "")[:200]
+            conn.execute("""
+                INSERT INTO browse_items
+                (goods_id, title, price, sales, image, mall_id, mall_name, page_type, source_url, first_seen, last_seen)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(goods_id) DO UPDATE SET
+                    title = CASE WHEN length(excluded.title) > length(browse_items.title) THEN excluded.title ELSE browse_items.title END,
+                    price = CASE WHEN excluded.price > 0 THEN excluded.price ELSE browse_items.price END,
+                    sales = CASE WHEN excluded.sales > browse_items.sales THEN excluded.sales ELSE browse_items.sales END,
+                    image = CASE WHEN excluded.image != '' THEN excluded.image ELSE browse_items.image END,
+                    mall_id = CASE WHEN excluded.mall_id != '' THEN excluded.mall_id ELSE browse_items.mall_id END,
+                    mall_name = CASE WHEN excluded.mall_name != '' THEN excluded.mall_name ELSE browse_items.mall_name END,
+                    page_type = excluded.page_type,
+                    source_url = excluded.source_url,
+                    last_seen = excluded.last_seen
+            """, (gid, title, price, sales, image, mall_id, mall_name, page_type, source_url, now, now))
+            saved += 1
+        conn.commit()
+        return jsonify({"ok": True, "saved": saved})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/browse", methods=["GET"])
+def api_browse() -> Any:
+    """浏览列表：按最近见到排序，标注是否已完整采集。"""
+    q = (request.args.get("q") or "").strip()
+    page_type = (request.args.get("type") or "").strip()
+    try:
+        limit = min(int(request.args.get("limit") or 500), 2000)
+    except ValueError:
+        limit = 500
+    try:
+        offset = max(int(request.args.get("offset") or 0), 0)
+    except ValueError:
+        offset = 0
+    where, params = [], []
+    if q:
+        where.append("(b.title LIKE ? OR b.goods_id LIKE ?)")
+        params += [f"%{q}%", f"%{q}%"]
+    if page_type:
+        where.append("b.page_type = ?")
+        params.append(page_type)
+    sql_where = ("WHERE " + " AND ".join(where)) if where else ""
+    conn = get_conn()
+    try:
+        rows = conn.execute(f"""
+            SELECT b.*, EXISTS(SELECT 1 FROM goods g WHERE g.goods_id = b.goods_id) AS captured
+            FROM browse_items b {sql_where}
+            ORDER BY b.last_seen DESC LIMIT ? OFFSET ?
+        """, params + [limit, offset]).fetchall()
+        total = conn.execute(f"SELECT COUNT(*) FROM browse_items b {sql_where}", params).fetchone()[0]
+        items = [{
+            "goods_id": r["goods_id"], "title": r["title"] or "", "price": r["price"] or 0,
+            "sales": r["sales"] or 0, "image": r["image"] or "", "mall_id": r["mall_id"] or "",
+            "mall_name": r["mall_name"] or "", "page_type": r["page_type"] or "",
+            "source_url": r["source_url"] or "", "first_seen": r["first_seen"] or "",
+            "last_seen": r["last_seen"] or "", "captured": bool(r["captured"]),
+        } for r in rows]
+        return jsonify({"items": items, "total": total})
+    finally:
+        conn.close()
+
+
+@app.route("/api/browse/clear", methods=["POST"])
+def api_browse_clear() -> Any:
+    conn = get_conn()
+    try:
+        conn.execute("DELETE FROM browse_items")
+        conn.commit()
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
+
+
+@app.route("/browse")
+def serve_browse_page() -> Any:
+    return send_from_directory(str(_BASE_DIR / "web"), "browse.html")
 
 import os
 import time

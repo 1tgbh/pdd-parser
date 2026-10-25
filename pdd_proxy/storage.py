@@ -22,8 +22,20 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
+_EXPORT_TEMPLATE_PRESETS = [
+    ("淘宝上架模板", ["title", "subtitle", "selling_points", "price", "original_price", "specs", "attributes"],
+     {"title": "商品标题", "subtitle": "副标题", "selling_points": "卖点", "price": "价格", "original_price": "原价", "specs": "规格", "attributes": "属性"}),
+    ("拼多多上架模板", ["title", "subtitle", "selling_points", "price", "min_group_price", "specs", "main_images"],
+     {"title": "商品标题", "subtitle": "副标题", "selling_points": "卖点", "price": "原价", "min_group_price": "团购价", "specs": "规格", "main_images": "主图"}),
+    ("抖音上架模板", ["title", "selling_points", "price", "original_price", "description"],
+     {"title": "商品标题", "selling_points": "卖点", "price": "价格", "original_price": "原价", "description": "详情描述"}),
+    ("通用数据模板", ["goods_id", "title", "subtitle", "price", "original_price", "min_group_price", "sales", "sold_quantity", "shop_name"],
+     {"goods_id": "商品ID", "title": "标题", "subtitle": "副标题", "price": "价格", "original_price": "原价", "min_group_price": "团购价", "sales": "销量", "sold_quantity": "已拼件数", "shop_name": "店铺"}),
+]
+
+
 def init_db() -> None:
-    """初始化数据库"""
+    """初始化数据库（全量表结构 + 内置导出模板）"""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_conn()
     conn.executescript("""
@@ -55,8 +67,7 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_goods_title ON goods(title);
         CREATE INDEX IF NOT EXISTS idx_goods_shop ON goods(shop_name);
         CREATE INDEX IF NOT EXISTS idx_goods_crawl ON goods(crawl_time);
-    """)
-    conn.executescript("""
+
         CREATE TABLE IF NOT EXISTS sku_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             goods_id TEXT NOT NULL,
@@ -70,6 +81,85 @@ def init_db() -> None:
             updated_at TEXT
         );
         CREATE INDEX IF NOT EXISTS idx_sku_items_goods_id ON sku_items(goods_id);
+
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            color TEXT DEFAULT '#3b82f6'
+        );
+        CREATE TABLE IF NOT EXISTS groups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            parent_id INTEGER,
+            sort_order INTEGER DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS product_tags (
+            goods_id TEXT NOT NULL,
+            tag_id INTEGER NOT NULL,
+            PRIMARY KEY (goods_id, tag_id)
+        );
+        CREATE TABLE IF NOT EXISTS product_groups (
+            goods_id TEXT NOT NULL,
+            group_id INTEGER NOT NULL,
+            PRIMARY KEY (goods_id, group_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_product_tags_goods ON product_tags(goods_id);
+        CREATE INDEX IF NOT EXISTS idx_product_tags_tag ON product_tags(tag_id);
+        CREATE INDEX IF NOT EXISTS idx_product_groups_goods ON product_groups(goods_id);
+
+        CREATE TABLE IF NOT EXISTS ai_images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            goods_id TEXT NOT NULL,
+            source_url TEXT,
+            prompt TEXT,
+            result_path TEXT NOT NULL,
+            model TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_ai_images_goods ON ai_images(goods_id);
+
+        CREATE TABLE IF NOT EXISTS export_templates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            fields TEXT NOT NULL,
+            column_map TEXT DEFAULT '{}',
+            is_preset INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS monitor_list (
+            goods_id TEXT PRIMARY KEY,
+            frequency TEXT DEFAULT 'daily',
+            last_check TEXT,
+            next_check TEXT,
+            status TEXT DEFAULT 'active',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS monitor_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            goods_id TEXT NOT NULL,
+            price REAL,
+            original_price REAL,
+            stock INTEGER,
+            sales INTEGER,
+            checked_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_monitor_history ON monitor_history(goods_id, checked_at);
+
+        CREATE TABLE IF NOT EXISTS browse_items (
+            goods_id TEXT PRIMARY KEY,
+            title TEXT,
+            price REAL DEFAULT 0,
+            sales INTEGER DEFAULT 0,
+            image TEXT DEFAULT '',
+            mall_id TEXT DEFAULT '',
+            mall_name TEXT DEFAULT '',
+            page_type TEXT DEFAULT '',
+            source_url TEXT DEFAULT '',
+            first_seen TEXT,
+            last_seen TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_browse_seen ON browse_items(last_seen);
     """)
     for col_sql in [
         "ALTER TABLE goods ADD COLUMN price_min REAL DEFAULT 0.0",
@@ -82,6 +172,15 @@ def init_db() -> None:
         except Exception:
             pass
     conn.commit()
+
+    existing = conn.execute("SELECT COUNT(*) FROM export_templates").fetchone()[0]
+    if existing == 0:
+        for name, fields, col_map in _EXPORT_TEMPLATE_PRESETS:
+            conn.execute(
+                "INSERT INTO export_templates (name, fields, column_map, is_preset) VALUES (?, ?, ?, 1)",
+                (name, json.dumps(fields, ensure_ascii=False), json.dumps(col_map, ensure_ascii=False)),
+            )
+        conn.commit()
     conn.close()
     print(f"✅ 数据库初始化完成: {DB_PATH}")
 
@@ -177,9 +276,20 @@ def _row_to_goods(row) -> GoodsInfo:
     skus = []
     try:
         for s in json.loads(row["skus"] or "[]"):
-            specs = [SkuSpec(name=sp.get("name", sp.get("spec_key", "")), value=sp.get("value", sp.get("spec_value", ""))) for sp in s.get("specs", {})]
-            if isinstance(s.get("specs"), dict):
-                specs = [SkuSpec(name=k, value=v) for k, v in s["specs"].items()]
+            if not isinstance(s, dict):
+                continue
+            raw_specs = s.get("specs", {})
+            specs = []
+            if isinstance(raw_specs, dict):
+                specs = [SkuSpec(name=k, value=v) for k, v in raw_specs.items()]
+            elif isinstance(raw_specs, list):
+                specs = [
+                    SkuSpec(
+                        name=sp.get("name", sp.get("spec_key", sp.get("key", ""))),
+                        value=sp.get("value", sp.get("spec_value", "")),
+                    )
+                    for sp in raw_specs if isinstance(sp, dict)
+                ]
             skus.append(SkuItem(
                 sku_id=s.get("sku_id", ""),
                 specs=specs,
@@ -247,8 +357,8 @@ def upsert_sku_items(goods_id: str, sku_list: list) -> None:
                  price, original_price, stock, image, now, now),
             )
         conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"❌ SKU upsert 失败: {e}")
     finally:
         conn.close()
 
@@ -265,8 +375,8 @@ def update_goods_price_range(goods_id: str, price_min: float, price_max: float, 
             (price_min, price_max, total_stock, now, goods_id),
         )
         conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"❌ 更新价格区间失败: {e}")
     finally:
         conn.close()
 
@@ -292,58 +402,6 @@ def get_sku_items(goods_id: str) -> list:
             "updated_at": r["updated_at"] or "",
         })
     return result
-
-
-def upsert_sku_items(goods_id: str, sku_list: list) -> None:
-    conn = get_conn()
-    now = datetime.now().isoformat()
-    try:
-        conn.execute("DELETE FROM sku_items WHERE goods_id = ?", (goods_id,))
-        for s in sku_list:
-            specs = s.get("specs", {})
-            if isinstance(specs, list):
-                specs_dict = {}
-                for sp in specs:
-                    if isinstance(sp, dict):
-                        name = sp.get("name", sp.get("spec_key", ""))
-                        value = sp.get("value", sp.get("spec_value", ""))
-                        if name:
-                            specs_dict[name] = value
-                specs = specs_dict
-            conn.execute(
-                """INSERT INTO sku_items
-                   (goods_id, sku_id, specs, price, original_price, stock, image, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    goods_id,
-                    s.get("sku_id", ""),
-                    json.dumps(specs, ensure_ascii=False),
-                    float(s.get("price", 0) or 0),
-                    float(s.get("original_price", 0) or 0),
-                    int(s.get("stock", 0) or 0),
-                    s.get("image", ""),
-                    now, now,
-                ),
-            )
-        conn.commit()
-    except Exception as e:
-        print(f"❌ SKU upsert 失败: {e}")
-    finally:
-        conn.close()
-
-
-def update_goods_price_range(goods_id: str, price_min: float, price_max: float, total_stock: int) -> None:
-    conn = get_conn()
-    try:
-        conn.execute(
-            "UPDATE goods SET price_min = ?, price_max = ?, total_stock = ? WHERE goods_id = ?",
-            (price_min, price_max, total_stock, goods_id),
-        )
-        conn.commit()
-    except Exception as e:
-        print(f"❌ 更新价格区间失败: {e}")
-    finally:
-        conn.close()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,17 @@
 (function() {
   'use strict';
   var INGEST_URL = 'http://127.0.0.1:5000/api/ingest';
+  var LIST_INGEST_URL = 'http://127.0.0.1:5000/api/list-ingest';
   var sent = {};
   var sentPrice = {};
   var sentDetail = {};
   var sentScore = {};
+  // ======== 浏览列表采集（整店/搜索/推荐列表卡 → browse_items） ========
+  var listCards = [];            // 待上报的列表卡
+  var listCardSet = (typeof Set !== 'undefined') ? new Set() : null;  // 本页已上报的 goods_id
+  var listMemberSet = (typeof WeakSet !== 'undefined') ? new WeakSet() : null; // 标记"是列表卡"的对象
+  var listPostTimer = null;
+  var listToastShown = false;
 
   function dataScore(d) {
     var s = 0;
@@ -237,6 +244,96 @@
       }
     }
     return null;
+  }
+
+  // ======== 列表页商品卡检测 ========
+  function isGoodsCard(o) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return false;
+    if (!(o.goods_id || o.goodsID)) return false;
+    if (o.goods_name || o.goodsName || o.goods_desc || o.goods_title || o.title) return true;
+    var hasImg = !!(o.thumb_url || o.thumbUrl || o.hd_thumb_url || o.image || o.goods_image_url || o.img);
+    var hasPrice = !!(o.price || o.min_group_price || o.group_price || o.normal_price || o.price_info || o.sale_price || o.min_on_sale_group_price);
+    return hasImg && hasPrice;
+  }
+  // 详情级对象（含 sku/图集等）不当作列表卡——仍走 /api/ingest 完整采集
+  function isDetailRich(o) {
+    if (!o || typeof o !== 'object') return false;
+    if ((o.sku || o.skus || o.sku_list || []).length > 0) return true;
+    if ((o.top_gallery || o.topGallery || o.gallery || o.detail_gallery || []).length > 0) return true;
+    if ((o.goodsProperty || o.goods_property || []).length > 0) return true;
+    return false;
+  }
+  function findGoodsLists(obj, depth, out) {
+    if (!obj || typeof obj !== 'object' || depth > 7 || out.length > 20) return;
+    if (Array.isArray(obj)) {
+      if (obj.length >= 2) {
+        var lim = Math.min(obj.length, 12), hits = 0;
+        for (var i = 0; i < lim; i++) { if (isGoodsCard(obj[i])) hits++; }
+        if (hits >= 2 && hits >= lim * 0.5) { out.push(obj); return; }
+      }
+      for (var j = 0; j < Math.min(obj.length, 30); j++) findGoodsLists(obj[j], depth + 1, out);
+      return;
+    }
+    var keys = Object.keys(obj);
+    for (var k = 0; k < keys.length; k++) findGoodsLists(obj[keys[k]], depth + 1, out);
+  }
+  function queueListCards(obj) {
+    if (!listCardSet) return;
+    var lists = [];
+    try { findGoodsLists(obj, 0, lists); } catch(e) { return; }
+    var added = 0;
+    for (var li = 0; li < lists.length; li++) {
+      var arr = lists[li];
+      for (var i = 0; i < arr.length; i++) {
+        var o = arr[i];
+        if (!isGoodsCard(o) || isDetailRich(o)) continue;
+        var gid = String(o.goods_id || o.goodsID || '');
+        if (!gid || !/^\d+$/.test(gid) || listCardSet.has(gid)) continue;
+        if (listMemberSet) listMemberSet.add(o);
+        listCardSet.add(gid);
+        listCards.push({
+          goods_id: gid,
+          title: o.goods_name || o.goodsName || o.goods_desc || o.goods_title || o.title || '',
+          price: extractPriceYuan(o),
+          sales: toInt(o.sales || o.sold_quantity || 0),
+          image: o.thumb_url || o.thumbUrl || o.hd_thumb_url || o.image || o.goods_image_url || o.img || '',
+          mall_id: String(o.mall_id || o.mallID || ''),
+          mall_name: o.mall_name || o.mallName || ''
+        });
+        added++;
+      }
+    }
+    if (added > 0) scheduleListPost();
+  }
+  function pageTypeFromUrl() {
+    var u = location.href;
+    if (/mall_page|pdd_mall|\/mall\//.test(u)) return 'mall';
+    if (/search_result|search\.html|\/search/.test(u)) return 'search';
+    if (/goods\.html|goods_detail|goods_id=\d/.test(u)) return 'goods';
+    return 'list';
+  }
+  function scheduleListPost() {
+    if (listPostTimer) return;
+    listPostTimer = setTimeout(function() { listPostTimer = null; flushListCards(); }, 800);
+  }
+  function flushListCards() {
+    if (window.__PDD_CAPTURE_ENABLED === false) { listCards = []; return; }
+    var batch = listCards.splice(0, 200);
+    if (!batch.length) return;
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', LIST_INGEST_URL, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300 && !listToastShown) {
+          listToastShown = true;
+          showToast('', '已记录 ' + batch.length + ' 个浏览商品');
+        }
+      };
+      xhr.send(JSON.stringify({ items: batch, source_url: location.href, page_type: pageTypeFromUrl() }));
+      console.log('[PDD] List captured: ' + batch.length + ' items type=' + pageTypeFromUrl());
+    } catch(e) {}
+    if (listCards.length) scheduleListPost();
   }
 
   function extractPriceYuan(gd) {
@@ -1262,8 +1359,9 @@
           if (jsonMatch) {
             try {
               var parsed = JSON.parse(jsonMatch[1]);
+              queueListCards(parsed);
               var gd = findGoodsData(parsed, 0);
-              if (gd) {
+              if (gd && !(listMemberSet && listMemberSet.has(gd))) {
                 var newGid = String(gd.goods_id || gd.goodsID || '');
                 var curGid = capturedRaw ? String(capturedRaw.goods_id || capturedRaw.goodsID || '') : '';
                 // Update if no capturedRaw OR if same goods (to get richer data)
@@ -1289,8 +1387,9 @@
         // Method 2: Try direct JSON parse of the whole content
         try {
           var directParsed = JSON.parse(text);
+          queueListCards(directParsed);
           var gd2 = findGoodsData(directParsed, 0);
-          if (gd2) {
+          if (gd2 && !(listMemberSet && listMemberSet.has(gd2))) {
             var newGid2 = String(gd2.goods_id || gd2.goodsID || '');
             var curGid2 = capturedRaw ? String(capturedRaw.goods_id || capturedRaw.goodsID || '') : '';
             if (!capturedRaw || newGid2 === curGid2) {
@@ -1339,8 +1438,9 @@
         console.log('[PDD] Found window.store.initDataObj, keys: ' + (storeData ? Object.keys(storeData).join(',') : 'null'));
       }
       if (storeData) {
+        queueListCards(storeData);
         var gd = findGoodsData(storeData, 0);
-        if (gd) {
+        if (gd && !(listMemberSet && listMemberSet.has(gd))) {
           var newGid = String(gd.goods_id || gd.goodsID || '');
           var curGid = capturedRaw ? String(capturedRaw.goods_id || capturedRaw.goodsID || '') : '';
           if (!capturedRaw || newGid === curGid) {
@@ -1360,8 +1460,9 @@
 
       // Check window.store directly as well
       if (window.store && typeof window.store === 'object') {
+        queueListCards(window.store);
         var gd2 = findGoodsData(window.store, 0);
-        if (gd2) {
+        if (gd2 && !(listMemberSet && listMemberSet.has(gd2))) {
           var newGid2 = String(gd2.goods_id || gd2.goodsID || '');
           var curGid2 = capturedRaw ? String(capturedRaw.goods_id || capturedRaw.goodsID || '') : '';
           if (!capturedRaw || newGid2 === curGid2) {
@@ -1382,8 +1483,9 @@
       for (var i = 0; i < globalKeys.length; i++) {
         var val = window[globalKeys[i]];
         if (val && typeof val === 'object') {
+          queueListCards(val);
           var gd3 = findGoodsData(val, 0);
-          if (gd3) {
+          if (gd3 && !(listMemberSet && listMemberSet.has(gd3))) {
             var newGid3 = String(gd3.goods_id || gd3.goodsID || '');
             var curGid3 = capturedRaw ? String(capturedRaw.goods_id || capturedRaw.goodsID || '') : '';
             if (!capturedRaw || newGid3 === curGid3) {
@@ -1413,8 +1515,9 @@
       if (result && result.goods_price_map) {
         capturePriceMap(result);
       } else {
+        queueListCards(result);
         var gd = findGoodsData(result, 0);
-        if (gd) {
+        if (gd && !(listMemberSet && listMemberSet.has(gd))) {
           console.log('[PDD] JSON.parse intercepted goods_id=' + (gd.goods_id || gd.goodsID));
           capturedRaw = gd;
           setTimeout(function() { extractAndPost(gd); }, 300);
@@ -1445,8 +1548,9 @@
           console.log('[PDD] PriceMap captured from XHR: ' + url.substring(0,60));
           return; // Don't search for goods data in price-only responses
         }
+        queueListCards(data);
         var gd = findGoodsData(data, 0);
-        if (gd) {
+        if (gd && !(listMemberSet && listMemberSet.has(gd))) {
           console.log('[PDD] XHR intercepted: ' + url.substring(0,60));
           capturedRaw = gd;
           setTimeout(function() { extractAndPost(gd); }, 300);
@@ -1471,8 +1575,9 @@
                 console.log('[PDD] PriceMap captured from fetch');
                 return;
               }
+              queueListCards(data);
               var gd = findGoodsData(data, 0);
-              if (gd) { console.log('[PDD] fetch intercepted'); capturedRaw = gd; setTimeout(function() { extractAndPost(gd); }, 300); }
+              if (gd && !(listMemberSet && listMemberSet.has(gd))) { console.log('[PDD] fetch intercepted'); capturedRaw = gd; setTimeout(function() { extractAndPost(gd); }, 300); }
             } catch(e) {}
           }).catch(function(){});
         }
@@ -1513,6 +1618,8 @@
     capturedRaw = null;
     capturedMall = null;
     capturedRawInitData = null;
+    if (listCardSet) listCardSet.clear();
+    listToastShown = false;
     setTimeout(scanWindowGlobals, 300);
     setTimeout(scanScriptTagsForGoods, 600);
     setTimeout(scrapeDOMAndPost, 1500);
@@ -1529,5 +1636,5 @@
     window.addEventListener('popstate', onNav);
   } catch(e) {}
 
-  console.log('[PDD] Goods extraction v11 loaded - score-based dedup, early script scanning, SPA nav, toggle support');
+  console.log('[PDD] Goods extraction v12 loaded - score-based dedup, early script scanning, SPA nav, toggle support, browse-list capture');
 })();

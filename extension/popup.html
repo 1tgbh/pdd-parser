@@ -46,6 +46,8 @@
     text-align: center; text-decoration: none;
   }
   .btn:active { opacity: .85; }
+  .btn.secondary { background: #fff; color: #e02e24; border: 1px solid #e02e24; margin-top: 8px; }
+  .btn.secondary:hover { background: #fff3f2; }
   .tip { font-size: 11px; color: #999; line-height: 1.6; margin-top: 2px; }
   .warn { color: #b71c1c; }
 </style>
@@ -78,6 +80,7 @@
   </div>
 
   <a class="btn" id="openAdmin" href="http://127.0.0.1:5000" target="_blank">打开管理后台</a>
+  <a class="btn secondary" id="openBrowse" href="http://127.0.0.1:5000/browse" target="_blank">浏览列表（整店/搜索记录）</a>
 
   <p class="tip" id="tip">浏览商品页时自动捕获数据，无需其他操作。</p>
   <p class="tip">提示：建议单标签页浏览采集，勿多标签同时打开商品页。</p>

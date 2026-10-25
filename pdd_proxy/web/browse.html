@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浏览列表 - PDD Parser</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f6f8; color: #333; }
+  .topbar { background: #e02e24; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
+  .topbar h1 { font-size: 18px; font-weight: 600; }
+  .topbar .stats { font-size: 13px; opacity: .9; }
+  .topbar .spacer { flex: 1; }
+  .topbar input, .topbar select { padding: 6px 10px; border: none; border-radius: 6px; font-size: 13px; outline: none; }
+  .topbar input { width: 200px; }
+  .btn { padding: 6px 14px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; background: rgba(255,255,255,.2); color: #fff; }
+  .btn:hover { background: rgba(255,255,255,.35); }
+  .btn.primary { background: #fff; color: #e02e24; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; padding: 20px 24px; }
+  .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.14); }
+  .card .thumb { width: 100%; aspect-ratio: 1; object-fit: cover; background: #eee; display: block; }
+  .card .body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .card .title { font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 36px; }
+  .card .price { color: #e02e24; font-size: 17px; font-weight: 700; }
+  .card .price small { font-size: 12px; font-weight: 400; }
+  .card .meta { font-size: 12px; color: #999; display: flex; justify-content: space-between; gap: 6px; }
+  .card .mall { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badges { display: flex; gap: 5px; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 1px 7px; border-radius: 8px; }
+  .badge.captured { background: #e8f7ee; color: #1a9e4b; }
+  .badge.type-mall { background: #fff3e0; color: #e68900; }
+  .badge.type-search { background: #e3f0ff; color: #2b6cb0; }
+  .badge.type-list { background: #eee; color: #777; }
+  .badge.type-goods { background: #f3e8ff; color: #7c3aed; }
+  .card .actions { display: flex; gap: 6px; padding: 0 12px 12px; }
+  .card .actions a, .card .actions button { flex: 1; text-align: center; font-size: 12px; padding: 6px 0; border-radius: 6px; text-decoration: none; border: 1px solid #e02e24; color: #e02e24; background: #fff; cursor: pointer; }
+  .card .actions a:hover, .card .actions button:hover { background: #fff0ef; }
+  .card .actions a.gray { border-color: #ddd; color: #888; }
+  .empty { text-align: center; padding: 80px 20px; color: #aaa; font-size: 14px; }
+  .seen { font-size: 11px; color: #bbb; }
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>浏览列表</h1>
+  <span class="stats" id="stats">加载中…</span>
+  <div class="spacer"></div>
+  <input id="q" placeholder="搜索标题/商品ID" onkeydown="if(event.key==='Enter')load()">
+  <select id="ptype" onchange="load()">
+    <option value="">全部来源</option>
+    <option value="mall">店铺页</option>
+    <option value="search">搜索页</option>
+    <option value="goods">详情页推荐</option>
+    <option value="list">其他列表</option>
+  </select>
+  <button class="btn" onclick="load()">刷新</button>
+  <button class="btn" onclick="copyAll()">复制全部链接</button>
+  <button class="btn" onclick="clearAll()">清空</button>
+  <a class="btn primary" href="/products" style="text-decoration:none">管理后台</a>
+</div>
+<div class="grid" id="grid"><div class="empty">加载中…</div></div>
+<div id="toast"></div>
+<script>
+var TYPE_LABEL = {mall:'店铺', search:'搜索', goods:'推荐', list:'列表'};
+var lastItems = [];
+function esc(s){ return (s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function goodsUrl(gid){ return 'https://mobile.yangkeduo.com/goods.html?goods_id=' + gid; }
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},2000); }
+function load(){
+  var q = document.getElementById('q').value.trim();
+  var pt = document.getElementById('ptype').value;
+  var url = '/api/browse?limit=500' + (q?'&q='+encodeURIComponent(q):'') + (pt?'&type='+encodeURIComponent(pt):'');
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    lastItems = d.items || [];
+    var cap = lastItems.filter(function(i){return i.captured;}).length;
+    document.getElementById('stats').textContent = '共 ' + d.total + ' 个（已完整采集 ' + cap + '）';
+    render(lastItems);
+  }).catch(function(){ document.getElementById('grid').innerHTML='<div class="empty">加载失败，后端是否在运行？</div>'; });
+}
+function render(items){
+  var g = document.getElementById('grid');
+  if(!items.length){ g.innerHTML='<div class="empty">暂无数据 — 浏览拼多多店铺页/搜索页后会自动出现在这里</div>'; return; }
+  var html = '';
+  items.forEach(function(it){
+    var tb = '<span class="badge type-' + esc(it.page_type||'list') + '">' + esc(TYPE_LABEL[it.page_type]||'列表') + '</span>';
+    var cb = it.captured ? '<a class="badge captured" href="/product/'+it.goods_id+'">已采集 ✓</a>' : '';
+    html += '<div class="card">'
+      + '<img class="thumb" loading="lazy" src="' + esc(it.image) + '" onerror="this.style.visibility=\'hidden\'">'
+      + '<div class="body">'
+      + '<div class="title" title="'+esc(it.title)+'">' + esc(it.title||'(无标题)') + '</div>'
+      + '<div class="price"><small>¥</small>' + (it.price||0).toFixed(2) + '</div>'
+      + '<div class="meta"><span>已拼' + (it.sales||0) + '件</span><span class="seen">' + esc((it.last_seen||'').slice(5,16).replace('T',' ')) + '</span></div>'
+      + (it.mall_name ? '<div class="mall">🏪 ' + esc(it.mall_name) + '</div>' : '')
+      + '<div class="badges">' + tb + cb + '</div>'
+      + '</div>'
+      + '<div class="actions">'
+      + '<a target="_blank" href="' + goodsUrl(it.goods_id) + '">打开商品页</a>'
+      + '<a class="gray" target="_blank" href="' + esc(it.source_url) + '">来源</a>'
+      + '</div></div>';
+  });
+  g.innerHTML = html;
+}
+function copyAll(){
+  var links = lastItems.map(function(i){return goodsUrl(i.goods_id);}).join('\n');
+  navigator.clipboard.writeText(links).then(function(){ toast('已复制 ' + lastItems.length + ' 个链接'); }, function(){ toast('复制失败'); });
+}
+function clearAll(){
+  if(!confirm('清空全部浏览列表？')) return;
+  fetch('/api/browse/clear', {method:'POST'}).then(function(){ toast('已清空'); load(); });
+}
+load();
+</script>
+</body>
+</html>
