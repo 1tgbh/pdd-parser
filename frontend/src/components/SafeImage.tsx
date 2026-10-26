@@ -10,19 +10,27 @@ type Props = {
 };
 
 const SafeImage: React.FC<Props> = ({ src, alt, className, fallback, style, onClick }) => {
-  const [hasError, setHasError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState('');
+
+  const imgSrc = useMemo(() => {
+    try {
+      const url = new URL(src);
+      if (/^https?:$/.test(url.protocol) && /(^|\.)(pddpic\.com|yangkeduo\.com)$/.test(url.hostname)) {
+        return '/api/proxy-image?url=' + encodeURIComponent(src);
+      }
+    } catch { /* Local image path. */ }
+    return src || '';
+  }, [src]);
 
   const handleError = useCallback(() => {
-    setHasError(true);
-  }, []);
+    setFailedSrc(imgSrc);
+  }, [imgSrc]);
 
   const handleLoad = useCallback(() => {
-    setHasError(false);
+    setFailedSrc('');
   }, []);
 
-  const imgSrc = useMemo(() => src || '', [src]);
-
-  if (hasError && !imgSrc) {
+  if (!imgSrc || failedSrc === imgSrc) {
     return fallback || <div style={{ width: 40, height: 40, background: '#f0f0f0', borderRadius: 4 }} />;
   }
 

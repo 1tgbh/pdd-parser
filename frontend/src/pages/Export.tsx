@@ -7,6 +7,8 @@ import type { ExportFormat, ExportTemplate } from '../types';
 import s from '../styles/modules/Export.module.css';
 
 const FORMATS: { key: ExportFormat; label: string }[] = [
+  { key: 'json', label: 'JSON' },
+  { key: 'csv', label: 'CSV' },
   { key: 'excel', label: 'Excel' },
   { key: 'txt', label: 'TXT图文包（推荐）' },
   { key: 'dawang', label: '通用数据包（CSV）' },
@@ -83,7 +85,7 @@ export default function Export() {
   const [tplFields, setTplFields] = useState<string[]>([]);
   const [tplColumnMap, setTplColumnMap] = useState<Record<string, string>>({});
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
   const allIds = useMemo(() => items.map((g) => g.goods_id), [items]);
   const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
   const totalPages = data ? Math.ceil(data.total / data.page_size) : 1;
@@ -118,7 +120,7 @@ export default function Export() {
     } catch {
       alert('删除失败');
     }
-  }, [selected, deleteMut]);
+  }, [selected, deleteMut, confirm]);
 
   const handleExport = useCallback(async () => {
     if (selected.size === 0) return;
@@ -207,7 +209,7 @@ export default function Export() {
     } catch (e) {
       alert('删除失败: ' + (e instanceof Error ? e.message : String(e)));
     }
-  }, [templateId, refetchTemplates]);
+  }, [templateId, refetchTemplates, confirm]);
 
   return (
     <>
@@ -329,9 +331,9 @@ export default function Export() {
                   ? `使用模板「${templates?.find((t) => t.id === templateId)?.name || ''}」导出 Excel`
                   : format === "txt" ? "TXT商品说明 + 实际图片打包（推荐）" : format === "dawang_raw" ? "导出原始数据包（每个商品一个JSON文件）" : `选中 ${selected.size} 件商品，导出为 ${FORMATS.find((f) => f.key === format)?.label} 格式`}
               </p>
-              <button className={`btn btn-primary ${s.btnFull}`} disabled={selected.size === 0} onClick={handleExport} aria-label="导出选中商品数据">
+              <button className={`btn btn-primary ${s.btnFull}`} disabled={selected.size === 0 || exportMut.isPending || packageMut.isPending} onClick={handleExport} aria-label="导出选中商品数据">
                 {DOWNLOAD_ICON_SVG}
-                导出数据
+                {exportMut.isPending ? '正在生成导出文件…' : '导出数据'}
               </button>
             </div>
           </div>
@@ -340,9 +342,9 @@ export default function Export() {
             <div className="card-header">打包下载</div>
             <div className="card-body">
               <p className={s.desc}>打包下载选中商品的所有图片（主图 + 详情图 + SKU图）</p>
-              <button className={`btn btn-primary ${s.btnFull}`} disabled={selected.size === 0} onClick={handlePackage} aria-label="打包下载选中商品图片">
+              <button className={`btn btn-primary ${s.btnFull}`} disabled={selected.size === 0 || exportMut.isPending || packageMut.isPending} onClick={handlePackage} aria-label="打包下载选中商品图片">
                 {PACKAGE_ICON_SVG}
-                打包图片
+                {packageMut.isPending ? '正在打包图片…' : '打包图片'}
               </button>
             </div>
           </div>

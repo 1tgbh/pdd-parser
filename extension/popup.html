@@ -6,7 +6,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    width: 280px; padding: 16px;
+    width: 390px; padding: 16px;
     font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
     background: #f6f7fb; color: #222;
   }
@@ -46,10 +46,20 @@
     text-align: center; text-decoration: none;
   }
   .btn:active { opacity: .85; }
+  .btn:disabled { opacity: .5; cursor: default; }
   .btn.secondary { background: #fff; color: #e02e24; border: 1px solid #e02e24; margin-top: 8px; }
   .btn.secondary:hover { background: #fff3f2; }
   .tip { font-size: 11px; color: #999; line-height: 1.6; margin-top: 2px; }
   .warn { color: #b71c1c; }
+  .feedback { font-size: 12px; line-height: 1.6; margin: 8px 0; color: #333; }
+  .queue-actions { display: flex; gap: 8px; }
+  [hidden] { display: none !important; }
+  .preview-title { font-size: 14px; margin: 8px 0; overflow-wrap: anywhere; }
+  .preview-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .preview-table td { padding: 5px 4px; border-bottom: 1px solid #eee; overflow-wrap: anywhere; }
+  .preview-meta { font-size: 11px; color: #666; overflow-wrap: anywhere; margin: 6px 0; }
+  .sku-preview { max-height: 160px; overflow: auto; font-size: 12px; }
+  .diagnostic-item { font-size: 12px; margin: 8px 0; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -67,23 +77,68 @@
       <span class="status"><span class="dot off" id="dot"></span><span id="statusText">检测中…</span></span>
     </div>
     <div class="row">
-      <span class="label">今日已采集</span>
+      <span class="label">今日已保存详情</span>
       <span><span class="count" id="count">0</span> <span class="count-sub">个商品</span></span>
     </div>
     <div class="row">
-      <span class="label">自动采集</span>
+      <span class="label">允许保存 / 同步</span>
       <label class="switch">
-        <input type="checkbox" id="toggle" checked>
+        <input type="checkbox" id="toggle" disabled aria-label="允许保存和同步">
         <span class="slider"></span>
       </label>
     </div>
   </div>
 
+  <div class="card">
+    <div class="label">详情采集：手动模式</div>
+    <p class="tip" id="pageHint">正在检查当前页面…</p>
+    <button class="btn" id="capture" disabled>读取并预览当前商品</button>
+    <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+    <div class="row">
+      <span class="label">列表自动记录（可选）</span>
+      <label class="switch">
+        <input type="checkbox" id="listToggle" disabled aria-label="启用可见列表自动记录">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="tip">默认关闭。开启后仅记录店铺 / 搜索页中可识别的可见商品卡片。</p>
+  </div>
+
+  <div class="card" id="previewCard" hidden>
+    <div class="label">待确认预览（尚未入库）</div>
+    <div class="preview-title" id="previewTitle"></div>
+    <div class="preview-meta" id="previewMeta"></div>
+    <div class="preview-meta" id="previewUrl"></div>
+    <table class="preview-table" id="previewFields"></table>
+    <details><summary class="tip">已读取的 SKU</summary><div class="sku-preview" id="previewSkus"></div></details>
+    <p class="feedback" id="previewMissing"></p>
+    <div class="queue-actions">
+      <button class="btn" id="confirmPreview" disabled>确认保存</button>
+      <button class="btn secondary" id="cancelPreview" disabled>取消预览</button>
+    </div>
+    <p class="tip">仅保存本次预览快照，不重新访问商品页。预览保留10分钟。</p>
+  </div>
+
+  <div class="card">
+    <div class="label" id="queueStatus">待同步：0 条</div>
+    <p class="tip">旧版、已暂停或失败的待传数据由你决定是否继续同步。</p>
+    <div class="queue-actions">
+      <button class="btn secondary" id="syncPending" disabled>同步已有待传</button>
+      <button class="btn secondary" id="clearPending" disabled>清理待传</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">最近异常诊断</div>
+    <div id="diagnosticItems" class="tip">暂无异常记录</div>
+    <a class="btn secondary" href="http://127.0.0.1:5000/diagnostics" target="_blank" rel="noopener noreferrer">打开异常诊断中心</a>
+  </div>
+
   <a class="btn" id="openAdmin" href="http://127.0.0.1:5000" target="_blank">打开管理后台</a>
   <a class="btn secondary" id="openBrowse" href="http://127.0.0.1:5000/browse" target="_blank">浏览列表（整店/搜索记录）</a>
 
-  <p class="tip" id="tip">浏览商品页时自动捕获数据，无需其他操作。</p>
-  <p class="tip">提示：建议单标签页浏览采集，勿多标签同时打开商品页。</p>
+  <p class="tip" id="tip">手动打开商品详情页，读取预览后确认保存。</p>
+  <p class="tip">只读取当前已加载字段；缺失的 SKU、价格或库存会明确提示。</p>
 
   <script src="popup.js"></script>
 </body>

@@ -10,14 +10,16 @@ import json
 import zipfile
 import sqlite3
 import io
+import tempfile
 from datetime import datetime
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from exporter import (
     get_conn, _load_goods, _download_image, _safe_filename,
     DATA_DIR, EXPORT_DIR, DB_PATH,
 )
+from normalization import specs_dict
+from paths import BASE_DIR
 
 # ============================================================
 # 微信小店导出配置
@@ -35,7 +37,7 @@ _WECHAT_DEFAULTS = {
     "deliver_method": 0,
     "seven_day_return": 1,
     "freight_insurance": 0,
-    "default_stock": 999,
+    "default_stock": 0,
     "brand_id": "2100000000",
     "listing": 0,
 }
@@ -48,6 +50,8 @@ def _load_categories():
     global _CATEGORIES_DATA
     if _CATEGORIES_DATA is None:
         cat_path = DATA_DIR / "wechat_categories.json"
+        if not cat_path.exists():
+            cat_path = BASE_DIR / "data" / "wechat_categories.json"
         if cat_path.exists():
             try:
                 with open(cat_path, "r", encoding="utf-8") as f:
@@ -63,6 +67,8 @@ def _load_forbidden():
     global _FORBIDDEN_DATA
     if _FORBIDDEN_DATA is None:
         fw_path = DATA_DIR / "forbidden_words.json"
+        if not fw_path.exists():
+            fw_path = BASE_DIR / "data" / "forbidden_words.json"
         if fw_path.exists():
             try:
                 with open(fw_path, "r", encoding="utf-8") as f:
@@ -175,7 +181,7 @@ def _convert_specs_to_sku_attrs(specs: dict) -> list:
     return attrs
 
 
-def _convert_skus(skus: list, default_stock: int = 999) -> list:
+def _convert_skus(skus: list, default_stock: int = 0) -> list:
     """将 PDD skus 转为微信小店 skus 格式。"""
     result = []
     if not isinstance(skus, list):
@@ -184,11 +190,11 @@ def _convert_skus(skus: list, default_stock: int = 999) -> list:
         if not isinstance(sku, dict):
             continue
         sale_price = _yuan_to_fen(sku.get("price", 0))
-        stock = sku.get("stock", 0)
-        if not stock or stock <= 0:
+        stock = sku.get("stock")
+        if stock is None:
             stock = default_stock
         sku_attrs = []
-        specs = sku.get("specs", {})
+        specs = specs_dict(sku.get("specs", {}))
         if isinstance(specs, dict):
             for k, v in specs.items():
                 if k and v:
@@ -268,13 +274,13 @@ def _build_wechat_goods(g: dict, cfg: dict) -> dict:
         "listing": cfg.get("listing", 0),
     }
 
-    converted_skus = _convert_skus(skus_raw, cfg.get("default_stock", 999))
+    converted_skus = _convert_skus(skus_raw, cfg.get("default_stock", 0))
     if converted_skus:
         product["skus"] = converted_skus
     else:
         product["skus"] = [{
             "sale_price": _yuan_to_fen(price_yuan),
-            "stock_num": cfg.get("default_stock", 999),
+            "stock_num": cfg.get("default_stock", 0),
             "sku_attrs": _convert_specs_to_sku_attrs(specs),
             "thumb_img": "",
         }]
@@ -330,7 +336,7 @@ def export_for_wechat(goods_ids: list = None) -> str:
         print("没有可导出的商品")
         return None
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     zip_name = "微信小店数据包_" + timestamp + ".zip"
     zip_path = EXPORT_DIR / zip_name
 
@@ -369,16 +375,18 @@ def export_for_wechat(goods_ids: list = None) -> str:
 
     # 下载图片
     img_results = {}
+    scratch = tempfile.TemporaryDirectory(prefix="wechat_images_", dir=EXPORT_DIR)
     total_imgs = len(all_img_tasks)
+    if total_imgs > 5000:
+        raise ValueError("单个图文包最多5000张图片")
     if total_imgs > 0:
-        workers = min(8, total_imgs)
-        print("正在下载 " + str(total_imgs) + " 张图片（" + str(workers) + " 线程）...")
-        with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(_download_image, task): task for task in all_img_tasks}
-            for future in as_completed(futures):
-                arcname, data = future.result()
-                if data:
-                    img_results[arcname] = data
+        print("正在下载 " + str(total_imgs) + " 张图片...")
+        for index, task in enumerate(all_img_tasks):
+            arcname, data = _download_image(task)
+            if data:
+                local = Path(scratch.name) / f"{index}.img"
+                local.write_bytes(data)
+                img_results[arcname] = local
         print("图片下载完成: " + str(len(img_results)) + "/" + str(total_imgs))
 
     # 生成 Excel 对照表
@@ -549,8 +557,11 @@ def export_for_wechat(goods_ids: list = None) -> str:
 
         zf.writestr("使用说明.txt", readme.encode("utf-8-sig"))
 
-        for arcname, data in img_results.items():
-            zf.writestr(arcname, data)
+        for arcname, local in img_results.items():
+            zf.write(local, arcname)
+        missing = [name for name, _ in all_img_tasks if name not in img_results]
+        if missing:
+            zf.writestr("下载未完成.txt", "以下图片未下载成功，访问受限时已停止重试：\n" + "\n".join(missing))
 
     downloaded = len(img_results)
     failed = total_imgs - downloaded
@@ -564,4 +575,5 @@ def export_for_wechat(goods_ids: list = None) -> str:
             print("    - " + w)
         if len(all_warnings) > 5:
             print("    ... 共 " + str(len(all_warnings)) + " 条，详见 warnings.json")
+    scratch.cleanup()
     return zip_path

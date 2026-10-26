@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-/** 复刻 usePagination 逻辑，避免 renderHook 的 act 兼容问题 */
-function usePagination(total: number, pageSize: number) {
-  const totalPages = Math.ceil(total / pageSize);
-  return { totalPages };
-}
+import { usePagination } from '../hooks/useApi';
 
 describe('usePagination', () => {
   it('计算总页数', () => {

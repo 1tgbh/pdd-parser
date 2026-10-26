@@ -9,7 +9,7 @@ export interface SkuItem {
   sku_id: string;
   price: number;
   original_price: number;
-  stock: number;
+  stock: number | null;
   specs: SkuSpec[];
   image: string;
   barcode: string;
@@ -38,6 +38,12 @@ export interface GoodsInfo {
   source_url: string;
   crawl_time: string;
   price_modified?: number;
+  price_min?: number;
+  price_max?: number;
+  total_stock?: number | null;
+  observed_at?: string | null;
+  updated_at?: string;
+  sku_items?: SkuItem[];
   tags?: TagInfo[];
   groups?: GroupInfo[];
 }
@@ -65,7 +71,7 @@ export interface AutoTaskStatus {
   logs: string[];
 }
 
-export type ExportFormat = 'excel' | 'txt' | 'dawang' | 'dawang_wechat' | 'dawang_pdd' | 'dawang_raw';
+export type ExportFormat = 'json' | 'csv' | 'excel' | 'txt' | 'dawang' | 'dawang_wechat' | 'dawang_pdd' | 'dawang_raw';
 
 export interface TagInfo {
   id: number;
@@ -94,7 +100,7 @@ export interface WechatExportSettings {
   seven_day_return?: number;
   freight_insurance?: number;
   default_stock?: number;
-  brand_id?: number;
+  brand_id?: string;
   listing?: number;
 }
 
@@ -228,4 +234,87 @@ export interface RiskCheckItem {
 
 export interface RiskCheckData {
   goods: RiskCheckItem[];
+}
+
+export interface CaptureState {
+  enabled: boolean;
+  reason: string;
+  updated_at: string;
+}
+
+export interface ImportPreview {
+  headers: string[];
+  rows: string[][];
+  detected_mapping: Record<string, number>;
+  mapping_labels: Record<string, string>;
+  error?: string;
+}
+
+export interface ImportResult {
+  total?: number;
+  imported: number;
+  updated?: number;
+  skipped: number;
+  errors: string[];
+  error?: string;
+}
+
+export interface PriceAlert {
+  goods_id: string;
+  title: string;
+  image: string;
+  current_price: number;
+  prev_price: number;
+  drop_percent: number;
+  checked_at: string;
+}
+
+export interface DiagnosticEvent {
+  id: string;
+  code: string;
+  stage: string;
+  severity: string;
+  occurred_at: string;
+  goods_id: string;
+  source_url: string;
+  http_status: number | null;
+  retry_at: string | null;
+  parser_version: string;
+  acknowledged: boolean;
+  message: string;
+  hint: string;
+  missing_fields?: string[];
+}
+
+export interface DiagnosticResponse extends PaginatedResponse<DiagnosticEvent> {
+  capture_state: CaptureState;
+}
+
+export interface FieldObservation {
+  origin: string;
+  status: string;
+  raw_value?: unknown;
+  normalized_value?: unknown;
+  source_field?: string;
+  source_url?: string;
+  observed_at?: string | null;
+  modified_at?: string;
+  parser_version?: string;
+}
+
+export interface ProvenanceField extends FieldObservation {
+  field: string;
+  current_value: unknown;
+  protected: boolean;
+  latest_observation: FieldObservation | null;
+}
+
+export interface ProductProvenance {
+  goods_id: string;
+  source_url: string;
+  observed_at: string | null;
+  updated_at: string;
+  manual_fields: string[];
+  fields: ProvenanceField[];
+  skus: { sku_id: string; key: string; specs: SkuSpec[]; fields: ProvenanceField[] }[];
 }

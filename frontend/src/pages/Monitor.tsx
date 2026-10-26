@@ -29,7 +29,7 @@ function MiniSvgChart({ points, label }: { points: MonitorHistoryPoint[]; label:
 
   if (values.length < 2) return <div className={s.chartContainer}><div className={s.chartTitle}>{label === 'price' ? '价格趋势' : label === 'sales' ? '销量趋势' : '库存趋势'}（数据不足）</div></div>;
 
-  const reversed = [...values].reverse();
+  const reversed = values;
   const w = 480, h = 80, pad = 4;
   const min = Math.min(...reversed);
   const max = Math.max(...reversed);
@@ -201,7 +201,7 @@ function MonitorCard({ item }: { item: MonitorItem }) {
           <div className={s.metricCell}>
             <div className={s.metricLabel}>库存</div>
             <div className={s.metricValue} style={{ color: item.latest_stock != null && item.latest_stock > 0 ? '#16a34a' : item.latest_stock === 0 ? '#dc2626' : undefined }}>
-              {item.latest_stock != null && item.latest_stock > 0 ? item.latest_stock.toLocaleString() : '-'}
+              {item.latest_stock != null ? item.latest_stock.toLocaleString() : '未知'}
             </div>
             {item.stock_change != null && item.stock_change !== 0 && (
               <div className={`${s.metricChange} ${item.stock_change > 0 ? s.changeUp : s.changeDown}`}>
@@ -218,7 +218,7 @@ function MonitorCard({ item }: { item: MonitorItem }) {
 
         {item.last_check && (
           <div style={{ fontSize: 11, color: 'var(--gray-400)', marginTop: 4 }}>
-            上次检查: {item.last_check}
+            最近实际采集: {item.last_check}
           </div>
         )}
 
@@ -263,14 +263,14 @@ export default function Monitor() {
   return (
     <div className={s.container}>
       <div className={s.header}>
-        <h1 className={s.headerTitle}>商品监控</h1>
+        <div><h1 className={s.headerTitle}>商品采集历史</h1><small>随实际浏览更新；刷新本地记录不会访问拼多多。</small></div>
         <div className={s.headerActions}>
           <button
             className={`${s.btn} ${s.btnPrimary}`}
             disabled={refreshMut.isPending}
             onClick={() => refreshMut.mutate()}
           >
-            {refreshMut.isPending ? '刷新中…' : '⟳ 立即刷新'}
+            {refreshMut.isPending ? '刷新中…' : '⟳ 刷新本地记录'}
           </button>
           <button className={`${s.btn} ${s.btnPrimary}`} onClick={() => setShowAdd(true)}>+ 添加商品</button>
         </div>

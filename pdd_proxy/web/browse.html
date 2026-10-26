@@ -65,7 +65,8 @@
 <script>
 var TYPE_LABEL = {mall:'店铺', search:'搜索', goods:'推荐', list:'列表'};
 var lastItems = [];
-function esc(s){ return (s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function safeUrl(s){ try { var u=new URL(s); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch(e){return '';} }
 function goodsUrl(gid){ return 'https://mobile.yangkeduo.com/goods.html?goods_id=' + gid; }
 function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._tm); t._tm=setTimeout(function(){t.style.opacity='0';},2000); }
 function load(){
@@ -87,7 +88,7 @@ function render(items){
     var tb = '<span class="badge type-' + esc(it.page_type||'list') + '">' + esc(TYPE_LABEL[it.page_type]||'列表') + '</span>';
     var cb = it.captured ? '<a class="badge captured" href="/product/'+it.goods_id+'">已采集 ✓</a>' : '';
     html += '<div class="card">'
-      + '<img class="thumb" loading="lazy" src="' + esc(it.image) + '" onerror="this.style.visibility=\'hidden\'">'
+      + '<img class="thumb" loading="lazy" src="' + esc(safeUrl(it.image)) + '" onerror="this.style.visibility=\'hidden\'">'
       + '<div class="body">'
       + '<div class="title" title="'+esc(it.title)+'">' + esc(it.title||'(无标题)') + '</div>'
       + '<div class="price"><small>¥</small>' + (it.price||0).toFixed(2) + '</div>'
@@ -97,7 +98,7 @@ function render(items){
       + '</div>'
       + '<div class="actions">'
       + '<a target="_blank" href="' + goodsUrl(it.goods_id) + '">打开商品页</a>'
-      + '<a class="gray" target="_blank" href="' + esc(it.source_url) + '">来源</a>'
+      + '<a class="gray" target="_blank" rel="noopener noreferrer" href="' + esc(safeUrl(it.source_url)) + '">来源</a>'
       + '</div></div>';
   });
   g.innerHTML = html;
@@ -110,7 +111,7 @@ function clearAll(){
   if(!confirm('清空全部浏览列表？')) return;
   fetch('/api/browse/clear', {method:'POST'}).then(function(){ toast('已清空'); load(); });
 }
-load();
+fetch('/api/session').then(function(r){if(!r.ok)throw new Error('session');return r.json();}).then(load).catch(function(){toast('本地服务认证失败，请刷新页面');});
 </script>
 </body>
 </html>

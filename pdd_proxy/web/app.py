@@ -9,6 +9,7 @@ import sqlite3
 import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
+from logging.handlers import RotatingFileHandler
 import os as _os
 from typing import Any
 
@@ -21,7 +22,12 @@ from flask import Flask, request, jsonify, send_file, send_from_directory
 logger = logging.getLogger(__name__)
 
 _BASE_DIR = Path(__file__).resolve().parent.parent
-_DATA_DIR = _BASE_DIR / "data"
+sys.path.insert(0, str(_BASE_DIR))
+from paths import DATA_DIR as _DATA_DIR, data_path
+from capture_state import CapturePaused, capturing, get_capture_state, set_capture_enabled, get_capture_enabled
+from web.security import install_security
+from normalization import normalize_skus, money, nonnegative_int, valid_goods_id, safe_source_url
+from image_store import read_image, is_pdd_image, ImageFetchError, image_type
 _DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 _log_fmt = logging.Formatter(
@@ -46,12 +52,12 @@ class _NoiseFilter(logging.Filter):
 
 _noise = _NoiseFilter()
 
-_file_handler = logging.FileHandler(_DATA_DIR / "server.log", encoding="utf-8")
+_file_handler = RotatingFileHandler(_DATA_DIR / "server.log", maxBytes=5_000_000, backupCount=2, encoding="utf-8")
 _file_handler.setLevel(logging.INFO)
 _file_handler.setFormatter(_log_fmt)
 _file_handler.addFilter(_noise)
 
-_err_handler = logging.FileHandler(_DATA_DIR / "server_err.log", encoding="utf-8")
+_err_handler = RotatingFileHandler(_DATA_DIR / "server_err.log", maxBytes=2_000_000, backupCount=2, encoding="utf-8")
 _err_handler.setLevel(logging.WARNING)
 _err_handler.setFormatter(_log_fmt)
 _err_handler.addFilter(_noise)
@@ -74,7 +80,7 @@ sys.path.insert(0, str(_BASE_DIR))
 from monitor_scheduler import start_scheduler
 
 DIST_DIR: Path = _BASE_DIR / "frontend" / "dist"
-DATA_DIR: Path = _BASE_DIR / "data"
+DATA_DIR: Path = _DATA_DIR
 DB_PATH: Path = DATA_DIR / "goods.db"
 IMAGES_DIR: Path = DATA_DIR / "images"
 EXPORT_DIR: Path = DATA_DIR / "exports"
@@ -84,24 +90,17 @@ _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 _IMAGE_TARGETS = {"main", "detail"}
 
 app = Flask(__name__, static_folder=None)
+install_security(app)
 
 
-@app.after_request
-def add_cors(response):
-    # /api/ingest 由注入到商品页面的脚本跨域调用，必须允许任意来源；
-    # 其余 API 仅允许本机来源，防止任意网站读取本地数据/配置。
-    if request.path in ("/api/ingest", "/api/list-ingest"):
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    else:
-        origin = request.headers.get("Origin", "")
-        if _re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Vary"] = "Origin"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    return response
+@app.errorhandler(CapturePaused)
+def capture_paused(error):
+    return jsonify({"error": "capture_paused", **get_capture_state()}), 409
+
+
+@app.errorhandler(ValueError)
+def invalid_value(error):
+    return jsonify({"error": str(error)}), 400
 
 
 import time as _time
@@ -123,11 +122,22 @@ def _log_request_end(response):
                 request.remote_addr or "-",
                 response.status_code, elapsed,
             )
+    if response.status_code >= 400 and getattr(request, "_pdd_authorized", False):
+        path = request.path
+        stage = "sync" if path in {"/api/ingest", "/api/list-ingest"} else "import" if path.startswith("/api/import") else "edit" if path.startswith("/api/product/") and request.method != "GET" else None
+        if stage:
+            from diagnostics import record
+            record("capture_paused" if response.status_code == 409 else "validation_failed" if response.status_code == 400 else "import_failed" if stage == "import" else "edit_failed" if stage == "edit" else "sync_failed", stage, http_status=response.status_code)
+    if response.status_code < 400 and request.path.startswith('/api/import') and getattr(request, '_pdd_authorized', False):
+        result = response.get_json(silent=True) or {}
+        if isinstance(result, dict) and (result.get('error') or result.get('errors')):
+            from diagnostics import record
+            record('import_failed', 'import', http_status=response.status_code)
     return response
 
 
 def get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -155,7 +165,7 @@ def _strip_thumb_params(url: str) -> str:
 
 
 def _is_pdd_image(url: str) -> bool:
-    return 'pddpic.com' in url or 'yangkeduo.com' in url
+    return is_pdd_image(url)
 
 
 def _hex_to_rgb(hex_color: str):
@@ -183,13 +193,53 @@ def _row_to_goods(r: sqlite3.Row) -> dict[str, Any]:
         "detail_images": json.loads(r["detail_images"] or "[]"),
         "sku_images": json.loads(r["sku_images"] or "[]"),
         "specs": json.loads(r["specs"] or "{}"),
-        "skus": json.loads(r["skus"] or "[]"),
+        "skus": normalize_skus(json.loads(r["skus"] or "[]")),
         "description": r["description"] or "",
         "attributes": json.loads(r["attributes"] or "{}"),
         "source_url": r["source_url"] or "",
         "crawl_time": r["crawl_time"] or "",
+        "observed_at": r["observed_at"] if "observed_at" in r.keys() else None,
+        "updated_at": r["updated_at"] or "",
         "price_modified": r["price_modified"] if "price_modified" in r.keys() else 0,
     }
+
+
+def _protect_manual_fields(conn, goods_id, fields, *, sku_prices=False):
+    row = conn.execute("SELECT manual_fields FROM goods WHERE goods_id=?", (goods_id,)).fetchone()
+    if row:
+        protected = set(json.loads(row[0] or "[]")) | set(fields)
+        conn.execute("UPDATE goods SET manual_fields=? WHERE goods_id=?", (json.dumps(sorted(protected)), goods_id))
+        from provenance import mark_manual
+        mark_manual(conn, goods_id, fields, datetime.now().isoformat(), sku_prices=sku_prices)
+
+
+def _delete_goods(conn, ids):
+    placeholders = ','.join('?' for _ in ids)
+    for table in ("sku_items", "product_tags", "product_groups", "monitor_list", "monitor_history", "goods"):
+        conn.execute(f"DELETE FROM {table} WHERE goods_id IN ({placeholders})", ids)
+
+
+def _product_filters(args):
+    clauses, params = [], []
+    keyword = args.get("keyword", "").strip()
+    if keyword:
+        clauses.append("(g.title LIKE ? OR g.shop_name LIKE ? OR g.goods_id LIKE ?)")
+        params.extend([f"%{keyword}%"] * 3)
+    for key, column, operator, convert in (
+        ("min_price", "price", ">=", money), ("max_price", "price", "<=", money),
+        ("min_sales", "sales", ">=", nonnegative_int), ("max_sales", "sales", "<=", nonnegative_int),
+    ):
+        if args.get(key) not in (None, ""):
+            clauses.append(f"g.{column} {operator} ?")
+            params.append(convert(args[key]))
+    for key, table, column in (("tag", "product_tags", "tag_id"), ("group", "product_groups", "group_id")):
+        if args.get(key):
+            clauses.append(f"EXISTS (SELECT 1 FROM {table} p WHERE p.goods_id=g.goods_id AND p.{column}=?)")
+            params.append(nonnegative_int(args[key]))
+    if args.get("shop"):
+        clauses.append("g.shop_name LIKE ?")
+        params.append(f"%{args['shop']}%")
+    return (" WHERE " + " AND ".join(clauses) if clauses else ""), params
 
 
 
@@ -197,7 +247,7 @@ def _apply_markup(price: float, multiplier: float, fixed_amount: float) -> float
     """对单个价格应用改价公式，价格<=0不改"""
     if price <= 0:
         return price
-    return round(price * multiplier + fixed_amount, 2)
+    return money(price * multiplier + fixed_amount)
 
 
 def _apply_markup_to_skus(skus: list, multiplier: float, fixed_amount: float) -> list:
@@ -216,25 +266,26 @@ def api_proxy_image():
     url = request.args.get("url", "")
     if not url or not _is_pdd_image(url):
         return jsonify({"error": "invalid url"}), 400
-    original_url = url
-    url = _strip_thumb_params(url)
-    cache_key = _hashlib.md5(url.encode()).hexdigest()
-    cache_path = _IMAGE_CACHE_DIR / cache_key
-    ext_match = _re.search(r'\.(jpe?g|png|webp|gif)', url.lower())
-    ext = ext_match.group(0) if ext_match else '.jpg'
-    cache_path_with_ext = cache_path.with_suffix(ext)
-    if cache_path_with_ext.exists():
-        return send_file(str(cache_path_with_ext), mimetype=f"image/{ext.lstrip('.')}")
     try:
-        resp = _requests.get(url, headers={"Referer": _PDD_REFERER, "User-Agent": "Mozilla/5.0"}, timeout=10, stream=True)
-        resp.raise_for_status()
-        ct = resp.headers.get("content-type", "image/jpeg")
-        data = resp.content
-        with open(cache_path_with_ext, "wb") as f:
-            f.write(data)
+        data, ct = read_image(url, pdd_only=True)
         return send_file(io.BytesIO(data), mimetype=ct)
+    except ImageFetchError as e:
+        return jsonify({"error": str(e)}), 429 if e.status == 429 else 400
     except Exception as e:
         return jsonify({"error": str(e)}), 502
+
+
+@app.post("/api/ai/cache-image")
+def api_cache_image():
+    url = (request.get_json() or {}).get("url", "")
+    content, content_type = read_image(url)
+    ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}[content_type]
+    name = "remote_" + _hashlib.sha256(content).hexdigest() + ext
+    path = DATA_DIR / "ai_uploads" / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        path.write_bytes(content)
+    return jsonify({"ok": True, "url": "/api/ai-image/ai_uploads/" + name})
 
 
 # ==================== React SPA ====================
@@ -246,8 +297,10 @@ def api_proxy_image():
 @app.route("/products")
 @app.route("/product/<path:_id>")
 @app.route("/export")
+@app.route("/import")
 @app.route("/settings")
 @app.route("/logs")
+@app.route("/diagnostics")
 @app.route("/ai-editor")
 def serve_spa(_id: str = "") -> Any:
     return send_from_directory(str(DIST_DIR), "index.html")
@@ -386,10 +439,10 @@ def api_price_alerts():
             JOIN monitor_history h1 ON m.goods_id = h1.goods_id
             JOIN monitor_history h2 ON m.goods_id = h2.goods_id
             WHERE h1.id = (
-                SELECT id FROM monitor_history WHERE goods_id = m.goods_id ORDER BY checked_at DESC LIMIT 1
+                SELECT id FROM monitor_history WHERE goods_id = m.goods_id AND observed_at IS NOT NULL ORDER BY observed_at DESC, id DESC LIMIT 1
             )
             AND h2.id = (
-                SELECT id FROM monitor_history WHERE goods_id = m.goods_id ORDER BY checked_at DESC LIMIT 1 OFFSET 1
+                SELECT id FROM monitor_history WHERE goods_id = m.goods_id AND observed_at IS NOT NULL ORDER BY observed_at DESC, id DESC LIMIT 1 OFFSET 1
             )
             AND h1.price < h2.price
             AND h2.price > 0
@@ -423,23 +476,11 @@ def api_price_alerts():
 def api_products() -> dict:
     page = max(1, int(request.args.get("page", 1)))
     page_size = min(100, max(1, int(request.args.get("page_size", 20))))
-    keyword = request.args.get("keyword", "").strip()
     offset = (page - 1) * page_size
+    where, params = _product_filters(request.args)
     conn = get_conn()
-    if keyword:
-        like = f"%{keyword}%"
-        total = conn.execute(
-            "SELECT COUNT(*) FROM goods WHERE title LIKE ? OR shop_name LIKE ?", (like, like)
-        ).fetchone()[0]
-        rows = conn.execute(
-            "SELECT * FROM goods WHERE title LIKE ? OR shop_name LIKE ? "
-            "ORDER BY crawl_time DESC LIMIT ? OFFSET ?", (like, like, page_size, offset)
-        ).fetchall()
-    else:
-        total = conn.execute("SELECT COUNT(*) FROM goods").fetchone()[0]
-        rows = conn.execute(
-            "SELECT * FROM goods ORDER BY crawl_time DESC LIMIT ? OFFSET ?", (page_size, offset)
-        ).fetchall()
+    total = conn.execute("SELECT COUNT(*) FROM goods g" + where, params).fetchone()[0]
+    rows = conn.execute("SELECT g.* FROM goods g" + where + " ORDER BY g.crawl_time DESC LIMIT ? OFFSET ?", params + [page_size, offset]).fetchall()
     conn.close()
     items = []
     for r in rows:
@@ -465,22 +506,81 @@ def api_shops():
 def api_capture_toggle():
     if request.method == "POST":
         data = request.get_json() or {}
-        enabled = data.get("enabled", True)
-        set_capture_enabled(bool(enabled))
-        return jsonify({"enabled": get_capture_enabled()})
-    return jsonify({"enabled": get_capture_enabled()})
+        set_capture_enabled(data.get("enabled"))
+    return jsonify(get_capture_state())
+
+
+@app.post("/api/capture-event")
+def api_capture_event():
+    data = request.get_json() or {}
+    reasons = {"auth_required": "页面要求登录", "http_401": "登录状态失效", "http_403": "页面访问受限（HTTP 403）",
+               "http_429": "页面请求频率受限（HTTP 429）", "verification": "页面要求安全验证"}
+    reason = reasons.get(data.get("kind"))
+    if not reason:
+        raise ValueError("不支持的采集事件")
+    result = set_capture_enabled(False, reason)
+    from diagnostics import record
+    code = {"auth_required": "auth_required", "http_401": "auth_required", "http_403": "access_denied", "http_429": "rate_limited", "verification": "verification_required"}[data["kind"]]
+    record(code, "page_read", source_url=data.get("source_url", ""), http_status=int(data["kind"][5:]) if data["kind"].startswith("http_") else None)
+    return jsonify(result)
+
+
+@app.post("/api/diagnostics/events")
+def api_diagnostic_events():
+    from diagnostics import write_events
+    events = (request.get_json() or {}).get("events")
+    if not isinstance(events, list) or not 1 <= len(events) <= 20:
+        raise ValueError("诊断事件必须是1到20项的数组")
+    conn = get_conn()
+    try:
+        write_events(conn, events)
+        conn.commit()
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
+
+
+@app.get("/api/diagnostics")
+def api_diagnostics():
+    from diagnostics import public, CODES, STAGES
+    clauses, params = [], []
+    for field, choices in (("code", CODES), ("stage", STAGES)):
+        value = request.args.get(field)
+        if value:
+            if value not in choices:
+                raise ValueError("诊断筛选无效")
+            clauses.append(field + "=?")
+            params.append(value)
+    if request.args.get("unread") == "true":
+        clauses.append("acknowledged=0")
+    where = " WHERE " + " AND ".join(clauses) if clauses else ""
+    page = max(1, int(request.args.get("page", 1)))
+    conn = get_conn()
+    try:
+        total = conn.execute("SELECT COUNT(*) FROM diagnostics" + where, params).fetchone()[0]
+        rows = conn.execute("SELECT * FROM diagnostics" + where + " ORDER BY occurred_at DESC,id DESC LIMIT 30 OFFSET ?", params + [(page - 1) * 30]).fetchall()
+        return jsonify({"items": [public(r) for r in rows], "total": total, "page": page, "page_size": 30, "capture_state": get_capture_state()})
+    finally:
+        conn.close()
+
+
+@app.post("/api/diagnostics/<event_id>/acknowledge")
+def api_acknowledge_diagnostic(event_id):
+    conn = get_conn()
+    try:
+        if not conn.execute("SELECT 1 FROM diagnostics WHERE id=?", (event_id,)).fetchone():
+            return jsonify({"error": "诊断记录不存在"}), 404
+        conn.execute("UPDATE diagnostics SET acknowledged=1 WHERE id=?", (event_id,))
+        conn.commit()
+        return jsonify({"ok": True})
+    finally:
+        conn.close()
 
 @app.route("/api/product-ids")
 def api_product_ids() -> dict:
-    keyword = request.args.get("keyword", "").strip()
+    where, params = _product_filters(request.args)
     conn = get_conn()
-    if keyword:
-        like = f"%{keyword}%"
-        rows = conn.execute(
-            "SELECT goods_id FROM goods WHERE title LIKE ? OR shop_name LIKE ?", (like, like)
-        ).fetchall()
-    else:
-        rows = conn.execute("SELECT goods_id FROM goods").fetchall()
+    rows = conn.execute("SELECT g.goods_id FROM goods g" + where, params).fetchall()
     conn.close()
     ids = [r["goods_id"] for r in rows]
     return jsonify({"ids": ids, "total": len(ids)})
@@ -489,14 +589,24 @@ def api_product_ids() -> dict:
 def api_product_detail(goods_id: str) -> Any:
     conn = get_conn()
     if request.method == "DELETE":
-        conn.execute("DELETE FROM goods WHERE goods_id = ?", (goods_id,))
+        _delete_goods(conn, [goods_id])
         conn.commit(); conn.close()
         return jsonify({"ok": True, "deleted": goods_id})
     if request.method == "PUT":
         data = request.get_json() or {}
+        for key in ("price", "original_price"):
+            if key in data:
+                data[key] = money(data[key])
+        for key in ("sales", "sold_quantity"):
+            if key in data:
+                data[key] = nonnegative_int(data[key])
         fields, values = [], []
         updatable = ["title","subtitle","price","original_price","sales","sold_quantity","shop_name","description"]
         json_list_fields = ["main_images","detail_images","sku_images"]
+        for field in json_list_fields + ["selling_points"]:
+            if field in data and (not isinstance(data[field], list) or any(not isinstance(v, str) for v in data[field])):
+                conn.close()
+                raise ValueError(field + "必须是字符串数组")
         for f in updatable:
             if f in data: fields.append(f"{f} = ?"); values.append(data[f])
         if "selling_points" in data:
@@ -506,6 +616,9 @@ def api_product_detail(goods_id: str) -> Any:
         if not fields: conn.close(); return jsonify({"error": "没有要更新的字段"}), 400
         fields.append("updated_at = ?"); values.append(datetime.now().isoformat()); values.append(goods_id)
         conn.execute(f"UPDATE goods SET {', '.join(fields)} WHERE goods_id = ?", values)
+        _protect_manual_fields(conn, goods_id, set(data) & set(updatable + json_list_fields + ["selling_points"]))
+        if "price" in data or "original_price" in data:
+            conn.execute("UPDATE goods SET price_modified=1 WHERE goods_id=?", (goods_id,))
         conn.commit()
         r = conn.execute("SELECT * FROM goods WHERE goods_id = ?", (goods_id,)).fetchone()
         conn.close()
@@ -523,9 +636,64 @@ def api_product_detail(goods_id: str) -> Any:
     return jsonify(resp)
 
 
+@app.get("/api/product/<goods_id>/provenance")
+def api_product_provenance(goods_id):
+    from provenance import describe
+    conn = get_conn()
+    try:
+        row = conn.execute("SELECT * FROM goods WHERE goods_id=?", (goods_id,)).fetchone()
+        if not row:
+            return jsonify({"error": "商品不存在"}), 404
+        return jsonify(describe(row))
+    finally:
+        conn.close()
+
+
 @app.route("/api/export", methods=["POST"])
 def api_export() -> Any:
-    data = request.get_json() or {}
+    from export_jobs import submit_export
+    data = _export_payload(request.get_json() or {})
+    return jsonify(submit_export("export", data, _create_export_file)), 202
+
+
+def _export_payload(data):
+    ids = data.get("ids") or []
+    if not isinstance(ids, list) or len(ids) > 500:
+        raise ValueError("单个导出任务最多500件商品")
+    data["ids"] = sorted({valid_goods_id(gid) for gid in ids})
+    if not data["ids"]:
+        conn = get_conn()
+        try:
+            rows = conn.execute("SELECT goods_id FROM goods ORDER BY goods_id LIMIT 501").fetchall()
+        finally:
+            conn.close()
+        if len(rows) > 500:
+            raise ValueError("全部商品超过500件，请分批选择导出")
+        data["ids"] = [r[0] for r in rows]
+        if not data["ids"]:
+            raise ValueError("没有可导出的商品")
+    return data
+
+
+@app.get("/api/jobs/<job_id>")
+def api_export_job(job_id):
+    from export_jobs import get_export_job, public_job
+    job = get_export_job(job_id)
+    if not job:
+        return jsonify({"error": "导出任务不存在或已过期"}), 404
+    return jsonify(public_job(job))
+
+
+@app.get("/api/jobs/<job_id>/download")
+def api_export_job_download(job_id):
+    from export_jobs import get_export_job
+    job = get_export_job(job_id)
+    if not job or job["status"] != "completed":
+        return jsonify({"error": "导出文件尚未就绪"}), 409
+    return send_file(job["path"], as_attachment=True, download_name=job["filename"])
+
+
+def _create_export_file(data):
     format_type = data.get("format", "json")
     goods_ids = data.get("ids", [])
     template_id = data.get("template_id")
@@ -535,7 +703,7 @@ def api_export() -> Any:
             tpl = conn.execute("SELECT * FROM export_templates WHERE id = ?", (template_id,)).fetchone()
             if not tpl:
                 conn.close()
-                return jsonify({"error": "模板不存在"}), 404
+                raise ValueError("模板不存在")
             fields = json.loads(tpl["fields"])
             column_map = json.loads(tpl["column_map"])
             if goods_ids:
@@ -546,28 +714,33 @@ def api_export() -> Any:
             conn.close()
             goods_list = [_row_to_goods(r) for r in rows]
             filepath, _ = export_with_template(goods_list, fields, column_map)
-            return send_file(filepath, as_attachment=True, download_name="export.xlsx")
+            return filepath
         func_map = {"json": export_json, "csv": export_csv, "excel": export_excel, "taobao": export_for_taobao, "txt": export_txt, "wechat": export_for_wechat}
         if format_type in ("dawang", "dawang_wechat", "dawang_pdd"):
             tpl = {"dawang": "universal", "dawang_wechat": "wechat", "dawang_pdd": "pdd"}[format_type]
             filepath = export_dawang(goods_ids if goods_ids else None, template=tpl)
-            return send_file(str(filepath), as_attachment=True, download_name=filepath.name)
+            return filepath
         if format_type == "dawang_raw":
             filepath = export_dawang_raw(goods_ids if goods_ids else None)
             if not filepath:
-                return jsonify({"error": "没有可导出的原始数据"}), 400
-            return send_file(str(filepath), as_attachment=True, download_name=Path(filepath).name)
+                raise ValueError("没有可导出的原始数据")
+            return filepath
         func = func_map.get(format_type)
-        if not func: return jsonify({"error": f"不支持的格式: {format_type}"}), 400
+        if not func: raise ValueError(f"不支持的格式: {format_type}")
         filepath = func(goods_ids if goods_ids else None)
-        return send_file(str(filepath), as_attachment=True, download_name=Path(filepath).name)
+        return filepath
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise ValueError(f"导出失败: {e}") from e
 
 
 @app.route("/api/package", methods=["POST"])
 def api_package() -> Any:
-    data = request.get_json() or {}
+    from export_jobs import submit_export
+    data = _export_payload(request.get_json() or {})
+    return jsonify(submit_export("package", data, _create_package_file)), 202
+
+
+def _create_package_file(data):
     goods_ids = data.get("ids", [])
     include_images = data.get("include_images", True)
     try:
@@ -578,13 +751,15 @@ def api_package() -> Any:
         else:
             rows = conn.execute("SELECT * FROM goods").fetchall()
         conn.close()
-        if not rows: return jsonify({"error": "没有可打包的商品"}), 400
+        if not rows: raise ValueError("没有可打包的商品")
         goods_list = [_row_to_goods(r) for r in rows]
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if include_images and sum(len(g["main_images"]) + len(g["detail_images"]) + len(g["sku_images"]) for g in goods_list) > 5000:
+            raise ValueError("单个图文包最多5000张图片")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         if len(goods_list) == 1 and goods_list[0].get("title"):
             _t = goods_list[0]["title"][:40]
             for ch in '/:*?"<>|': _t = _t.replace(ch, "_")
-            zip_name = f"{_t}.zip"
+            zip_name = f"{_safe_filename(_t)}_{timestamp}.zip"
         else:
             zip_name = f"商品采集_{timestamp}.zip"
         zip_path = EXPORT_DIR / zip_name
@@ -592,26 +767,23 @@ def api_package() -> Any:
         with zipfile.ZipFile(str(zip_path), "w", zipfile.ZIP_DEFLATED) as zf:
             zf.writestr("数据/goods.json", json.dumps(goods_list, ensure_ascii=False, indent=2))
             if include_images:
-                import requests as _req
-                import random as _rand
-                import time as _t
-                _dl_headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.pinduoduo.com/"}
+                from exporter import _download_image
+                missing = []
                 for g in goods_list:
-                    gid = g["goods_id"]
+                    gid = valid_goods_id(g["goods_id"])
                     safe_title = _safe_filename(g.get("title", ""), 30)
                     img_dir = f"图片/{safe_title}_{gid}"
-                    all_imgs = g["main_images"] + g["detail_images"]
+                    all_imgs = list(dict.fromkeys(g["main_images"] + g["detail_images"] + g["sku_images"]))
                     for idx, url in enumerate(all_imgs):
-                        if not url or not url.startswith("http"): continue
-                        try:
-                            _t.sleep(_rand.uniform(0.2, 0.8))  # 随机间隔，降低风控风险
-                            resp = _req.get(url, headers=_dl_headers, timeout=15, verify=False)
-                            if resp.status_code == 200 and len(resp.content) > 100:
-                                fname = f"主图_{idx+1}.jpg" if idx < len(g["main_images"]) else f"详情图_{idx-len(g['main_images'])+1}.jpg"
-                                zf.writestr(f"{img_dir}/{fname}", resp.content)
-                        except Exception: pass
+                        fname, content = _download_image((f"{img_dir}/图片_{idx+1}.jpg", url))
+                        if content:
+                            zf.writestr(fname, content)
+                        else:
+                            missing.append(fname)
                     if all_imgs:
                         zf.writestr(f"{img_dir}/图片URL索引.txt", "\n".join(all_imgs))
+                if missing:
+                    zf.writestr("下载未完成.txt", "以下图片未下载成功，访问受限时已停止重试：\n" + "\n".join(missing))
             # 包含 AI 生成图片
             ai_conn = get_conn()
             for g in goods_list:
@@ -622,7 +794,7 @@ def api_package() -> Any:
                     "SELECT result_path, prompt FROM ai_images WHERE goods_id = ?", (gid,)
                 ).fetchall()
                 for ai_idx, ai_row in enumerate(ai_rows, 1):
-                    ai_path = DATA_DIR / ai_row[0]
+                    ai_path = data_path(ai_row[0], _AI_IMAGE_DIRS)
                     if ai_path.exists():
                         ext = ai_path.suffix or ".png"
                         arcname = f"{img_dir}/AI图片_{ai_idx}{ext}"
@@ -637,9 +809,9 @@ def api_package() -> Any:
                 zf.writestr(f"图片/{safe_title}_{gid}/商品信息.txt", txt_content.encode("utf-8-sig"))
             readme = f"商品采集数据包\n{'='*20}\n\n采集时间: {timestamp}\n商品数量: {len(goods_list)}\n包含图片: {'是' if include_images else '否'}\n"
             zf.writestr("README.txt", readme)
-        return send_file(str(zip_path), as_attachment=True, download_name=zip_name)
+        return zip_path
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise ValueError(f"打包失败: {e}") from e
 
 
 @app.route("/api/import/preview", methods=["POST"])
@@ -720,7 +892,7 @@ def api_products_delete() -> Any:
     if not ids: return jsonify({"error": "请选择要删除的商品"}), 400
     conn = get_conn()
     placeholders = ",".join("?" * len(ids))
-    conn.execute(f"DELETE FROM goods WHERE goods_id IN ({placeholders})", ids)
+    _delete_goods(conn, ids)
     conn.commit(); conn.close()
     return jsonify({"ok": True, "deleted_count": len(ids)})
 
@@ -769,187 +941,16 @@ def api_import_raw_json() -> Any:
                 pass
 
 @app.route("/api/ingest", methods=["POST", "OPTIONS"])
+@capturing
 def api_ingest() -> Any:
-    if request.method == "OPTIONS": return "", 204
-    data = request.get_json() or {}
-    goods_id = str(data.get("goods_id", "")).strip()
-    if not goods_id: return jsonify({"error": "missing goods_id"}), 400
-    title = data.get("title", "").strip()
-    images = data.get("main_images", [])
-    if not title and not images: return jsonify({"error": "no title or images"}), 400
-    conn = get_conn()
-    now = datetime.now().isoformat()
-    try:
-        # Fetch existing row for merge logic
-        existing = conn.execute(
-            "SELECT * FROM goods WHERE goods_id = ?", (goods_id,)
-        ).fetchone()
-
-        def _json_len(v):
-            """Measure richness of a JSON field."""
-            if not v: return 0
-            try:
-                parsed = json.loads(v) if isinstance(v, str) else v
-                if isinstance(parsed, list): return len(parsed)
-                if isinstance(parsed, dict): return len(parsed)
-            except: pass
-            return 0
-
-        def _str_len(v):
-            return len(v) if v and isinstance(v, str) else 0
-
-        if existing:
-            # Merge: for each field, keep the richer value
-            def pick(cur_val, new_val, cur_len, new_len):
-                return new_val if new_len > cur_len else cur_val
-
-            # Parse existing JSON fields
-            ex_main = json.loads(existing["main_images"] or "[]")
-            ex_detail = json.loads(existing["detail_images"] or "[]")
-            ex_sku_img = json.loads(existing["sku_images"] or "[]")
-            ex_specs = json.loads(existing["specs"] or "{}")
-            ex_skus = json.loads(existing["skus"] or "[]")
-            ex_attrs = json.loads(existing["attributes"] or "{}")
-            ex_sp = json.loads(existing["selling_points"] or "[]")
-
-            new_main = data.get("main_images", [])
-            new_detail = data.get("detail_images", [])
-            new_sku_img = data.get("sku_images", [])
-            new_specs = data.get("specs", {})
-            new_skus = data.get("skus", [])
-            new_attrs = data.get("attributes", {})
-            new_sp = data.get("selling_points", [])
-
-            # Count rich SKUs (with sku_id, stock, or image)
-            def rich_sku_count(skus):
-                return sum(1 for s in (skus or []) if isinstance(s, dict) and (s.get("sku_id") or s.get("stock", 0) > 0 or s.get("image")))
-
-            ex_rich = rich_sku_count(ex_skus)
-            new_rich = rich_sku_count(new_skus)
-
-            # Pick richer versions
-            m_main = pick(ex_main, new_main, len(ex_main), len(new_main))
-            m_detail = pick(ex_detail, new_detail, len(ex_detail), len(new_detail))
-            m_sku_img = pick(ex_sku_img, new_sku_img, len(ex_sku_img), len(new_sku_img))
-            m_specs = pick(ex_specs, new_specs, len(ex_specs), len(new_specs))
-            m_skus = pick(ex_skus, new_skus, ex_rich, new_rich) if new_rich > 0 or len(new_skus) > len(ex_skus) else ex_skus
-            m_attrs = pick(ex_attrs, new_attrs, len(ex_attrs), len(new_attrs))
-            m_sp = pick(ex_sp, new_sp, len(ex_sp), len(new_sp))
-
-            # For text fields, keep non-empty, prefer longer
-            m_title = pick(existing["title"] or "", data.get("title",""), _str_len(existing["title"]), _str_len(data.get("title","")))
-            m_subtitle = pick(existing["subtitle"] or "", data.get("subtitle",""), _str_len(existing["subtitle"]), _str_len(data.get("subtitle","")))
-            m_desc = pick(existing["description"] or "", data.get("description",""), _str_len(existing["description"]), _str_len(data.get("description","")))
-            m_shop = pick(existing["shop_name"] or "", data.get("shop_name",""), _str_len(existing["shop_name"]), _str_len(data.get("shop_name","")))
-            m_shop_id = pick(existing["shop_id"] or "", data.get("shop_id",""), _str_len(existing["shop_id"]), _str_len(data.get("shop_id","")))
-            m_shop_logo = pick(existing["shop_logo"] or "", data.get("shop_logo",""), _str_len(existing["shop_logo"]), _str_len(data.get("shop_logo","")))
-
-            # For numbers, keep non-zero
-            m_price = float(data.get("price",0) or 0) if float(data.get("price",0) or 0) > 0 else (existing["price"] or 0)
-            m_orig = float(data.get("original_price",0) or 0) if float(data.get("original_price",0) or 0) > 0 else (existing["original_price"] or 0)
-            m_mgp = float(data.get("min_group_price",0) or 0) if float(data.get("min_group_price",0) or 0) > 0 else (existing["min_group_price"] or 0)
-            m_sales = int(data.get("sales",0) or 0) if int(data.get("sales",0) or 0) > 0 else (existing["sales"] or 0)
-            m_sold = int(data.get("sold_quantity",0) or 0) if int(data.get("sold_quantity",0) or 0) > 0 else (existing["sold_quantity"] or 0)
-
-            # raw_data: keep the richer one
-            new_raw = json.dumps(data.get("raw_init_data") or data, ensure_ascii=False)
-            ex_raw = existing["raw_data"] or ""
-            m_raw = pick(ex_raw, new_raw, _str_len(ex_raw), _str_len(new_raw))
-
-            conn.execute("""
-                UPDATE goods SET
-                    title=?, subtitle=?, selling_points=?, price=?, original_price=?, min_group_price=?,
-                    sales=?, sold_quantity=?, shop_name=?, shop_id=?, shop_logo=?,
-                    main_images=?, detail_images=?, sku_images=?, specs=?, skus=?,
-                    description=?, attributes=?, source_url=?, updated_at=?, raw_data=?
-                WHERE goods_id=?
-            """, (
-                m_title, m_subtitle,
-                json.dumps(m_sp, ensure_ascii=False),
-                m_price, m_orig, m_mgp,
-                m_sales, m_sold,
-                m_shop, m_shop_id, m_shop_logo,
-                json.dumps(m_main, ensure_ascii=False),
-                json.dumps(m_detail, ensure_ascii=False),
-                json.dumps(m_sku_img, ensure_ascii=False),
-                json.dumps(m_specs, ensure_ascii=False),
-                json.dumps(m_skus, ensure_ascii=False),
-                m_desc,
-                json.dumps(m_attrs, ensure_ascii=False),
-                data.get("source_url","") or (existing["source_url"] or ""),
-                now, m_raw,
-                goods_id,
-            ))
-            conn.commit()
-        else:
-            conn.execute("""
-                INSERT INTO goods
-                (goods_id, title, subtitle, selling_points, price, original_price, min_group_price,
-                 sales, sold_quantity, shop_name, shop_id, shop_logo,
-                 main_images, detail_images, sku_images, specs, skus,
-                 description, attributes, source_url, crawl_time, updated_at, raw_data)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                goods_id, data.get("title",""), data.get("subtitle",""),
-                json.dumps(data.get("selling_points",[]), ensure_ascii=False),
-                data.get("price",0), data.get("original_price",0), data.get("min_group_price",0),
-                data.get("sales",0), data.get("sold_quantity",0),
-                data.get("shop_name",""), data.get("shop_id",""), data.get("shop_logo",""),
-                json.dumps(data.get("main_images",[]), ensure_ascii=False),
-                json.dumps(data.get("detail_images",[]), ensure_ascii=False),
-                json.dumps(data.get("sku_images",[]), ensure_ascii=False),
-                json.dumps(data.get("specs",{}), ensure_ascii=False),
-                json.dumps(data.get("skus",[]), ensure_ascii=False),
-                data.get("description",""),
-                json.dumps(data.get("attributes",{}), ensure_ascii=False),
-                data.get("source_url",""), now, now,
-                json.dumps(data.get("raw_init_data") or data, ensure_ascii=False),
-            ))
-            conn.commit()
-        sku_list = data.get("skus", [])
-        if isinstance(sku_list, list) and len(sku_list) > 0:
-            upsert_sku_items(goods_id, sku_list)
-
-        price_min = float(data.get("price_min", 0) or 0)
-        price_max = float(data.get("price_max", 0) or 0)
-        total_stock = int(data.get("total_stock", 0) or 0)
-
-        if (price_min <= 0 or price_max <= 0) and isinstance(sku_list, list) and len(sku_list) > 0:
-            prices = []
-            stock_sum = 0
-            for s in sku_list:
-                p = float(s.get("price", 0) or 0)
-                if p > 0:
-                    prices.append(p)
-                stock_sum += int(s.get("stock", 0) or 0)
-            if prices:
-                price_min = min(prices)
-                price_max = max(prices)
-            if stock_sum > 0:
-                total_stock = stock_sum
-
-        if price_min > 0 or price_max > 0 or total_stock > 0:
-            update_goods_price_range(goods_id, price_min, price_max, total_stock)
-
-        mall_info = data.get("mall_info") or {}
-        if isinstance(mall_info, dict) and mall_info:
-            mall_name = mall_info.get("mallName") or mall_info.get("mall_name") or ""
-            mall_logo = mall_info.get("mallLogo") or mall_info.get("mall_logo") or ""
-            if mall_name:
-                conn.execute("UPDATE goods SET shop_name=?, shop_logo=? WHERE goods_id=?",
-                             mall_name, mall_logo, goods_id)
-                conn.commit()
-
-        return jsonify({"ok": True, "goods_id": goods_id})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
+    from storage import ingest_goods
+    return jsonify(ingest_goods(request.get_json()))
 
 
 # ==================== 浏览列表采集（店铺/搜索/推荐列表被动记录） ====================
 
 @app.route("/api/list-ingest", methods=["POST", "OPTIONS"])
+@capturing
 def api_list_ingest() -> Any:
     """接收页面渲染过的商品列表卡（整店/搜索/推荐），被动记录，不发额外请求。"""
     if request.method == "OPTIONS": return "", 204
@@ -957,7 +958,7 @@ def api_list_ingest() -> Any:
     items = data.get("items") or []
     if not isinstance(items, list) or not items:
         return jsonify({"error": "missing items"}), 400
-    source_url = str(data.get("source_url") or "")[:2000]
+    source_url = safe_source_url(data.get("source_url"))
     page_type = str(data.get("page_type") or "")[:30]
     conn = get_conn()
     now = datetime.now().isoformat()
@@ -970,8 +971,8 @@ def api_list_ingest() -> Any:
             if not gid or not gid.isdigit():
                 continue
             title = str(it.get("title") or "")[:500]
-            price = float(it.get("price") or 0)
-            sales = int(it.get("sales") or 0)
+            price = money(it.get("price"))
+            sales = nonnegative_int(it.get("sales"))
             image = str(it.get("image") or "")[:1000]
             mall_id = str(it.get("mall_id") or "")[:50]
             mall_name = str(it.get("mall_name") or "")[:200]
@@ -993,6 +994,8 @@ def api_list_ingest() -> Any:
             saved += 1
         conn.commit()
         return jsonify({"ok": True, "saved": saved})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
@@ -1065,7 +1068,6 @@ from exporter import export_json, export_csv, export_excel, export_for_taobao, e
 from importer import preview_file, import_file, import_raw_json_files, import_raw_json_directory, import_goods_json
 from wechat_export import export_for_wechat, match_category, check_forbidden_words, auto_fix_forbidden, _load_categories
 from web.ai import load_config, save_config, generate_image, edit_image, rewrite_text, generate_copywriting, remove_background, PRESET_PROMPTS
-from service import set_capture_enabled, get_capture_enabled
 
 
 # ==================== 设置 ====================
@@ -1147,7 +1149,7 @@ def api_settings_test():
                 f"{base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={"model": model, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 5},
-                timeout=15, verify=False
+                timeout=15
             )
             if resp.status_code == 200:
                 return jsonify({"ok": True, "model": model})
@@ -1168,7 +1170,7 @@ def api_settings_test():
                 f"{base_url}/v1/draw/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={"model": model, "prompt": "test connection", "size": "512x512"},
-                timeout=90, stream=True, verify=False
+                timeout=90, stream=True
             )
             if resp.status_code == 200:
                 return jsonify({"ok": True, "model": model})
@@ -1306,6 +1308,7 @@ def api_tags():
 def api_tag_detail(tag_id):
     conn = get_conn()
     if request.method == "DELETE":
+        conn.execute("DELETE FROM product_tags WHERE tag_id = ?", (tag_id,))
         conn.execute("DELETE FROM tags WHERE id = ?", (tag_id,))
         conn.commit()
         conn.close()
@@ -1381,6 +1384,7 @@ def api_groups():
 def api_group_detail(group_id):
     conn = get_conn()
     if request.method == "DELETE":
+        conn.execute("DELETE FROM product_groups WHERE group_id = ?", (group_id,))
         conn.execute("DELETE FROM groups WHERE id = ?", (group_id,))
         conn.commit()
         conn.close()
@@ -1475,6 +1479,7 @@ def api_batch_price_single(goods_id: str):
         conn.execute("UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
                      (new_p, new_op, now, sr["id"]))
 
+    _protect_manual_fields(conn, goods_id, ["price", "original_price", "min_group_price", "price_min", "price_max"], sku_prices=True)
     conn.commit()
     conn.close()
     return jsonify({"ok": True, "price": price, "skus_count": len(skus)})
@@ -1526,7 +1531,8 @@ def api_batch_update():
             for sr in conn.execute("SELECT id, price, original_price FROM sku_items WHERE goods_id=?", (gid,)).fetchall():
                 conn.execute("UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
                              (_apply_markup(sr["price"] or 0, multiply, add),
-                              _apply_markup(sr["original_price"] or 0, multiply, add), now, sr["id"]))
+                               _apply_markup(sr["original_price"] or 0, multiply, add), now, sr["id"]))
+            _protect_manual_fields(conn, gid, ["price", "original_price", "min_group_price", "price_min", "price_max"], sku_prices=True)
         conn.commit()
     
     # 批量打标签
@@ -1568,9 +1574,7 @@ def api_products_batch_delete():
             return jsonify({"error": "未选择商品"}), 400
         conn = get_conn()
         placeholders = ",".join("?" * len(goods_ids))
-        conn.execute(f"DELETE FROM goods WHERE goods_id IN ({placeholders})", goods_ids)
-        conn.execute(f"DELETE FROM product_tags WHERE goods_id IN ({placeholders})", goods_ids)
-        conn.execute(f"DELETE FROM product_groups WHERE goods_id IN ({placeholders})", goods_ids)
+        _delete_goods(conn, goods_ids)
         conn.commit()
         conn.close()
         return jsonify({"ok": True, "deleted": len(goods_ids)})
@@ -1661,6 +1665,15 @@ def api_ai_use_image():
     if not goods_id or not image_path:
         return jsonify({"error": "缺少参数"}), 400
     
+    if image_path.startswith(("http://", "https://")):
+        from web.ai import _download_and_save
+        image_path = _download_and_save(image_path, valid_goods_id(goods_id))
+        if not image_path:
+            raise ValueError("AI图片尚未成功保存")
+    image_path = image_path.removeprefix("/api/ai-image/")
+    path = data_path(image_path, _AI_IMAGE_DIRS)
+    if not path.is_file() or path.suffix.lower() not in _IMAGE_EXTENSIONS:
+        raise ValueError("AI图片不存在")
     # 构建可访问的 URL
     image_url = f"/api/ai-image/{image_path}"
     
@@ -1674,6 +1687,7 @@ def api_ai_use_image():
     images.append(image_url)
     conn.execute(f"UPDATE goods SET {target}_images = ?, updated_at = ? WHERE goods_id = ?",
                 (json.dumps(images), datetime.now().isoformat(), goods_id))
+    _protect_manual_fields(conn, goods_id, [f"{target}_images"])
     conn.commit()
     conn.close()
     return jsonify({"ok": True, "images": images})
@@ -1757,17 +1771,8 @@ def api_fill_background():
         return jsonify({"error": "image_url is required"}), 400
 
     try:
-        full_url = image_url
-        headers = {"User-Agent": "Mozilla/5.0"}
-        if image_url.startswith("/"):
-            full_url = f"http://127.0.0.1:5000{image_url}"
-        elif "pddpic.com" in image_url or "pinduoduo" in image_url:
-            headers["Referer"] = "https://www.pinduoduo.com/"
-
-        img_resp = _requests.get(full_url, headers=headers, timeout=30, verify=False)
-        img_resp.raise_for_status()
-
-        img = _PILImage.open(_io.BytesIO(img_resp.content)).convert("RGBA")
+        image_bytes, _ = read_image(image_url)
+        img = _PILImage.open(_io.BytesIO(image_bytes)).convert("RGBA")
         w, h = img.size
 
         bg = _PILImage.new("RGBA", (w, h), (0, 0, 0, 0))
@@ -1891,6 +1896,7 @@ def api_product_apply_copywriting(goods_id: str):
     params.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     params.append(goods_id)
     conn.execute(f"UPDATE goods SET {', '.join(updates)} WHERE goods_id = ?", params)
+    _protect_manual_fields(conn, goods_id, set(fields) & {"title", "subtitle", "selling_points", "description"})
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
@@ -1980,11 +1986,11 @@ def api_monitor_list():
         result = []
         for r in rows:
             latest = conn.execute(
-                "SELECT price, stock, sales FROM monitor_history WHERE goods_id = ? ORDER BY checked_at DESC LIMIT 1",
+                "SELECT price, stock, sales, observed_at FROM monitor_history WHERE goods_id = ? AND observed_at IS NOT NULL ORDER BY observed_at DESC, id DESC LIMIT 1",
                 (r["goods_id"],)
             ).fetchone()
             prev = conn.execute(
-                "SELECT price, stock, sales FROM monitor_history WHERE goods_id = ? ORDER BY checked_at DESC LIMIT 1 OFFSET 1",
+                "SELECT price, stock, sales FROM monitor_history WHERE goods_id = ? AND observed_at IS NOT NULL ORDER BY observed_at DESC, id DESC LIMIT 1 OFFSET 1",
                 (r["goods_id"],)
             ).fetchone()
             price_change = None
@@ -2010,7 +2016,7 @@ def api_monitor_list():
                 "title": r["title"] or "",
                 "main_images": images,
                 "frequency": r["frequency"],
-                "last_check": r["last_check"],
+                "last_check": latest["observed_at"] if latest else None,
                 "next_check": r["next_check"],
                 "status": r["status"],
                 "latest_price": latest["price"] if latest else None,
@@ -2035,6 +2041,9 @@ def api_monitor_add():
         if not goods_id:
             return jsonify({"error": "请选择商品"}), 400
         conn = get_conn()
+        if not conn.execute("SELECT 1 FROM goods WHERE goods_id=?", (goods_id,)).fetchone():
+            conn.close()
+            return jsonify({"error": "商品不存在"}), 404
         existing = conn.execute("SELECT goods_id FROM monitor_list WHERE goods_id = ?", (goods_id,)).fetchone()
         if existing:
             conn.close()
@@ -2046,14 +2055,10 @@ def api_monitor_add():
             "INSERT INTO monitor_list (goods_id, frequency, next_check) VALUES (?, ?, ?)",
             (goods_id, frequency, next_check)
         )
-        row = conn.execute("SELECT price, sales FROM goods WHERE goods_id = ?", (goods_id,)).fetchone()
-        if row:
-            conn.execute(
-                "INSERT INTO monitor_history (goods_id, price, stock, sales) VALUES (?, ?, ?, ?)",
-                (goods_id, row["price"], None, row["sales"])
-            )
         conn.commit()
         conn.close()
+        from monitor_scheduler import _check_and_refresh
+        _check_and_refresh()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -2094,7 +2099,7 @@ def api_monitor_history(goods_id: str):
         limit = min(100, max(1, int(request.args.get("limit", 30))))
         conn = get_conn()
         rows = conn.execute(
-            "SELECT price, stock, sales, checked_at FROM monitor_history WHERE goods_id = ? ORDER BY checked_at DESC LIMIT ?",
+            "SELECT price, stock, sales, observed_at AS checked_at FROM monitor_history WHERE goods_id = ? AND observed_at IS NOT NULL ORDER BY observed_at DESC, id DESC LIMIT ?",
             (goods_id, limit)
         ).fetchall()
         conn.close()
@@ -2110,44 +2115,8 @@ def api_monitor_history(goods_id: str):
 
 @app.route("/api/monitor/refresh", methods=["POST"])
 def api_monitor_refresh():
-    try:
-        conn = get_conn()
-        rows = conn.execute("""
-            SELECT m.goods_id, m.frequency, g.title, g.price, g.sales, g.source_url, g.raw_data
-            FROM monitor_list m
-            JOIN goods g ON m.goods_id = g.goods_id
-            WHERE m.status = 'active'
-        """).fetchall()
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        updated = 0
-        for r in rows:
-            price = r["price"]
-            sales = r["sales"]
-            stock = None
-
-            if r["raw_data"]:
-                try:
-                    raw = json.loads(r["raw_data"])
-                    if isinstance(raw, dict):
-                        stock = raw.get("group_gallery", {}).get("quantity") or raw.get("stock_quantity")
-                except (json.JSONDecodeError, TypeError):
-                    pass
-
-            freq_hours = {"daily": 24, "12h": 12, "6h": 6}.get(r["frequency"], 24)
-            next_check = (datetime.now() + timedelta(hours=freq_hours)).strftime("%Y-%m-%d %H:%M:%S")
-
-            conn.execute(
-                "INSERT INTO monitor_history (goods_id, price, stock, sales, checked_at) VALUES (?, ?, ?, ?, ?)",
-                (r["goods_id"], price, stock, sales, now)
-            )
-            conn.execute("UPDATE monitor_list SET last_check = ?, next_check = ? WHERE goods_id = ?",
-                         (now, next_check, r["goods_id"]))
-            updated += 1
-        conn.commit()
-        conn.close()
-        return jsonify({"ok": True, "updated": updated})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    from monitor_scheduler import _check_and_refresh
+    return jsonify({"ok": True, "updated": _check_and_refresh(), "mode": "observations_only"})
 
 
 @app.route("/api/ai/upload-image", methods=["POST"])
@@ -2163,7 +2132,12 @@ def api_ai_upload_image():
     upload_dir.mkdir(parents=True, exist_ok=True)
     filename = f"upload_{int(time.time() * 1000)}{ext}"
     filepath = upload_dir / filename
-    file.save(str(filepath))
+    content = file.read()
+    image_type(content)
+    from PIL import Image
+    with Image.open(io.BytesIO(content)) as image:
+        image.verify()
+    filepath.write_bytes(content)
     return jsonify({"ok": True, "url": f"/api/ai-image/ai_uploads/{filename}"})
 
 
@@ -2277,7 +2251,7 @@ def api_ai_history_delete():
     rows = conn.execute(f"SELECT id, result_path FROM ai_images WHERE id IN ({placeholders})", ids).fetchall()
     for r in rows:
         if r["result_path"]:
-            file_path = DATA_DIR / r["result_path"]
+            file_path = data_path(r["result_path"], _AI_IMAGE_DIRS)
             if file_path.exists():
                 file_path.unlink()
     conn.execute(f"DELETE FROM ai_images WHERE id IN ({placeholders})", ids)
@@ -2338,6 +2312,12 @@ def api_ai_rewrite():
 @app.route("/api/product/<goods_id>/images/upload", methods=["POST"])
 def api_upload_image(goods_id):
     """上传图片到商品"""
+    goods_id = valid_goods_id(goods_id)
+    conn = get_conn()
+    exists = conn.execute("SELECT 1 FROM goods WHERE goods_id=?", (goods_id,)).fetchone()
+    conn.close()
+    if not exists:
+        return jsonify({"error": "商品不存在"}), 404
     if "file" not in request.files:
         return jsonify({"error": "没有文件"}), 400
     
@@ -2355,7 +2335,12 @@ def api_upload_image(goods_id):
 
     filename = f"upload_{int(time.time() * 1000)}{ext}"
     filepath = img_dir / filename
-    file.save(str(filepath))
+    content = file.read()
+    image_type(content)
+    from PIL import Image
+    with Image.open(io.BytesIO(content)) as image:
+        image.verify()
+    filepath.write_bytes(content)
     
     image_url = f"/api/local-image/{goods_id}/{filename}"
     
@@ -2370,6 +2355,7 @@ def api_upload_image(goods_id):
     images.append(image_url)
     conn.execute(f"UPDATE goods SET {target}_images = ?, updated_at = ? WHERE goods_id = ?",
                 (json.dumps(images), datetime.now().isoformat(), goods_id))
+    _protect_manual_fields(conn, goods_id, [f"{target}_images"])
     conn.commit()
     conn.close()
     return jsonify({"ok": True, "url": image_url, "images": images})
@@ -2400,6 +2386,7 @@ def api_reorder_images(goods_id):
     conn = get_conn()
     conn.execute(f"UPDATE goods SET {target}_images = ?, updated_at = ? WHERE goods_id = ?",
                 (json.dumps(new_order), datetime.now().isoformat(), goods_id))
+    _protect_manual_fields(conn, goods_id, [f"{target}_images"])
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
@@ -2483,6 +2470,8 @@ def api_product_skus(goods_id):
 
 
 if __name__ == "__main__":
+    from storage import init_db
+    init_db()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     start_scheduler()

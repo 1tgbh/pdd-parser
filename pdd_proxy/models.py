@@ -21,7 +21,7 @@ class SkuItem:
     specs: List[SkuSpec] = field(default_factory=list)
     price: float = 0.0
     original_price: float = 0.0
-    stock: int = 0
+    stock: Optional[int] = None
     image: str = ""
 
 
@@ -67,7 +67,7 @@ class GoodsInfo:
     raw_data: Optional[dict] = None
     price_min: float = 0.0
     price_max: float = 0.0
-    total_stock: int = 0
+    total_stock: Optional[int] = None
     
     def to_dict(self) -> dict:
         """转为字典，用于导出"""

@@ -1,26 +1,23 @@
 """
 数据导出模块 - 支持 JSON/CSV/Excel/TXT 格式导出
 
-TXT 导出包含商品信息 + 实际图片（多线程并行下载），可直接用于上货。
+TXT 导出包含商品信息和缓存图片，逐张写入压缩包以限制内存占用。
 """
 
 import csv
 import json
 import os
-import random
 import sqlite3
 import tempfile
 import time
 import zipfile
-import requests as _req
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from image_store import read_image, ImageFetchError
+from normalization import valid_goods_id, normalize_goods, normalize_skus
 
-DATA_DIR: Path = Path(__file__).resolve().parent / "data"
+from paths import DATA_DIR, data_path
 EXPORT_DIR: Path = DATA_DIR / "exports"
 DB_PATH: Path = DATA_DIR / "goods.db"
 
@@ -65,37 +62,16 @@ def _apply_markup_to_goods(goods, markup):
                 sku["original_price"] = _apply_export_markup(sku["original_price"], markup)
 
 
-_IMG_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Referer": "https://mobile.yangkeduo.com/",
-    "Accept": "image/webp,image/apng,image/*,*/*;q=0.8",
-}
-_IMG_SESSION: _req.Session | None = None
-
-
-def _get_img_session() -> _req.Session:
-    global _IMG_SESSION
-    if _IMG_SESSION is None:
-        _IMG_SESSION = _req.Session()
-        _IMG_SESSION.headers.update(_IMG_HEADERS)
-    return _IMG_SESSION
-
-
 def _download_image(task: tuple) -> tuple:
     """下载单张图片。task = (arcname, url)，返回 (arcname, bytes|None)"""
     arcname, url = task
-    if not url or not url.startswith("http"):
+    if not url:
         return (arcname, None)
-    time.sleep(random.uniform(0.2, 0.8))  # 随机间隔，降低请求突发
-    sess = _get_img_session()
-    for attempt in range(3):
-        try:
-            resp = sess.get(url, timeout=15, verify=False)
-            if resp.status_code == 200 and len(resp.content) > 200:
-                return (arcname, resp.content)
-        except Exception:
-            if attempt < 2:
-                time.sleep(0.3 * (attempt + 1))
+    try:
+        data, _ = read_image(url)
+        return arcname, data
+    except (ValueError, OSError, TimeoutError):
+        pass
     return (arcname, None)
 
 
@@ -157,6 +133,7 @@ def _load_goods(rows) -> list:
             "price_min": r["price_min"] if "price_min" in r.keys() else (r["price"] or 0),
             "price_max": r["price_max"] if "price_max" in r.keys() else (r["price"] or 0),
             "total_stock": r["total_stock"] if "total_stock" in r.keys() else 0,
+            "price_modified": r["price_modified"] if "price_modified" in r.keys() else 0,
         }
         if not goods["skus"]:
             try:
@@ -181,7 +158,8 @@ def _load_goods(rows) -> list:
     _markup = _get_export_markup()
     if _markup:
         for _g in goods_list:
-            _apply_markup_to_goods(_g, _markup)
+            if not _g["price_modified"]:
+                _apply_markup_to_goods(_g, _markup)
     return goods_list
 
 
@@ -271,7 +249,7 @@ def export_json(goods_ids: list = None) -> str:
         rows = conn.execute("SELECT * FROM goods ORDER BY crawl_time DESC").fetchall()
     conn.close()
     goods_list = _load_goods(rows)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filepath = EXPORT_DIR / f"goods_{timestamp}.json"
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(goods_list, f, ensure_ascii=False, indent=2)
@@ -289,7 +267,7 @@ def export_csv(goods_ids: list = None) -> str:
         rows = conn.execute("SELECT * FROM goods ORDER BY crawl_time DESC").fetchall()
     conn.close()
     goods_list = _load_goods(rows)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filepath = EXPORT_DIR / f"goods_{timestamp}.csv"
     headers = [
         "商品ID", "标题", "副标题", "卖点", "价格", "原价", "拼团价",
@@ -335,7 +313,7 @@ def export_excel(goods_ids: list = None) -> str:
         rows = conn.execute("SELECT * FROM goods ORDER BY crawl_time DESC").fetchall()
     conn.close()
     goods_list = _load_goods(rows)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filepath = EXPORT_DIR / f"goods_{timestamp}.xlsx"
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -403,10 +381,10 @@ def export_with_template(goods_list: list, fields: list, column_map: dict) -> tu
     for col in ws.columns:
         max_len = max(len(str(cell.value or "")) for cell in col)
         ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 40)
-    tmp = tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False, mode="wb")
-    wb.save(tmp.name)
-    tmp.close()
-    return tmp.name, "export.xlsx"
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", dir=EXPORT_DIR, delete=False) as tmp:
+        name = tmp.name
+    wb.save(name)
+    return name, "export.xlsx"
 
 
 def export_for_taobao(goods_ids: list = None) -> str:
@@ -419,7 +397,7 @@ def export_for_taobao(goods_ids: list = None) -> str:
         rows = conn.execute("SELECT * FROM goods ORDER BY crawl_time DESC").fetchall()
     conn.close()
     goods_list = _load_goods(rows)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     filepath = EXPORT_DIR / f"taobao_{timestamp}.json"
     taobao_goods = []
     for g in goods_list:
@@ -455,7 +433,7 @@ def export_for_taobao(goods_ids: list = None) -> str:
 
 
 def export_txt(goods_ids: list = None) -> str:
-    """导出为 TXT 格式（多线程并行下载图片）- 打包为 ZIP"""
+    """导出为 TXT + 图片 ZIP，使用共享下载缓存并流式写入。"""
     conn = get_conn()
     if goods_ids:
         placeholders = ",".join(["?"] * len(goods_ids))
@@ -466,13 +444,13 @@ def export_txt(goods_ids: list = None) -> str:
     goods_list = _load_goods(rows)
     if not goods_list:
         return None
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     zip_path = EXPORT_DIR / f"goods_txt_{timestamp}.zip"
     goods_data = []
     all_tasks = []
     goods_ai_files = []
     for g in goods_list:
-        gid = g["goods_id"]
+        gid = valid_goods_id(g["goods_id"])
         title = g["title"] or "unknown"
         base_dir = f"{gid}_{_safe_filename(title)}"
         txt_content = generate_goods_txt(g)
@@ -483,6 +461,8 @@ def export_txt(goods_ids: list = None) -> str:
         if g["detail_images"]:
             for i, url in enumerate(g["detail_images"]):
                 img_tasks.append((f"{base_dir}/详情图/详情图_{i+1}.jpg", url))
+        for i, url in enumerate(g["sku_images"]):
+            img_tasks.append((f"{base_dir}/SKU图/SKU_{i+1}.jpg", url))
         # Collect AI-generated images from disk
         ai_conn = get_conn()
         ai_rows = ai_conn.execute(
@@ -491,7 +471,7 @@ def export_txt(goods_ids: list = None) -> str:
         ai_conn.close()
         ai_local = []
         for ai_idx, ai_row in enumerate(ai_rows, 1):
-            ai_path = DATA_DIR / ai_row[0]
+            ai_path = data_path(ai_row[0], ("ai_images", "ai_uploads"))
             if ai_path.exists():
                 ext = ai_path.suffix or ".png"
                 ai_local.append((f"{base_dir}/AI图_{ai_idx}{ext}", str(ai_path)))
@@ -499,22 +479,22 @@ def export_txt(goods_ids: list = None) -> str:
         goods_data.append((f"{base_dir}/商品信息.txt", txt_content))
         all_tasks.extend(img_tasks)
         goods_ai_files.extend(ai_local)
-    results = {}
+    results = set()
     total_imgs = len(all_tasks)
-    if total_imgs > 0:
-        workers = min(3, total_imgs)  # 低并发 + 随机间隔，降低风控风险
-        print(f"Downloading {total_imgs} images with {workers} threads...")
-        with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(_download_image, task): task for task in all_tasks}
-            for future in as_completed(futures):
-                arcname, data = future.result()
-                if data:
-                    results[arcname] = data
+    if total_imgs > 5000:
+        raise ValueError("单个图文包最多5000张图片，请分批导出")
     with zipfile.ZipFile(str(zip_path), "w", zipfile.ZIP_DEFLATED) as zf:
         for txt_arcname, txt_content in goods_data:
             zf.writestr(txt_arcname, txt_content.encode("utf-8-sig"))
-        for arcname, data in results.items():
-            zf.writestr(arcname, data)
+        # Stream each completed image to disk; do not retain every image in RAM.
+        for task in all_tasks:
+            arcname, content = _download_image(task)
+            if content:
+                zf.writestr(arcname, content)
+                results.add(arcname)
+        missing = [arcname for arcname, _ in all_tasks if arcname not in results]
+        if missing:
+            zf.writestr("下载未完成.txt", "以下图片未下载成功（访问受限时已停止重试）：\n" + "\n".join(missing))
         # Write AI-generated images from local disk
         for arcname, local_path in goods_ai_files:
             zf.write(local_path, arcname)
@@ -543,7 +523,7 @@ def export_dawang(goods_ids: list = None, template: str = "universal") -> str:
     goods_list = _load_goods(rows)
     if not goods_list:
         return None
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     if template == "wechat":
         return _export_dawang_wechat(goods_list, timestamp)
@@ -572,7 +552,7 @@ def _export_dawang_universal(goods_list: list, timestamp: str) -> str:
             for s in g["skus"]:
                 spec_vals = " ".join(_sku_specs_to_dict(s.get("specs")).values()) if s.get("specs") else ""
                 price_str = f"{s.get('price', 0):.2f}"
-                stock_str = str(s.get("stock", 999))
+                stock_str = "" if s.get("stock") is None else str(s["stock"])
                 sku_parts.append(f"{spec_vals}/{price_str}/{stock_str}")
             skus_str = "|".join(sku_parts)
             attrs_str = "; ".join(
@@ -638,7 +618,7 @@ def _export_dawang_wechat(goods_list: list, timestamp: str) -> str:
                 spec_str = " ".join(_sku_specs_to_dict(s.get("specs")).values()) if s.get("specs") else ""
                 sku_specs_parts.append(spec_str)
                 sku_prices.append(f"{s.get('price', g['price']):.2f}")
-                sku_stocks.append(str(s.get("stock", 999)))
+                sku_stocks.append("" if s.get("stock") is None else str(s["stock"]))
                 sku_imgs.append(s.get("image", ""))
             row.append("|".join(sku_specs_parts))
             row.append("|".join(sku_prices))
@@ -672,9 +652,9 @@ def _export_dawang_pdd(goods_list: list, timestamp: str) -> str:
                 [f"{s.get('price', 0):.2f}" for s in g["skus"]]
             )
             sku_stocks = "|".join(
-                [str(s.get("stock", 999)) for s in g["skus"]]
+                ["" if s.get("stock") is None else str(s["stock"]) for s in g["skus"]]
             )
-            total_stock = sum(s.get("stock", 999) for s in g["skus"]) or 999
+            total_stock = g.get("total_stock") if g.get("total_stock") is not None else ""
             attrs_str = "; ".join(
                 [f"{k}:{v}" for k, v in g["attributes"].items()]
             )
@@ -701,17 +681,18 @@ def _normalize_to_dawang_format(data: dict) -> dict:
     2. 系统采集(initDataObj): {"goods":{...},"mall":{...},...} - 需要包装
     3. 旧格式(简化): {"goods_id":...,"attributes":...} - 无法还原完整数据
     """
-    # 格式1: 已经是大王解析标准格式
-    if "store" in data and isinstance(data.get("store"), dict):
-        if "initDataObj" in data["store"]:
-            return data
-    # 格式2: initDataObj扁平结构 (有goods字段)
-    if "goods" in data and isinstance(data.get("goods"), dict):
-        ts = int(data.get("ts", data.get("goods", {}).get("eventTime", 0)))
-        if ts < 1000000000000:
-            ts = ts * 1000
-        return {"ts": ts, "store": {"initDataObj": data}}
-    # 格式3: 旧简化格式 - 包装为最小可用结构
+    # Rebuild a catalog-only document, including for legacy full-page captures.
+    if not data.get("goods_id") or "title" not in data:
+        from parser import GoodsParser
+        parsed = GoodsParser.parse(data)
+        if not parsed:
+            raise ValueError("原始数据中没有可识别的商品")
+        init = data.get("store", {}).get("initDataObj", data)
+        mall = init.get("mall") or {}
+        data = parsed.to_dict()
+        data["shop_name"] = mall.get("mallName") or mall.get("mall_name") or data["shop_name"]
+        data["shop_id"] = str(mall.get("mallID") or mall.get("mall_id") or data["shop_id"])
+    data = normalize_goods(data)
     goods_id = data.get("goods_id", "")
     mall_info = data.get("mall_info") or {}
     return {
@@ -721,9 +702,16 @@ def _normalize_to_dawang_format(data: dict) -> dict:
                 "goods": {
                     "goodsID": goods_id,
                     "goodsName": data.get("title", ""),
+                    "minGroupPrice": data["price"],
+                    "linePrice": data["original_price"],
+                    "goods_desc": data["description"],
+                    "sales": data["sales"],
                     "topGallery": [{"url": u} for u in data.get("main_images", [])],
                     "detailGallery": [{"url": u} for u in data.get("detail_images", [])],
-                    "skus": [],
+                    "skus": [{"skuID": s["sku_id"], "groupPrice": s["price"], "normalPrice": s["original_price"],
+                              "quantity": s["stock"], "thumbUrl": s["image"],
+                              "specs": [{"spec_key": k, "spec_value": v} for k, v in _sku_specs_to_dict(s["specs"]).items()]}
+                             for s in data["skus"]],
                     "goodsProperty": [
                         {"key": k, "values": [v]} for k, v in data.get("attributes", {}).items()
                     ],
@@ -749,7 +737,7 @@ def export_dawang_raw(goods_ids: list = None) -> str:
     conn.close()
     if not rows:
         return None
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     out_dir = EXPORT_DIR / f"dawang_raw_{timestamp}"
     out_dir.mkdir(parents=True, exist_ok=True)
     count = 0
@@ -762,7 +750,7 @@ def export_dawang_raw(goods_ids: list = None) -> str:
         except Exception:
             continue
         normalized = _normalize_to_dawang_format(data)
-        filepath = out_dir / f"{r['goods_id']}.txt"
+        filepath = out_dir / f"{valid_goods_id(r['goods_id'])}.txt"
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(normalized, f, ensure_ascii=False)
         count += 1

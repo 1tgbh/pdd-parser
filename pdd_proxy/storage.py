@@ -7,18 +7,22 @@
 import json
 import os
 import sqlite3
+import uuid
+import hashlib
 from typing import List, Optional
 from models import GoodsInfo, SkuItem, SkuSpec
 from datetime import datetime
 from pathlib import Path
 
-DB_PATH: Path = Path(__file__).resolve().parent / "data" / "goods.db"
+from paths import DB_PATH
+from normalization import normalize_goods, normalize_skus, specs_dict
 
 
 def get_conn() -> sqlite3.Connection:
     """获取数据库连接（Row 模式）。"""
-    conn = sqlite3.connect(str(DB_PATH))
+    conn = sqlite3.connect(str(DB_PATH), timeout=15)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=15000")
     return conn
 
 
@@ -38,6 +42,9 @@ def init_db() -> None:
     """初始化数据库（全量表结构 + 内置导出模板）"""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_conn()
+    conn.execute("PRAGMA journal_mode=WAL")
+    from diagnostics import init_schema
+    init_schema(conn)
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS goods (
             goods_id TEXT PRIMARY KEY,
@@ -166,11 +173,19 @@ def init_db() -> None:
         "ALTER TABLE goods ADD COLUMN price_max REAL DEFAULT 0.0",
         "ALTER TABLE goods ADD COLUMN total_stock INTEGER DEFAULT 0",
         "ALTER TABLE goods ADD COLUMN price_modified INTEGER DEFAULT 0",
+        "ALTER TABLE goods ADD COLUMN manual_fields TEXT DEFAULT '[]'",
+        "ALTER TABLE goods ADD COLUMN observed_at TEXT",
+        "ALTER TABLE goods ADD COLUMN source_snapshot TEXT DEFAULT '{}'",
+        "ALTER TABLE goods ADD COLUMN capture_source TEXT DEFAULT ''",
+        "ALTER TABLE goods ADD COLUMN last_capture_id TEXT DEFAULT ''",
+        "ALTER TABLE goods ADD COLUMN field_provenance TEXT DEFAULT '{}'",
+        "ALTER TABLE monitor_history ADD COLUMN observed_at TEXT",
     ]:
         try:
             conn.execute(col_sql)
-        except Exception:
-            pass
+        except sqlite3.OperationalError as exc:
+            if "duplicate column" not in str(exc).lower():
+                raise
     conn.commit()
 
     existing = conn.execute("SELECT COUNT(*) FROM export_templates").fetchone()[0]
@@ -330,35 +345,11 @@ def upsert_sku_items(goods_id: str, sku_list: list) -> None:
     conn = get_conn()
     now = datetime.now().isoformat()
     try:
-        conn.execute("DELETE FROM sku_items WHERE goods_id = ?", (goods_id,))
-        for s in sku_list:
-            if not isinstance(s, dict):
-                continue
-            sku_id = str(s.get("sku_id", s.get("id", "")))
-            specs = s.get("specs", s.get("spec", {}))
-            if isinstance(specs, list):
-                specs_dict = {}
-                for sp in specs:
-                    if isinstance(sp, dict):
-                        k = sp.get("spec_key", sp.get("name", sp.get("spec", "")))
-                        v = sp.get("spec_value", sp.get("value", ""))
-                        if k:
-                            specs_dict[k] = v
-                specs = specs_dict
-            price = float(s.get("price", 0) or 0)
-            original_price = float(s.get("original_price", s.get("normal_price", 0)) or 0)
-            stock = int(s.get("stock", s.get("quantity", 0)) or 0)
-            image = s.get("image", s.get("thumb_url", ""))
-            conn.execute(
-                """INSERT INTO sku_items
-                   (goods_id, sku_id, specs, price, original_price, stock, image, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (goods_id, sku_id, json.dumps(specs, ensure_ascii=False),
-                 price, original_price, stock, image, now, now),
-            )
+        sync_skus(conn, goods_id, normalize_skus(sku_list), now)
         conn.commit()
-    except Exception as e:
-        print(f"❌ SKU upsert 失败: {e}")
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
@@ -396,12 +387,140 @@ def get_sku_items(goods_id: str) -> list:
             "specs": json.loads(r["specs"] or "{}"),
             "price": r["price"] or 0,
             "original_price": r["original_price"] or 0,
-            "stock": r["stock"] or 0,
+            "stock": r["stock"],
             "image": r["image"] or "",
             "created_at": r["created_at"] or "",
             "updated_at": r["updated_at"] or "",
         })
     return result
+
+
+def sync_skus(conn, goods_id: str, skus: list, now: str):
+    """The JSON view and normalized table are written in the caller's transaction."""
+    conn.execute("DELETE FROM sku_items WHERE goods_id=?", (goods_id,))
+    conn.executemany(
+        "INSERT INTO sku_items (goods_id,sku_id,specs,price,original_price,stock,image,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
+        [(goods_id, s["sku_id"], json.dumps(specs_dict(s["specs"]), ensure_ascii=False), s["price"], s["original_price"], s["stock"], s["image"], now, now) for s in skus],
+    )
+
+
+def _sku_key(sku):
+    return sku["sku_id"] or json.dumps(specs_dict(sku["specs"]), sort_keys=True, ensure_ascii=False)
+
+
+def merge_skus(old, new, *, complete=False, price_locked=False):
+    old_map = {_sku_key(s): s for s in old}
+    merged = {} if complete else dict(old_map)
+    for sku in new:
+        key = _sku_key(sku)
+        prior = old_map.get(key, {})
+        value = dict(prior)
+        value.update({k: v for k, v in sku.items() if v not in (None, "", []) and not (k in {"price", "original_price"} and v <= 0 and prior.get(k, 0) > 0)})
+        for field in ("sku_id", "specs", "price", "original_price", "stock", "image"):
+            value.setdefault(field, sku[field])
+        if price_locked:
+            for field in ("price", "original_price"):
+                value[field] = prior.get(field, 0)
+        merged[key] = value
+    return list(merged.values())
+
+
+def ingest_goods(payload: dict) -> dict:
+    data = normalize_goods(payload)
+    gid = data["goods_id"]
+    now = datetime.now().isoformat()
+    event_id = str(payload.get("capture_id") or uuid.uuid4().hex)[:128]
+    observed = now
+    if payload.get("captured_at"):
+        stamp = datetime.fromisoformat(str(payload["captured_at"]).replace("Z", "+00:00"))
+        stamp = stamp.astimezone().replace(tzinfo=None) if stamp.tzinfo else stamp
+        if stamp.timestamp() > datetime.now().timestamp() + 300:
+            raise ValueError("采集时间超出范围")
+        observed = stamp.isoformat()
+    json_fields = ("main_images", "detail_images", "sku_images", "skus", "specs", "attributes", "selling_points")
+    conn = get_conn()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute("SELECT * FROM goods WHERE goods_id=?", (gid,)).fetchone()
+        if row and row["last_capture_id"] == event_id:
+            return {"ok": True, "goods_id": gid, "observed_at": row["observed_at"]}
+        if row and row["observed_at"] and observed < row["observed_at"]:
+            return {"ok": True, "goods_id": gid, "ignored": "older_observation", "observed_at": row["observed_at"]}
+        authoritative = True
+        accepted = set()
+        locked = False
+        new_skus = data["skus"]
+        if row:
+            merged = dict(row)
+            for key in json_fields:
+                merged[key] = json.loads(row[key] or ("{}" if key in {"specs", "attributes"} else "[]"))
+            manual = set(json.loads(row["manual_fields"] or "[]"))
+            locked = bool(row["price_modified"])
+            rank = {"dom": 1, "": 2, "api": 3, "import": 3}
+            authoritative = rank[data["capture_source"]] >= rank.get(row["capture_source"], 2)
+            for key, value in data.items():
+                if key in {"skus", "skus_complete"} or key in manual:
+                    continue
+                if locked and key in {"price", "original_price", "min_group_price"}:
+                    continue
+                known_zero = key in {"sales", "sold_quantity"} and value == 0 and data["field_sources"]["fields"][key]["status"] == "known"
+                if (value not in (None, "", [], {}, 0) or known_zero) and (authoritative or not merged.get(key)):
+                    merged[key] = value
+                    accepted.add(key)
+            old_skus = normalize_skus(merged["skus"])
+            new_skus = data["skus"]
+            # A late DOM fallback cannot replace identified API SKUs with guesses.
+            if not authoritative:
+                new_skus = [s for s in new_skus if s["sku_id"] and not any(o["sku_id"] == s["sku_id"] for o in old_skus)]
+            merged["skus"] = merge_skus(old_skus, new_skus, complete=data["skus_complete"] and authoritative, price_locked=locked)
+        else:
+            merged = dict(data, crawl_time=now, price_modified=0, manual_fields="[]")
+        prices = [s["price"] for s in merged["skus"] if s["price"] > 0]
+        prices = prices or ([merged["price"]] if merged["price"] > 0 else [])
+        merged["price_min"] = min(prices) if prices else 0
+        merged["price_max"] = max(prices) if prices else 0
+        stocks = [s["stock"] for s in merged["skus"]]
+        merged["total_stock"] = sum(stocks) if stocks and all(s is not None for s in stocks) else None
+        if merged["skus"]:
+            specs = {}
+            for sku in merged["skus"]:
+                for key, value in specs_dict(sku["specs"]).items():
+                    if value not in specs.setdefault(key, []):
+                        specs[key].append(value)
+            if specs:
+                merged["specs"] = specs
+        # Store only validated product fields, never full page state or request headers.
+        source = json.dumps(data, ensure_ascii=False, sort_keys=True)
+        observed_at = observed if authoritative else row["observed_at"]
+        source = source if authoritative else row["source_snapshot"]
+        merged.update(updated_at=now, observed_at=observed_at, source_snapshot=source, raw_data=source, last_capture_id=event_id)
+        from provenance import update_current, sku_key
+        merged["field_provenance"] = json.dumps(update_current(row, data, merged, observed, accepted, locked, {sku_key(s) for s in new_skus}), ensure_ascii=False)
+        fields = ["goods_id", "title", "subtitle", "price", "original_price", "min_group_price", "sales", "sold_quantity", "shop_name", "shop_id", "shop_logo", *json_fields, "description", "source_url", "crawl_time", "updated_at", "raw_data", "price_min", "price_max", "total_stock", "price_modified", "manual_fields", "observed_at", "source_snapshot", "capture_source", "last_capture_id", "field_provenance"]
+        values = [json.dumps(merged[k], ensure_ascii=False) if k in json_fields else merged.get(k) for k in fields]
+        updates = ",".join(f"{k}=excluded.{k}" for k in fields if k != "goods_id")
+        conn.execute(f"INSERT INTO goods ({','.join(fields)}) VALUES ({','.join('?' for _ in fields)}) ON CONFLICT(goods_id) DO UPDATE SET {updates}", values)
+        sync_skus(conn, gid, merged["skus"], now)
+        missing = [field for field in ('price', 'main_images', 'skus') if not data[field]]
+        if missing:
+            from diagnostics import write_events
+            write_events(conn, [{"id": "incomplete-" + hashlib.sha256(event_id.encode()).hexdigest()[:32],
+                                 "code": "data_incomplete", "stage": "sync", "goods_id": gid,
+                                 "source_url": data["source_url"], "parser_version": data["parser_version"],
+                                 "occurred_at": now, "missing_fields": missing}])
+        # History records are observations, not copies of the local edited selling price.
+        if authoritative and data["price"] > 0 and conn.execute("SELECT 1 FROM monitor_list WHERE goods_id=?", (gid,)).fetchone():
+            source_stocks = [s["stock"] for s in data["skus"]]
+            stock = sum(source_stocks) if source_stocks and all(s is not None for s in source_stocks) else None
+            conn.execute("INSERT INTO monitor_history (goods_id,price,stock,sales,checked_at,observed_at) VALUES (?,?,?,?,?,?)", (gid, data["price"], stock, data["sales"], observed_at, observed_at))
+            conn.execute("UPDATE monitor_list SET last_check=? WHERE goods_id=?", (observed_at, gid))
+        conn.commit()
+        return {"ok": True, "goods_id": gid, "observed_at": observed_at}
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":

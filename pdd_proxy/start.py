@@ -2,15 +2,15 @@
 """
 拼多多商品采集服务 - 一键启动版
 
-默认（扩展模式，推荐）：
+默认（扩展手动模式，推荐）：
     1. 启动 Web 管理后台
-    2. 自动打开浏览器访问拼多多
-    3. 浏览器扩展捕获商品数据（真实浏览器环境，无需代理/证书）
+    2. 只打开本地管理后台
+    3. 用户手动打开商品页，在扩展中点击保存（无需代理/证书）
 
 --proxy（MITM 代理模式，备选）：
     1. 设置系统代理
     2. 启动 mitmproxy 监听
-    3. 自动打开浏览器访问拼多多
+    3. 打开本地管理后台
     4. 用户登录后浏览商品，自动采集
     5. 退出时自动恢复代理设置
 """
@@ -26,6 +26,7 @@ import shutil
 import socket
 import threading
 import time
+import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -44,17 +45,16 @@ if '| packaged by' in sys.version:
     sys.version = (_ver[:_start].strip() + ' ' + _ver[_end:].strip()).strip()
     sys.version_info = tuple(sys.version_info)
 
-from mitmproxy.options import Options
-from mitmproxy.tools.dump import DumpMaster
-
-
 # 配置
 BASE_DIR = Path(__file__).resolve().parent
-FRONTEND_DIR = BASE_DIR / "frontend"
-DIST_DIR = FRONTEND_DIR / "dist"
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+DIST_DIR = BASE_DIR / "frontend" / "dist"
 CERTS_DIR = BASE_DIR / "certs"
 PROXY_PORT = 8080
-PDD_URL = "https://mobile.yangkeduo.com"
+ADMIN_URL = "http://127.0.0.1:5000"
+from paths import DATA_DIR
+_PROXY_BACKUP_PATH = DATA_DIR / "proxy_backup.json"
+_proxy_backup = None
 
 
 # ==================== 系统代理设置 ====================
@@ -65,6 +65,7 @@ def get_os():
 
 def set_system_proxy(port: int):
     """设置系统代理"""
+    global _proxy_backup
     os_type = get_os()
     
     if os_type == "Windows":
@@ -72,7 +73,21 @@ def set_system_proxy(port: int):
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                 r"Software\Microsoft\Windows\CurrentVersion\Internet Settings",
-                0, winreg.KEY_SET_VALUE)
+                0, winreg.KEY_SET_VALUE | winreg.KEY_READ)
+            saved = {}
+            for name in ("ProxyEnable", "ProxyServer"):
+                try:
+                    value, kind = winreg.QueryValueEx(key, name)
+                    saved[name] = [value, kind]
+                except FileNotFoundError:
+                    saved[name] = None
+            # Keep an earlier recovery record if the previous process was killed.
+            if _PROXY_BACKUP_PATH.exists():
+                saved = json.loads(_PROXY_BACKUP_PATH.read_text("utf-8"))["values"]
+            _PROXY_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+            backup_tmp = _PROXY_BACKUP_PATH.with_suffix(".tmp")
+            backup_tmp.write_text(json.dumps({"values": saved, "ours": f"127.0.0.1:{port}"}), encoding="utf-8")
+            backup_tmp.replace(_PROXY_BACKUP_PATH)
             winreg.SetValueEx(key, "ProxyEnable", 0, winreg.REG_DWORD, 1)
             winreg.SetValueEx(key, "ProxyServer", 0, winreg.REG_SZ, f"127.0.0.1:{port}")
             winreg.CloseKey(key)
@@ -84,14 +99,21 @@ def set_system_proxy(port: int):
     
     elif os_type == "Darwin":
         try:
+            _proxy_backup = []
             result = subprocess.run(["networksetup", "-listallnetworkservices"], 
                                   capture_output=True, text=True)
             services = result.stdout.strip().split("\n")[1:]
             for service in services:
                 service = service.strip()
                 if service and "*" not in service:
-                    subprocess.run(["networksetup", "-setwebproxy", service, "127.0.0.1", str(port)])
-                    subprocess.run(["networksetup", "-setsecurewebproxy", service, "127.0.0.1", str(port)])
+                    for kind in ("webproxy", "securewebproxy"):
+                        previous = subprocess.run(["networksetup", "-get" + kind, service], capture_output=True, text=True, check=True)
+                        cfg = dict(line.split(": ", 1) for line in previous.stdout.splitlines() if ": " in line)
+                        if cfg.get("Authenticated Proxy Enabled") == "1":
+                            print(f"  [WARN] {service} 使用认证代理，请在浏览器中手动设置本地代理")
+                            continue
+                        _proxy_backup.append((service, kind, cfg))
+                        subprocess.run(["networksetup", "-set" + kind, service, "127.0.0.1", str(port)], check=True)
             print(f"  [OK] macOS 系统代理已设置: 127.0.0.1:{port}")
             return True
         except Exception as e:
@@ -99,6 +121,7 @@ def set_system_proxy(port: int):
             return False
     
     elif os_type == "Linux":
+        _proxy_backup = {k: os.environ.get(k) for k in ("http_proxy", "https_proxy")}
         os.environ["http_proxy"] = f"http://127.0.0.1:{port}"
         os.environ["https_proxy"] = f"http://127.0.0.1:{port}"
         print(f"  [OK] Linux 代理环境变量已设置: 127.0.0.1:{port}")
@@ -109,37 +132,52 @@ def set_system_proxy(port: int):
 
 def restore_system_proxy():
     """恢复系统代理"""
+    global _proxy_backup
     os_type = get_os()
     
     if os_type == "Windows":
+        if not _PROXY_BACKUP_PATH.exists():
+            return
         try:
             import winreg
+            saved = json.loads(_PROXY_BACKUP_PATH.read_text("utf-8"))
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                 r"Software\Microsoft\Windows\CurrentVersion\Internet Settings",
-                0, winreg.KEY_SET_VALUE)
-            winreg.SetValueEx(key, "ProxyEnable", 0, winreg.REG_DWORD, 0)
+                0, winreg.KEY_SET_VALUE | winreg.KEY_READ)
+            current, _ = winreg.QueryValueEx(key, "ProxyServer")
+            if current == saved["ours"]:
+                for name, previous in saved["values"].items():
+                    if previous is None:
+                        try:
+                            winreg.DeleteValue(key, name)
+                        except FileNotFoundError:
+                            pass
+                    else:
+                        winreg.SetValueEx(key, name, 0, previous[1], previous[0])
             winreg.CloseKey(key)
+            _PROXY_BACKUP_PATH.unlink()
             print("  [OK] Windows 系统代理已恢复")
         except Exception:
             pass
     
     elif os_type == "Darwin":
         try:
-            result = subprocess.run(["networksetup", "-listallnetworkservices"], 
-                                  capture_output=True, text=True)
-            services = result.stdout.strip().split("\n")[1:]
-            for service in services:
-                service = service.strip()
-                if service and "*" not in service:
-                    subprocess.run(["networksetup", "-setwebproxystate", service, "off"])
-                    subprocess.run(["networksetup", "-setsecurewebproxystate", service, "off"])
+            for service, kind, cfg in (_proxy_backup or []):
+                if cfg.get("Server") and cfg.get("Port"):
+                    subprocess.run(["networksetup", "-set" + kind, service, cfg["Server"], cfg["Port"]], check=True)
+                subprocess.run(["networksetup", "-set" + kind + "state", service, "on" if cfg.get("Enabled") == "Yes" else "off"], check=True)
+            _proxy_backup = None
             print("  [OK] macOS 系统代理已恢复")
         except Exception:
             pass
     
     elif os_type == "Linux":
-        os.environ.pop("http_proxy", None)
-        os.environ.pop("https_proxy", None)
+        for name, value in (_proxy_backup or {}).items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+        _proxy_backup = None
         print("  [OK] Linux 代理环境变量已清除")
 
 
@@ -167,30 +205,33 @@ def _check_frontend_dist():
     if not DIST_DIR.is_dir() or not (DIST_DIR / "index.html").is_file():
         print("\n[0/4] 构建前端...")
         if FRONTEND_DIR.is_dir() and shutil.which("npm"):
-            subprocess.run(["npm", "run", "build"], cwd=str(FRONTEND_DIR), check=True, shell=True)
+            npm = shutil.which("npm.cmd") or shutil.which("npm")
+            subprocess.run([npm, "run", "build"], cwd=str(FRONTEND_DIR), check=True)
             print("  [OK] 前端构建完成")
         else:
             print("  [WARN] 前端未构建，管理后台可能无法访问")
 
 
 def _start_web_thread(web_port: int):
-    def run_web():
-        from monitor_scheduler import start_scheduler
-        from web.app import app
-        start_scheduler()
-        app.run(host="127.0.0.1", port=web_port, debug=False, use_reloader=False)
-    web_thread = threading.Thread(target=run_web, daemon=True)
+    from monitor_scheduler import start_scheduler
+    from web.app import app
+    from werkzeug.serving import make_server
+    # Bind synchronously: a port conflict must fail before opening the browser.
+    server = make_server("127.0.0.1", web_port, app, threaded=True)
+    start_scheduler()
+    atexit.register(server.shutdown)
+    web_thread = threading.Thread(target=server.serve_forever, daemon=True)
     web_thread.start()
     return web_thread
 
 
 async def run_server():
-    """扩展模式：只启动 Web 后台 + 打开浏览器，无需代理和证书。"""
-    from service import init_db
+    """手动模式：启动并打开本地后台，商品页由用户自行打开。"""
+    from storage import init_db
     init_db()
 
     print("\n" + "=" * 55)
-    print("    拼多多商品自动采集服务（浏览器扩展模式）")
+    print("    拼多多商品采集服务（浏览器扩展手动模式）")
     print("=" * 55)
 
     _check_frontend_dist()
@@ -201,19 +242,20 @@ async def run_server():
     await asyncio.sleep(0.5)
     print(f"  [OK] 管理后台: http://127.0.0.1:{web_port}")
 
-    print(f"\n[2/3] 打开浏览器...")
-    open_browser(PDD_URL)
+    print(f"\n[2/3] 打开本地管理后台...")
+    open_browser(ADMIN_URL)
 
     print(f"\n[3/3] 就绪!")
     print(f"  管理后台: http://127.0.0.1:{web_port}")
-    print(f"  数据目录: {Path(__file__).resolve().parent / 'data'}")
+    print(f"  数据目录: {DATA_DIR}")
     print(f"\n  {'='*45}")
     print(f"  首次使用请安装浏览器扩展（只需一次）：")
     print(f"  1. Chrome/Edge 打开 chrome://extensions")
     print(f"  2. 开启右上角「开发者模式」")
     print(f"  3. 点「加载已解压的扩展程序」，选择目录：")
     print(f"     {EXTENSION_DIR}")
-    print(f"  4. 然后登录拼多多，正常浏览商品即可自动采集")
+    print(f"  4. 手动打开商品页，点击「读取并预览当前商品」，核对后「确认保存」")
+    print(f"  列表自动记录默认关闭；未点击保存不会采集商品详情。")
     print(f"  {'='*45}")
     print(f"\n  按 Ctrl+C 停止服务\n")
 
@@ -227,6 +269,8 @@ async def run_server():
 
 
 async def run_proxy(port: int):
+    from mitmproxy.options import Options
+    from mitmproxy.tools.dump import DumpMaster
     from service import init_db, PddInterceptor
     init_db()
 
@@ -284,8 +328,8 @@ async def run_proxy(port: int):
     set_system_proxy(port)
     
     # Step 4: 打开浏览器
-    print(f"\n[4/5] 打开浏览器...")
-    open_browser(PDD_URL)
+    print(f"\n[4/5] 打开本地管理后台...")
+    open_browser(ADMIN_URL)
     
     # Step 5: 就绪
     print(f"\n[5/5] 全部就绪!")
@@ -310,20 +354,14 @@ async def run_proxy(port: int):
 
 
 def main():
+    if "--restore-proxy" in sys.argv:
+        restore_system_proxy()
+        return
     use_proxy = "--proxy" in sys.argv
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     port = int(args[0]) if args else 8080
 
     if use_proxy:
-        # MITM 代理模式：需要管理员权限设置系统代理
-        if get_os() == "Windows":
-            try:
-                import ctypes
-                if not ctypes.windll.shell32.IsUserAnAdmin():
-                    print("  [WARN] 建议以管理员身份运行，以便自动设置系统代理")
-                    print("  右键点击 -> 以管理员身份运行\n")
-            except Exception:
-                pass
         asyncio.run(run_proxy(port))
     else:
         asyncio.run(run_server())

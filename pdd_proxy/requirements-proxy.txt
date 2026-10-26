@@ -1,0 +1,2 @@
+-r requirements.txt
+mitmproxy>=12.3,<13

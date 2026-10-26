@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import React from 'react';
 import '@testing-library/jest-dom/vitest';
 
@@ -6,7 +5,7 @@ import '@testing-library/jest-dom/vitest';
 // react-dom/test-utils -> React.act. Patch it directly on the React object.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (React as any).act = React.act ?? ((cb: () => void) => {
-  const result = cb();
+  cb();
   return {
     then: (resolve: () => void) => {
       resolve();

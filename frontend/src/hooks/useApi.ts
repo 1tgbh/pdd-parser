@@ -4,8 +4,8 @@ import {
   fetchProducts, fetchProduct,
   exportGoods, packageGoods, deleteProduct, deleteProducts, updateProduct,
   fetchSettings, saveSettings, testApi,
-  fetchTags, createTag, updateTag, deleteTag, fetchProductTags, setProductTags,
-  fetchGroups, createGroup, updateGroup, deleteGroup,
+  fetchTags, createTag, deleteTag, fetchProductTags, setProductTags,
+  fetchGroups, createGroup, deleteGroup,
   batchUpdate,
   batchPriceSingle,
   fetchAiPresets, aiGenerateImage, aiEditImage, aiUseImage, fetchProductAiImages, aiRewrite,
@@ -14,13 +14,14 @@ import {
   fetchDuplicates,
   aiCopywriting, applyCopywriting, aiSuggestPrompt,
   fetchExportTemplates,
-  fetchMonitorList, addMonitor, removeMonitor, updateMonitorFrequency,
+  fetchMonitorList, addMonitor, removeMonitor,
   fetchMonitorHistory, refreshMonitor, fetchProductSkus,
-  importRawJson, importRawJsonDir,
+  previewImport, importData, importRawJson, importRawJsonDir,
   fetchLogs, fetchLogInfo, exportLogs,
   fetchRiskCheck, dismissRiskCheck, fetchShops,
   fetchProductIds,
   fetchCaptureToggle, setCaptureToggle,
+  fetchProductProvenance, fetchDiagnostics, acknowledgeDiagnostic,
 } from '../api';
 import type { ExportFormat } from '../types';
 
@@ -58,6 +59,19 @@ export function useProducts(
 
 export function useProduct(id: string | undefined) {
   return useQuery({ queryKey: ['product', id], queryFn: () => fetchProduct(id!), enabled: !!id });
+}
+
+export function useProductProvenance(id: string, revision: string | undefined, enabled: boolean) {
+  return useQuery({ queryKey: ['productProvenance', id, revision], queryFn: () => fetchProductProvenance(id), enabled });
+}
+
+export function useDiagnostics(filters: { page: number; stage?: string; code?: string; unread?: boolean }) {
+  return useQuery({ queryKey: ['diagnostics', filters], queryFn: () => fetchDiagnostics(filters), refetchInterval: 10000 });
+}
+
+export function useAcknowledgeDiagnostic() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: acknowledgeDiagnostic, onSuccess: () => qc.invalidateQueries({ queryKey: ['diagnostics'] }) });
 }
 
 export function useDeleteProduct() {
@@ -357,7 +371,7 @@ export function useRefreshMonitor() {
 }
 
 export function useCaptureToggle() {
-  return useQuery({ queryKey: ['captureToggle'], queryFn: fetchCaptureToggle });
+  return useQuery({ queryKey: ['captureToggle'], queryFn: fetchCaptureToggle, refetchInterval: 5000 });
 }
 
 export function useSetCaptureToggle() {

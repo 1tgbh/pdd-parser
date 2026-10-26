@@ -1,0 +1,12 @@
+.toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.toolbar select { padding: 8px 10px; border: 1px solid var(--brand-border); border-radius: 8px; background: var(--brand-surface); color: var(--brand-text); }
+.note { color: var(--brand-text-secondary); font-size: 13px; line-height: 1.7; margin: 8px 0; }
+.card { margin-bottom: 12px; padding: 16px; background: var(--brand-surface); border: 1px solid var(--brand-border); border-radius: 10px; }
+.heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.small { font-size: 12px; color: var(--brand-text-muted); overflow-wrap: anywhere; }
+.alert { color: var(--brand-red); font-weight: 600; }
+.tableWrap { overflow: auto; margin: 12px 0; }
+.table { min-width: 850px; width: 100%; border-collapse: collapse; font-size: 12px; }
+.table th, .table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--brand-border); vertical-align: top; }
+.value { max-width: 240px; max-height: 110px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.summary { cursor: pointer; font-weight: 600; padding: 12px 0; }

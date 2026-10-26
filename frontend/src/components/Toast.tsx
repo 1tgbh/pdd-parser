@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, createContext, useContext, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, createContext, useContext, useRef } from 'react';
 
 interface ToastItem {
   id: number;
@@ -16,6 +16,7 @@ const ToastContext = createContext<ToastContextValue>({ success: () => {}, error
 
 let _toastId = 0;
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its provider
 export function useToast() {
   return useContext(ToastContext);
 }
@@ -37,14 +38,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [remove]);
 
   useEffect(() => {
-    return () => { timers.current.forEach(t => clearTimeout(t)); };
+    const pending = timers.current;
+    return () => { pending.forEach(t => clearTimeout(t)); };
   }, []);
 
-  const value: ToastContextValue = {
+  const value = useMemo<ToastContextValue>(() => ({
     success: (msg) => show('success', msg),
     error: (msg) => show('error', msg),
     info: (msg) => show('info', msg),
-  };
+  }), [show]);
 
   return (
     <ToastContext.Provider value={value}>

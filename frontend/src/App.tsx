@@ -17,6 +17,7 @@ const Compare = lazy(() => import('./pages/Compare'));
 const AiCopywriting = lazy(() => import('./pages/AiCopywriting'));
 const Logs = lazy(() => import('./pages/Logs'));
 const Monitor = lazy(() => import('./pages/Monitor'));
+const Diagnostics = lazy(() => import('./pages/Diagnostics'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ export default function App() {
                     <Route path="compare" element={<Compare />} />
                     <Route path="ai-copywriting" element={<AiCopywriting />} />
                     <Route path="monitor" element={<Monitor />} />
+                    <Route path="diagnostics" element={<Diagnostics />} />
                   </Route>
                 </Routes>
               </Suspense>

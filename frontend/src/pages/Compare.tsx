@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchProductsForEditor } from '../hooks/useApi';
 import { fetchCompare } from '../api/index';
 import type { CompareItem, AiEditorProduct } from '../types';
@@ -142,32 +143,26 @@ export default function Compare() {
       return Array.isArray(stored) ? stored.slice(0, MAX_COMPARE) : [];
     } catch { return []; }
   });
-  const [selectedItems, setSelectedItems] = useState<CompareItem[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
 
   const { data: searchData } = useSearchProductsForEditor(searchKeyword);
   const searchResults = useMemo(() => searchData?.items || [], [searchData]);
 
+  const compareQuery = useQuery({
+    queryKey: ['compare', selectedIds],
+    queryFn: () => fetchCompare(selectedIds),
+    enabled: selectedIds.length >= 2,
+  });
+  const selectedItems = useMemo<CompareItem[]>(() => compareQuery.data ?? [], [compareQuery.data]);
+  const loading = compareQuery.isFetching;
+  const error = compareQuery.isError ? '获取对比数据失败，请重试' : '';
+
   const filteredResults = useMemo(() => {
     return searchResults.filter(p => !selectedIds.includes(p.goods_id));
   }, [searchResults, selectedIds]);
-
-  useEffect(() => {
-    if (selectedIds.length >= 2) {
-      setLoading(true);
-      fetchCompare(selectedIds)
-        .then(data => { setSelectedItems(data); })
-        .catch(() => { setError('获取对比数据失败，请重试'); })
-        .finally(() => { setLoading(false); setError(''); });
-    } else {
-      setSelectedItems([]);
-    }
-  }, [selectedIds]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -209,7 +204,6 @@ export default function Compare() {
 
   const handleClearAll = useCallback(() => {
     setSelectedIds([]);
-    setSelectedItems([]);
     setSearchInput('');
     setSearchKeyword('');
     localStorage.removeItem('compare_selected');

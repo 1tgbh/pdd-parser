@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useDashboard, usePriceDistribution, useTopSales, useTagStats, usePriceAlerts } from '../hooks/useApi';
+import { useDashboard, usePriceAlerts } from '../hooks/useApi';
 import type { GoodsInfo } from '../types';
 import s from '../styles/modules/Dashboard.module.css';
 
@@ -18,9 +18,6 @@ const SHOP_ICON_SVG = (
 export default function Dashboard() {
   const { data, isLoading } = useDashboard();
   const { data: alerts } = usePriceAlerts();
-  const { data: priceDist } = usePriceDistribution();
-  const { data: topSales } = useTopSales();
-  const { data: tagStats } = useTagStats();
 
   const sortedShops = useMemo(() => {
     if (!data) return [];
@@ -49,8 +46,8 @@ export default function Dashboard() {
           <div style={{ fontWeight: 600, color: 'var(--brand-red)', marginBottom: 8, fontSize: 14 }}>
             ⚠️ 价格预警 ({alerts.length} 个商品降价)
           </div>
-          {alerts.slice(0, 5).map((alert: any) => (
-            <a key={alert.goods_id} href={`/products/${alert.goods_id}`}
+          {alerts.slice(0, 5).map((alert) => (
+            <a key={alert.goods_id} href={`/product/${encodeURIComponent(alert.goods_id)}`}
                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', color: 'var(--brand-text)', textDecoration: 'none', fontSize: 13 }}>
               {alert.image && <img src={alert.image} alt="" style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} />}
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alert.title}</span>

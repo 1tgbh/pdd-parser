@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, createContext, useContext, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, createContext, useContext } from 'react';
 
 interface ConfirmOptions {
   title: string;
@@ -14,6 +14,7 @@ interface ConfirmContextValue {
 
 const ConfirmContext = createContext<ConfirmContextValue>({ confirm: () => Promise.resolve(false) });
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its provider
 export function useConfirm() {
   return useContext(ConfirmContext);
 }
@@ -46,8 +47,10 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handler);
   }, [state, handleCancel]);
 
+  const value = useMemo(() => ({ confirm }), [confirm]);
+
   return (
-    <ConfirmContext.Provider value={{ confirm }}>
+    <ConfirmContext.Provider value={value}>
       {children}
       {state && (
         <div className="confirm-overlay" onClick={handleCancel}>

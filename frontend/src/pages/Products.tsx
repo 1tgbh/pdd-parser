@@ -64,7 +64,12 @@ export default function Products() {
   const deleteMut = useDeleteProducts();
   const batchMut = useBatchUpdate();
   const { data: settings } = useSettings();
-  useEffect(() => { if (settings?.price_markup) { setPriceMultiply(String(settings.price_markup.multiplier)); setPriceAdd(String(settings.price_markup.fixed_amount)); } }, [settings]);
+  const priceMarkup = settings?.price_markup;
+  const [prevPriceMarkup, setPrevPriceMarkup] = useState(priceMarkup);
+  if (priceMarkup !== prevPriceMarkup) {
+    setPrevPriceMarkup(priceMarkup);
+    if (priceMarkup) { setPriceMultiply(String(priceMarkup.multiplier)); setPriceAdd(String(priceMarkup.fixed_amount)); }
+  }
   const { data: tags, refetch: refetchTags } = useTags();
   const { data: groups, refetch: refetchGroups } = useGroups();
   const createTagMut = useCreateTag();
@@ -73,7 +78,7 @@ export default function Products() {
   const deleteGroupMut = useDeleteGroup();
   const { data: dupData, refetch: refetchDups, isFetching: dupLoading } = useDuplicates();
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
   const allIds = useMemo(() => items.map(g => g.goods_id), [items]);
   const allSelected = allIds.length > 0 && allIds.every(id => selected.has(id));
   const totalPages = data ? Math.ceil(data.total / data.page_size) : 1;
@@ -142,14 +147,14 @@ export default function Products() {
     try {
       const result = await batchMut.mutateAsync({ ids, updates: { price_multiply: parseFloat(priceMultiply) || 1, price_add: parseFloat(priceAdd) || 0 } });
       setBatchModal(null);
-      const skipped = (result as any)?.skipped || 0;
+      const skipped = result.skipped || 0;
       if (skipped > 0) {
         toast.success(`已更新 ${ids.length - skipped} 件商品价格，跳过 ${skipped} 件已改价商品`);
       } else {
         toast.success(`已更新 ${ids.length} 件商品价格`);
       }
     } catch { toast.error('改价失败'); }
-  }, [selected, priceMultiply, priceAdd, batchMut]);
+  }, [selected, priceMultiply, priceAdd, batchMut, toast]);
 
   const handleBatchTag = useCallback(async (tagId: number) => {
     const ids = [...selected]; if (ids.length === 0) return;
@@ -157,23 +162,23 @@ export default function Products() {
       await batchMut.mutateAsync({ ids, updates: { tags_add: [tagId] } });
       setBatchModal(null); toast.success(`已打标签`);
     } catch { toast.error('操作失败'); }
-  }, [selected, batchMut]);
+  }, [selected, batchMut, toast]);
 
   const handleCreateTag = useCallback(async () => {
     if (!tagName.trim()) return;
     try { await createTagMut.mutateAsync({ name: tagName.trim(), color: tagColor }); setTagName(''); refetchTags(); }
     catch { toast.error('创建失败'); }
-  }, [tagName, tagColor, createTagMut, refetchTags]);
+  }, [tagName, tagColor, createTagMut, refetchTags, toast]);
 
   const handleCreateGroup = useCallback(async () => {
     if (!groupName.trim()) return;
     try { await createGroupMut.mutateAsync({ name: groupName.trim() }); setGroupName(''); refetchGroups(); }
     catch { toast.error('创建失败'); }
-  }, [groupName, createGroupMut, refetchGroups]);
+  }, [groupName, createGroupMut, refetchGroups, toast]);
 
   const handleDetectDups = useCallback(async () => {
     setDupModal(true);
-    try { await refetchDups(); } catch {}
+    try { await refetchDups(); } catch { /* errors surface via query state */ }
   }, [refetchDups]);
 
   const handleBatchExport = useCallback(async () => {
@@ -186,7 +191,7 @@ export default function Products() {
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch { toast.error('导出失败'); }
-  }, [selected]);
+  }, [selected, toast]);
 
   const handleBatchTagConfirm = useCallback(async () => {
     if (!batchTagId || selected.size === 0) return;
@@ -195,7 +200,7 @@ export default function Products() {
       setBatchTagModal(false);
       setBatchTagId(null);
     } catch { toast.error('批量标签失败'); }
-  }, [selected, batchTagId, batchMut]);
+  }, [selected, batchTagId, batchMut, toast]);
 
   const gridClass = `${s.productGrid} ${density === 'compact' ? s.productGridCompact : density === 'relaxed' ? s.productGridRelaxed : ''}`;
 
@@ -273,7 +278,7 @@ export default function Products() {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <span onClick={() => { setSelectedGroupId(g.id); setPage(1); }}>{g.name}</span>
                 <button className={s.filterDel} title="删除分组"
-                  onClick={async (e) => { e.stopPropagation(); const ok = await confirm({ title: '删除分组', message: '确定删除该分组？分组内的商品不会被删除。', confirmText: '删除', danger: true }); if (ok) deleteGroupMut.mutate(g.id, { onSuccess: refetchGroups }); }}>x</button>
+                  onClick={async (e) => { e.stopPropagation(); const ok = await confirm({ title: '删除分组', message: '确定删除该分组？分组内的商品不会被删除。', confirmText: '删除', danger: true }); if (ok) deleteGroupMut.mutate(g.id, { onSuccess: () => { void refetchGroups(); } }); }}>x</button>
               </span>
             ))}
           </div>
@@ -297,7 +302,7 @@ export default function Products() {
                 <span className={s.filterDot} style={{ background: t.color }} />
                 <span onClick={() => { setSelectedTagId(t.id); setPage(1); }}>{t.name}</span>
                 <button className={s.filterDel} title="删除标签"
-                  onClick={async (e) => { e.stopPropagation(); const ok = await confirm({ title: '删除标签', message: '确定删除该标签？标签关联不会被删除。', confirmText: '删除', danger: true }); if (ok) deleteTagMut.mutate(t.id, { onSuccess: refetchTags }); }}>x</button>
+                  onClick={async (e) => { e.stopPropagation(); const ok = await confirm({ title: '删除标签', message: '确定删除该标签？关联将一并移除，商品会保留。', confirmText: '删除', danger: true }); if (ok) deleteTagMut.mutate(t.id, { onSuccess: () => { void refetchTags(); } }); }}>x</button>
               </span>
             ))}
           </div>
@@ -327,7 +332,7 @@ export default function Products() {
       ) : (
         <div className={gridClass}>
           {items.map(g => {
-            const g2 = g as Record<string, unknown>;
+            const g2 = g as unknown as Record<string, unknown>;
             const totalStock = Number(g2.total_stock ?? 0);
             return (
               <div key={g.goods_id} className={`card ${s.productCard}`}>

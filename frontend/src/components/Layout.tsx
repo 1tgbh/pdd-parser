@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCaptureToggle, useSetCaptureToggle } from '../hooks/useApi';
 import s from '../styles/modules/Layout.module.css';
@@ -106,6 +106,11 @@ const NAV_ITEMS = [
     ),
   },
   {
+    to: '/diagnostics',
+    label: '异常诊断',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 2L2 17h16L10 2Z" /><path d="M10 7v5M10 14v1" /></svg>,
+  },
+  {
     to: '/settings',
     label: 'API 设置',
     icon: (
@@ -125,13 +130,14 @@ function CaptureToggle() {
     <label className={s.toggleLabel}>
       <span className={s.toggleStatus}>
         <span className={s.toggleDot} style={{ background: enabled ? 'var(--brand-accent)' : 'var(--brand-gray-4)' }} />
-        采集开关
+        {enabled ? '允许保存 / 同步' : (data?.reason || '保存已暂停')}
       </span>
       <button
         className={s.toggleSwitch}
         onClick={() => toggleMut.mutate(!enabled)}
+        disabled={toggleMut.isPending}
         style={{ background: enabled ? 'var(--brand-accent)' : 'var(--brand-gray-4)' }}
-        aria-label={enabled ? '关闭采集' : '开启采集'}
+        aria-label={enabled ? '暂停保存和同步' : '恢复保存和同步'}
       >
         <span className={s.toggleKnob} style={{ left: enabled ? 20 : 2 }} />
       </button>
@@ -140,7 +146,6 @@ function CaptureToggle() {
 }
 
 export default function Layout() {
-  const { pathname } = useLocation();
   const qc = useQueryClient();
   const { data: settings } = useSettings();
   const riskEnabled = settings?.risk_monitor?.enabled ?? false;
@@ -167,7 +172,7 @@ export default function Layout() {
       <aside className={s.sidebar} role="navigation" aria-label="主导航">
         <div className={s.logo}>
           <h1>多多采集</h1>
-          <small>AI 增强版 v1.1.2</small>
+          <small>手动采集 · AI 增强</small>
         </div>
         <nav className={s.nav}>
           {NAV_ITEMS.map((item) => (
@@ -176,7 +181,6 @@ export default function Layout() {
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) => (isActive ? 'active' : '')}
-              aria-current={({ isActive }: { isActive: boolean }) => (isActive ? 'page' : undefined) as unknown as string}
             >
               {item.icon}
               {item.label}
@@ -186,7 +190,7 @@ export default function Layout() {
         <div className={s.toggleWrap}>
           <CaptureToggle />
         </div>
-        <div className={s.footer}>v1.1.2</div>
+        <div className={s.footer}>在扩展弹窗点击“保存当前商品”</div>
       </aside>
       <main className={s.main} role="main">
         <Outlet />
@@ -208,9 +212,9 @@ export default function Layout() {
                 <rect x="20" y="16" width="4" height="12" rx="2" fill="#fff"/>
                 <circle cx="22" cy="32" r="2" fill="#fff"/>
               </svg>
-              <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>账号风控提醒</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>数据完整性提醒</h3>
               <p style={{ color: '#666', fontSize: 13, margin: 0 }}>
-                检测到 <strong style={{ color: '#1d1d1f' }}>{riskData!.goods.length}</strong> 个商品缺少 SKU 信息
+                检测到 <strong style={{ color: '#1d1d1f' }}>{riskData!.goods.length}</strong> 个商品缺少 SKU 信息，不能据此判断账号状态
               </p>
             </div>
             <div style={{ flex: 1, overflow: 'auto', maxHeight: '50vh' }}>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useSettings, useSaveSettings, useTestApi, useBatchUpdate, useAllProductIds } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
 import type { WechatExportSettings } from '../types';
@@ -27,7 +27,7 @@ export default function Settings() {
     seven_day_return: 1,
     freight_insurance: 0,
     default_stock: 999,
-    brand_id: 2100000000,
+    brand_id: '2100000000',
     listing: 0,
   });
 
@@ -41,7 +41,11 @@ export default function Settings() {
   const [txtKeySet, setTxtKeySet] = useState(false);
   const [txtKeyMasked, setTxtKeyMasked] = useState('');
 
-  useEffect(() => {
+  // Sync fetched settings into the form when they arrive (adjust state during render,
+  // see https://react.dev/learn/you-might-not-need-an-effect)
+  const [prevSettings, setPrevSettings] = useState(settings);
+  if (settings !== prevSettings) {
+    setPrevSettings(settings);
     if (settings) {
       if (settings.image_api) {
         setImgBase(settings.image_api.base_url || '');
@@ -65,7 +69,7 @@ export default function Settings() {
         setPriceMarkup(prev => ({ ...prev, ...settings.price_markup }));
       }
     }
-  }, [settings]);
+  }
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -101,7 +105,7 @@ export default function Settings() {
     } finally {
       setSaving(false);
     }
-  }, [imgKey, imgBase, imgModel, txtKey, txtBase, txtModel, wechatCfg, riskMonitor, saveMut]);
+  }, [imgKey, imgBase, imgModel, txtKey, txtBase, txtModel, wechatCfg, riskMonitor, priceMarkup, saveMut, toast]);
 
   const handleTest = useCallback(async (type: 'text' | 'image') => {
     const params = type === 'image'
@@ -280,7 +284,7 @@ export default function Settings() {
                       ids: allIds.ids,
                       updates: { price_multiply: priceMarkup.multiplier, price_add: priceMarkup.fixed_amount }
                     });
-                    const skipped = (result as any)?.skipped || 0;
+                    const skipped = result.skipped || 0;
                     if (skipped > 0) {
                       toast.success(`已改价 ${allIds.total - skipped} 件商品，跳过 ${skipped} 件已改价商品`);
                     } else {
@@ -295,10 +299,10 @@ export default function Settings() {
         </div>
 
         <div className="card">
-          <div className="card-header">风控检测</div>
+          <div className="card-header">数据完整性检查</div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--brand-text-secondary)', margin: 0, lineHeight: 1.5 }}>
-              定期扫描商品列表中缺少 SKU 信息的商品，可能是拼多多账号被风控导致。
+              定期检查缺少 SKU 的商品。缺失数据不代表账号受限；捕获到访问限制或安全验证时，采集会自动暂停。
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -308,7 +312,7 @@ export default function Settings() {
                   onChange={e => setRiskMonitor(prev => ({ ...prev, enabled: e.target.checked }))}
                   style={{ width: 16, height: 16 }}
                 />
-                启用风控检测
+                启用完整性检查
               </label>
             </div>
             {riskMonitor.enabled && (

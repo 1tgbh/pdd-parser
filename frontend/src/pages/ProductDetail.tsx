@@ -1,16 +1,17 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useProduct, useUpdateProduct, usePackageGoods, useProductAiImages, useTags,
   useProductTags, useAiPresets, useAiEditImage, useAiUseImage, useAiRewrite,
   useUploadImage, useSetProductTags, useAddMonitor,
-  useSettings, useBatchPriceSingle,
+  useBatchPriceSingle,
 } from '../hooks/useApi';
-import type { GoodsInfo, SkuItem } from '../types';
+import type { SkuItem } from '../types';
 import s from '../styles/modules/ProductDetail.module.css';
+import FieldProvenance from '../components/FieldProvenance';
 
 function getImgUrl(path: string) {
-  if (path.startsWith('http')) return path;
+  if (path.startsWith('http') || path.startsWith('/api/')) return path;
   return `/api/ai-image/${path.replace(/^\/+/, '')}`;
 }
 
@@ -44,7 +45,6 @@ export default function ProductDetail() {
   const [batchMultiplier, setBatchMultiplier] = useState(1.5);
   const [batchFixedAmount, setBatchFixedAmount] = useState(3.0);
   const batchPriceMut = useBatchPriceSingle();
-  const { data: settings } = useSettings();
   const [aiEditModal, setAiEditModal] = useState<{ open: boolean; imageUrl: string }>({ open: false, imageUrl: '' });
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiPreset, setAiPreset] = useState('');
@@ -75,7 +75,10 @@ export default function ProductDetail() {
   const { data: allTags } = useTags();
   const { data: productTags } = useProductTags(id);
 
-  useEffect(() => {
+  // Initialize edit form when the product loads / edit mode opens (adjust state during render)
+  const [prevEditInit, setPrevEditInit] = useState<{ p: typeof product; e: boolean }>({ p: undefined, e: false });
+  if (product !== prevEditInit.p || isEdit !== prevEditInit.e) {
+    setPrevEditInit({ p: product, e: isEdit });
     if (product && isEdit) {
       setEditData({
         title: product.title || '',
@@ -90,7 +93,7 @@ export default function ProductDetail() {
       setDeletedMainIdx(new Set());
       setDeletedDetailIdx(new Set());
     }
-  }, [product, isEdit]);
+  }
 
   const displayImages = useMemo(() => {
     if (isEdit) {
@@ -101,11 +104,10 @@ export default function ProductDetail() {
     return product ? [...product.main_images, ...product.detail_images].filter(Boolean) : [];
   }, [product, isEdit, mainImages, detailImages, deletedMainIdx, deletedDetailIdx]);
 
-  useEffect(() => {
-    if (activeImgIdx >= displayImages.length) {
-      setActiveImgIdx(Math.max(0, displayImages.length - 1));
-    }
-  }, [displayImages.length, activeImgIdx]);
+  // Clamp the active image index when the image list shrinks
+  if (activeImgIdx >= displayImages.length) {
+    setActiveImgIdx(Math.max(0, displayImages.length - 1));
+  }
 
   const goBack = useCallback(() => navigate(-1), [navigate]);
 
@@ -371,6 +373,7 @@ export default function ProductDetail() {
         </div>
       </div>
 
+      <FieldProvenance goodsId={product.goods_id} revision={product.updated_at} />
       <div className={s.detailLayout}>
         <div className={s.detailGallery}>
           <div className={s.detailThumbs}>
@@ -547,7 +550,7 @@ export default function ProductDetail() {
                         <tr key={sku.sku_id}>
                           <td className={s.detailSkuId}>{sku.sku_id}</td>
                           <td className={s.detailSkuPrice}>¥{sku.price.toFixed(2)}</td>
-                          <td>{sku.stock}</td>
+                          <td>{sku.stock ?? '未知'}</td>
                           <td>{Array.isArray(sku.specs) ? sku.specs.map(sp => `${sp.key}:${sp.value}`).join(' / ') : (sku.specs && typeof sku.specs === 'object' ? Object.entries(sku.specs).map(([k,v]) => `${k}:${v}`).join(' / ') : '-')}</td>
                         </tr>
                       ))}
@@ -582,7 +585,7 @@ export default function ProductDetail() {
                             {sku.original_price > 0 ? `¥${sku.original_price.toFixed(2)}` : '-'}
                           </td>
                           <td style={tdStyle}>
-                            {sku.stock > 0 ? (
+                            {sku.stock == null ? '未知' : sku.stock > 0 ? (
                               <span style={{ color: 'var(--brand-green)' }}>{sku.stock}</span>
                             ) : (
                               <span style={{ color: 'var(--brand-red)' }}>缺货</span>
@@ -651,7 +654,10 @@ export default function ProductDetail() {
                   await batchPriceMut.mutateAsync({ goodsId: product.goods_id, multiplier: batchMultiplier, fixedAmount: batchFixedAmount });
                   setShowBatchPrice(false);
                   alert('改价成功');
-                } catch (e: any) { alert('改价失败: ' + (e?.response?.data?.error || e?.message || '未知错误')); }
+                } catch (e: unknown) {
+                  const err = e as { response?: { data?: { error?: string } }; message?: string };
+                  alert('改价失败: ' + (err?.response?.data?.error || err?.message || '未知错误'));
+                }
               }}>{batchPriceMut.isPending ? '处理中...' : '确认改价'}</button>
             </div>
             <button style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}

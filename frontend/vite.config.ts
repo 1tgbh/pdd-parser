@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -14,7 +14,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist',
+    outDir: '../pdd_proxy/frontend/dist',
     emptyOutDir: true,
   },
   test: {

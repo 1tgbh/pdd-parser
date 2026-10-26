@@ -5,25 +5,33 @@ import os
 import time
 import re
 import requests
+import threading
+import uuid
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+from paths import DATA_DIR
+from image_store import read_image
+from normalization import valid_goods_id
 CONFIG_PATH = DATA_DIR / "config.json"
 IMAGES_DIR = DATA_DIR / "ai_images"
+_config_lock = threading.RLock()
 
 
 def load_config() -> dict:
-    if CONFIG_PATH.exists():
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+    with _config_lock:
+        if CONFIG_PATH.exists():
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
     return {}
 
 
 def save_config(cfg: dict):
-    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=2)
+    with _config_lock:
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        tmp = CONFIG_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(CONFIG_PATH)
 
 
 # ============ grsai 图片生成 (SSE 流式) ============
@@ -56,22 +64,8 @@ def _fetch_image_as_data_url(image_url: str) -> str | None:
     """下载图片并转为 base64 data URL，失败返回 None"""
     import base64
     try:
-        full_url = image_url
-        if image_url.startswith("/"):
-            full_url = f"http://127.0.0.1:5000{image_url}"
-        resp = requests.get(full_url, timeout=30, headers={"Referer": "https://mobile.yangkeduo.com/"}, verify=False)
-        if resp.status_code != 200:
-            return None
-        ct = resp.headers.get("content-type", "image/jpeg")
-        if "jpeg" in ct or "jpg" in ct:
-            ct = "image/jpeg"
-        elif "png" in ct:
-            ct = "image/png"
-        elif "webp" in ct:
-            ct = "image/webp"
-        else:
-            ct = "image/jpeg"
-        b64 = base64.b64encode(resp.content).decode()
+        image, ct = read_image(image_url)
+        b64 = base64.b64encode(image).decode()
         return f"data:{ct};base64,{b64}"
     except Exception:
         return None
@@ -103,12 +97,12 @@ def _call_grsai(prompt: str, image_url: str = None, size: str = "1024x1024") -> 
         if image_data_url:
             body["urls"] = [image_data_url]
         else:
-            body["urls"] = [image_url]
+            return {"error": "图片无法安全读取，请检查图片地址或重新上传"}
 
     url = f"{base_url}/v1/draw/completions"
 
     try:
-        resp = requests.post(url, headers=headers, json=body, timeout=120, stream=True, verify=False)
+        resp = requests.post(url, headers=headers, json=body, timeout=120, stream=True)
         if resp.status_code != 200:
             return {"error": f"API 请求失败 (HTTP {resp.status_code}): {resp.text[:200]}"}
 
@@ -155,20 +149,20 @@ def _call_grsai(prompt: str, image_url: str = None, size: str = "1024x1024") -> 
 def _download_and_save(url: str, goods_id: str, prefix: str = "ai") -> str | None:
     """下载图片并保存到本地，返回相对路径"""
     try:
-        resp = requests.get(url, timeout=30, verify=False)
-        if resp.status_code != 200:
-            return None
+        goods_id = valid_goods_id(goods_id)
+        image, content_type = read_image(url)
 
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)
         goods_dir = IMAGES_DIR / goods_id
         goods_dir.mkdir(parents=True, exist_ok=True)
 
         ts = int(time.time() * 1000)
-        filename = f"{prefix}_{ts}.png"
+        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}[content_type]
+        filename = f"{prefix}_{ts}_{uuid.uuid4().hex[:8]}{ext}"
         filepath = goods_dir / filename
-        filepath.write_bytes(resp.content)
+        filepath.write_bytes(image)
 
-        return str(filepath.relative_to(DATA_DIR))
+        return filepath.relative_to(DATA_DIR).as_posix()
     except Exception:
         return None
 
@@ -176,7 +170,7 @@ def _download_and_save(url: str, goods_id: str, prefix: str = "ai") -> str | Non
 _executor = ThreadPoolExecutor(max_workers=2)
 
 
-def _save_image_bg(url: str, goods_id: str, prefix: str):
+def _save_image_bg(url: str, goods_id: str, prefix: str, prompt: str = "", source_url: str = ""):
     """后台下载保存图片到本地"""
     import sqlite3 as _sqlite3
     try:
@@ -185,17 +179,19 @@ def _save_image_bg(url: str, goods_id: str, prefix: str):
             db_path = DATA_DIR / "goods.db"
             conn = _sqlite3.connect(str(db_path))
             conn.execute(
-                "INSERT INTO ai_images (goods_id, result_path, model) VALUES (?, ?, ?)",
-                (goods_id, path, load_config().get("image_api", {}).get("model", ""))
+                "INSERT INTO ai_images (goods_id, result_path, model, prompt, source_url) VALUES (?, ?, ?, ?, ?)",
+                (goods_id, path, load_config().get("image_api", {}).get("model", ""), prompt, source_url)
             )
             conn.commit()
             conn.close()
+            return path
     except Exception:
         pass
 
 
 def generate_image(prompt: str, goods_id: str, size: str = "1024x1024") -> dict:
     """文生图 — 直接返回 API URL，后台下载到本地"""
+    valid_goods_id(goods_id)
     result = _call_grsai(prompt, size=size)
     if "error" in result:
         return result
@@ -204,14 +200,16 @@ def generate_image(prompt: str, goods_id: str, size: str = "1024x1024") -> dict:
     if not urls:
         return {"error": "图片生成成功但未返回图片URL"}
 
-    for url in urls:
-        _executor.submit(_save_image_bg, url, goods_id, "gen")
-
-    return {"urls": urls, "prompt": prompt}
+    futures = [_executor.submit(_save_image_bg, url, goods_id, "gen", prompt) for url in urls[:4]]
+    paths = [path for future in futures if (path := future.result())]
+    if not paths:
+        return {"error": "AI生成已完成，但图片未能保存到本地"}
+    return {"urls": ["/api/ai-image/" + path for path in paths], "paths": paths, "prompt": prompt}
 
 
 def edit_image(image_url: str, prompt: str, goods_id: str, size: str = "1024x1024") -> dict:
     """图片编辑 — 直接返回 API URL，后台下载到本地"""
+    valid_goods_id(goods_id)
     result = _call_grsai(prompt, image_url=image_url, size=size)
     if "error" in result:
         return result
@@ -220,35 +218,38 @@ def edit_image(image_url: str, prompt: str, goods_id: str, size: str = "1024x102
     if not urls:
         return {"error": "图片编辑成功但未返回图片URL"}
 
-    for url in urls:
-        _executor.submit(_save_image_bg, url, goods_id, "edit")
-
-    return {"urls": urls, "prompt": prompt}
+    futures = [_executor.submit(_save_image_bg, url, goods_id, "edit", prompt, image_url) for url in urls[:4]]
+    paths = [path for future in futures if (path := future.result())]
+    if not paths:
+        return {"error": "AI编辑已完成，但图片未能保存到本地"}
+    return {"urls": ["/api/ai-image/" + path for path in paths], "paths": paths, "prompt": prompt}
 
 
 def remove_background(image_url: str) -> str:
     """Remove background from image using grsai API."""
     import requests
-    config = load_config()
-    api_key = config.get("api_key", "")
-    base_url = (config.get("base_url", "") or "https://api.grsai.ai/v1").rstrip("/")
+    cfg = load_config().get("image_api", {})
+    api_key = cfg.get("api_key", "")
+    # 与 _call_grsai 保持同一组配置；base_url 统一为不含 /v1 的主机地址
+    base_url = (cfg.get("base_url") or "https://api.grsai.ai").rstrip("/")
+    if base_url.endswith("/v1"):
+        base_url = base_url[:-3]
 
     if not api_key:
         raise ValueError("未配置 AI API Key，请在设置中添加")
 
-    img_resp = requests.get(image_url, timeout=30)
-    img_resp.raise_for_status()
+    image_bytes, _ = read_image(image_url)
 
     import base64, io
     from PIL import Image
-    img = Image.open(io.BytesIO(img_resp.content))
+    img = Image.open(io.BytesIO(image_bytes))
     if img.mode == 'RGBA':
         img = img.convert('RGB')
     buf = io.BytesIO()
     img.save(buf, format='JPEG', quality=95)
     img_b64 = base64.b64encode(buf.getvalue()).decode()
 
-    url = f"{base_url}/images/edits"
+    url = f"{base_url}/v1/images/edits"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     body = {
         "model": "gpt-image-1",
@@ -276,7 +277,7 @@ def remove_background(image_url: str) -> str:
         raise ValueError("AI 未返回图片")
 
     from pathlib import Path
-    out_dir = Path(__file__).parent.parent / "data" / "ai_images"
+    out_dir = DATA_DIR / "ai_images"
     out_dir.mkdir(parents=True, exist_ok=True)
     ts = int(time.time() * 1000)
 
@@ -285,10 +286,10 @@ def remove_background(image_url: str) -> str:
     if kind == "base64":
         out_path.write_bytes(payload)
     else:
-        r = requests.get(payload, timeout=30)
-        out_path.write_bytes(r.content)
+        downloaded, _ = read_image(payload)
+        out_path.write_bytes(downloaded)
 
-    return f"/api/ai-image/{out_path.name}"
+    return f"/api/ai-image/ai_images/{out_path.name}"
 
 
 # ============ 小米文本改写 ============
@@ -346,7 +347,7 @@ def rewrite_text(goods_info: dict, targets: list = None, style: str = "default",
     }
 
     try:
-        resp = requests.post(f"{base_url}/chat/completions", headers=headers, json=body, timeout=60, verify=False)
+        resp = requests.post(f"{base_url}/chat/completions", headers=headers, json=body, timeout=60)
         if resp.status_code != 200:
             return {"error": f"文本 API 错误 (HTTP {resp.status_code}): {resp.text[:200]}"}
         content = resp.json()["choices"][0]["message"]["content"]
@@ -405,21 +406,25 @@ def generate_copywriting(goods_info: dict, copy_type: str = "all", style: str = 
         user_msg += f"\n额外要求: {custom_prompt}"
     user_msg += "\n只返回纯JSON，不要任何其他文字。"
 
-    resp = requests.post(
-        f"{base_url}/chat/completions",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={
-            "model": model,
-            "messages": [
-                {"role": "system", "content": "你是电商文案专家，擅长撰写吸引人的商品文案。"},
-                {"role": "user", "content": user_msg},
-            ],
-            "temperature": 0.7,
-            "max_tokens": 2000,
-        },
-        timeout=60,
-        verify=False,
-    )
+    try:
+        resp = requests.post(
+            f"{base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "你是电商文案专家，擅长撰写吸引人的商品文案。"},
+                    {"role": "user", "content": user_msg},
+                ],
+                "temperature": 0.7,
+                "max_tokens": 2000,
+            },
+            timeout=60,
+        )
+    except requests.exceptions.ConnectionError:
+        return {"error": f"无法连接到文本 API ({base_url})，请检查网络"}
+    except Exception as e:
+        return {"error": f"请求失败: {str(e)}"}
 
     if resp.status_code != 200:
         return {"error": f"API 请求失败: HTTP {resp.status_code}"}
@@ -454,14 +459,9 @@ def suggest_prompt(image_url: str) -> dict:
         "Authorization": f"Bearer {api_key}",
     }
 
-    is_external = "pddpic.com" in image_url or "yangkeduo.com" in image_url
-    if is_external:
-        image_input = image_url
-    else:
-        data_url = _fetch_image_as_data_url(image_url)
-        if not data_url:
-            return {"error": "无法读取图片，请检查图片路径"}
-        image_input = data_url
+    image_input = _fetch_image_as_data_url(image_url)
+    if not image_input:
+        return {"error": "无法读取图片，请检查图片路径"}
 
     describe_body = {
         "model": model,
@@ -483,7 +483,6 @@ def suggest_prompt(image_url: str) -> dict:
             headers=headers,
             json=describe_body,
             timeout=60,
-            verify=False,
         )
         if resp.status_code != 200:
             return {"error": f"图片理解失败: {resp.text[:200]}"}
@@ -527,7 +526,6 @@ def suggest_prompt(image_url: str) -> dict:
             headers=headers,
             json=prompt_body,
             timeout=60,
-            verify=False,
         )
         if resp2.status_code != 200:
             return {"error": f"提示词生成失败: {resp2.text[:200]}"}
@@ -542,6 +540,3 @@ def suggest_prompt(image_url: str) -> dict:
         return {"prompt": prompt}
     except Exception as e:
         return {"error": f"提示词生成请求失败: {str(e)}"}
-
-
-

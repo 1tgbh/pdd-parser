@@ -5,6 +5,7 @@
 import re
 from datetime import datetime
 from models import GoodsInfo, SkuItem, SkuSpec
+from normalization import pdd_price, normalize_skus, nonnegative_int
 
 
 class GoodsParser:
@@ -30,13 +31,13 @@ class GoodsParser:
         goods.selling_points = GoodsParser._extract_selling_points(goods_data)
         
         # 价格
-        goods.price = GoodsParser._to_float(goods_data.get("min_group_price", goods_data.get("price", 0)))
-        goods.original_price = GoodsParser._to_float(goods_data.get("market_price", goods_data.get("normal_price", 0)))
-        goods.min_group_price = GoodsParser._to_float(goods_data.get("min_group_price", goods_data.get("group_price", 0)))
+        goods.price = pdd_price(goods_data)
+        goods.original_price = pdd_price(goods_data, original=True)
+        goods.min_group_price = goods.price
         
         # 销售数据
-        goods.sales = int(goods_data.get("sales", 0) or 0)
-        goods.sold_quantity = int(goods_data.get("sold_quantity", 0) or 0)
+        goods.sales = nonnegative_int(goods_data.get("sales"))
+        goods.sold_quantity = nonnegative_int(goods_data.get("sold_quantity"))
         
         # 店铺
         goods.shop_name = goods_data.get("mall_name", goods_data.get("shop_name", ""))
@@ -72,6 +73,12 @@ class GoodsParser:
             elif isinstance(goods, dict):
                 return goods
         
+        if isinstance(data.get("goods"), dict):
+            return data["goods"]
+        if isinstance(data.get("data"), dict):
+            return GoodsParser._extract_goods_data(data["data"])
+        if isinstance(data.get("result"), dict):
+            return GoodsParser._extract_goods_data(data["result"])
         if "goods_detail" in data:
             return data["goods_detail"]
         
@@ -168,23 +175,17 @@ class GoodsParser:
         if not isinstance(sku_list, list):
             return specs, skus
         
-        for s in sku_list:
-            if not isinstance(s, dict):
-                continue
-            
+        for s in normalize_skus(sku_list, from_pdd=True):
             sku = SkuItem(
-                sku_id=str(s.get("sku_id", s.get("skuId", ""))),
-                price=GoodsParser._to_float(s.get("group_price", s.get("price", 0))),
-                original_price=GoodsParser._to_float(s.get("normal_price", s.get("original_price", 0))),
-                stock=int(s.get("quantity", s.get("stock", 0)) or 0),
-                image=s.get("thumb_url", s.get("image", "")),
+                sku_id=s["sku_id"], price=s["price"], original_price=s["original_price"],
+                stock=s["stock"], image=s["image"],
             )
             
             # 解析规格
             for sp in s.get("specs", s.get("spec", [])):
                 if not isinstance(sp, dict):
                     continue
-                name = sp.get("spec_key", sp.get("spec", ""))
+                name = sp.get("key", sp.get("spec_key", sp.get("spec", "")))
                 value = sp.get("spec_value", sp.get("value", ""))
                 if name and value:
                     sku.specs.append(SkuSpec(name=name, value=value))

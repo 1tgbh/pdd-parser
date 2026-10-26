@@ -31,11 +31,14 @@ export default function Logs() {
   const { data: logInfo } = useLogInfo();
   const exportMut = useExportLogs();
 
-  useEffect(() => {
+  // Sync newly fetched log lines into the display buffer (adjust state during render)
+  const [prevData, setPrevData] = useState(data);
+  if (data !== prevData) {
+    setPrevData(data);
     if (data?.lines) {
       setDisplayLines(data.lines);
     }
-  }, [data]);
+  }
 
   useEffect(() => {
     if (shouldAutoScroll.current && logRef.current) {

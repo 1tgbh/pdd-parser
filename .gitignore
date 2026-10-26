@@ -30,6 +30,17 @@ pdd_proxy/data/ai_images/
 pdd_proxy/data/images/
 pdd_proxy/data/*.db
 pdd_proxy/data/config.json
+pdd_proxy/data/export.json
+pdd_proxy/data/*.db-*
+pdd_proxy/data/*.log*
+pdd_proxy/data/*.tmp
+pdd_proxy/data/capture_state.json
+pdd_proxy/data/proxy_backup.json
+pdd_proxy/data/ai_uploads/
+pdd_proxy/data/image_cache/
+pdd_proxy/data/imports/
+pdd_proxy/data/capture/
+pdd_proxy/capture/
 
 # Certificates
 pdd_proxy/certs/

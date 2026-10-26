@@ -20,7 +20,6 @@ const PRESET_LABELS: Record<string, string> = {
   style_cartoon: '卡通风格',
 };
 const PRESET_KEYS = Object.keys(PRESET_LABELS);
-const RATIOS = ['1:1', '4:3', '16:9', '3:4', '9:16'];
 
 const RESOLUTIONS = [
   { label: '1:1 1024²', value: '1024x1024', desc: '主图' },
@@ -109,7 +108,7 @@ const PLATFORM_SIZES = [
 ];
 
 function getImgUrl(path: string) {
-  if (path.startsWith('http')) return path;
+  if (path.startsWith('http') || path.startsWith('/api/')) return path;
   return `/api/ai-image/${path.replace(/^\/+/, '')}`;
 }
 
@@ -171,7 +170,6 @@ export default function AiEditor() {
   const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
   const [batchResults, setBatchResults] = useState<Record<string, { paths?: string[]; urls?: string[]; error?: string }>>({});
   const [batchGenerating, setBatchGenerating] = useState(false);
-  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
   const [batchKeyword, setBatchKeyword] = useState('');
   const [batchExpandedProducts, setBatchExpandedProducts] = useState<Set<string>>(new Set());
 
@@ -286,7 +284,7 @@ export default function AiEditor() {
       if (result.prompt) { setCustomPrompt(result.prompt); toast.success('提示词已生成'); }
       else { toast.error(result.error || '生成失败'); }
     } catch { toast.error('提示词生成失败'); }
-  }, [sourceImage, selectedProduct, suggestPromptMut]);
+  }, [sourceImage, selectedProduct, suggestPromptMut, toast]);
 
   const handleRemoveBg = useCallback(async () => {
     if (!sourceImage) return;
@@ -338,10 +336,15 @@ export default function AiEditor() {
     setSelectedProduct(prev => prev?.goods_id === p.goods_id ? null : p);
   }, []);
 
-  const handleImageSelect = useCallback((url: string, goodsId?: string) => {
-    setSourceImage({ url, goodsId });
-    saveToHistory(url);
-  }, [saveToHistory]);
+  const handleImageSelect = useCallback(async (url: string, goodsId?: string) => {
+    try {
+      const local = url.startsWith('http') ? (await proxyImage(url)).url : url;
+      setSourceImage({ url: local, goodsId });
+      saveToHistory(local);
+    } catch {
+      toast.error('图片读取失败，请检查访问限制或上传本地图片');
+    }
+  }, [saveToHistory, toast]);
 
   const handleFileUpload = useCallback(async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -367,7 +370,7 @@ export default function AiEditor() {
     } catch {
       toast.error('上传失败');
     }
-  }, [uploadMut, batchMode]);
+  }, [uploadMut, batchMode, toast]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -431,7 +434,7 @@ export default function AiEditor() {
     } catch {
       toast.error('下载失败');
     }
-  }, []);
+  }, [toast]);
 
   const handleHistoryExport = useCallback(() => {
     if (!historyData?.items || historySelected.size === 0) return;
@@ -450,7 +453,7 @@ export default function AiEditor() {
     } catch {
       toast.error('删除失败');
     }
-  }, [historySelected, deleteHistMut]);
+  }, [historySelected, deleteHistMut, toast]);
 
   const handleBatchDownload = useCallback(async () => {
     for (const idx of selectedResults) {
@@ -463,7 +466,6 @@ export default function AiEditor() {
     if (batchSelected.size < 1 || !selectedPreset || !isApiReady) return;
     setBatchGenerating(true);
     setBatchResults({});
-    setBatchProgress({ current: 0, total: batchSelected.size });
     try {
       const resp = await aiClient.post('/ai/batch-generate', {
         images: Array.from(batchSelected),
@@ -474,9 +476,8 @@ export default function AiEditor() {
       toast.error('批量生成失败');
     } finally {
       setBatchGenerating(false);
-      setBatchProgress({ current: 0, total: 0 });
     }
-  }, [batchSelected, selectedPreset, isApiReady]);
+  }, [batchSelected, selectedPreset, isApiReady, toast]);
 
   const handleBatchToggleImage = useCallback((imageUrl: string) => {
     setBatchSelected(prev => {
@@ -582,7 +583,7 @@ export default function AiEditor() {
     } catch {
       toast.error('应用失败');
     }
-  }, [applyGoodsId, applyModal.imagePath, applyTarget, useImageMut]);
+  }, [applyGoodsId, applyModal.imagePath, applyTarget, useImageMut, toast]);
 
   const handleGenerate = useCallback(async () => {
     if (!canGenerate) return;
@@ -625,9 +626,12 @@ export default function AiEditor() {
     } catch (err: unknown) {
       toast.error(extractAxiosError(err));
     }
-  }, [canGenerate, sourceImage, effectivePrompt, selectedPreset, aspectRatio, imageCount, editMut, generateMut]);
+  }, [canGenerate, sourceImage, effectivePrompt, selectedPreset, aspectRatio, imageCount, editMut, generateMut, toast]);
 
-  useEffect(() => {
+  // Reset view transforms when the source image changes (adjust state during render)
+  const [prevSourceImage, setPrevSourceImage] = useState(sourceImage);
+  if (sourceImage !== prevSourceImage) {
+    setPrevSourceImage(sourceImage);
     setZoom(1);
     setRotation(0);
     setFlipH(false);
@@ -635,7 +639,7 @@ export default function AiEditor() {
     setPanX(0);
     setPanY(0);
     setCropMode(false);
-  }, [sourceImage]);
+  }
 
   useEffect(() => {
     const el = canvasContainerRef.current;
@@ -823,7 +827,7 @@ export default function AiEditor() {
     } catch {
       toast.error('变换应用失败');
     }
-  }, [sourceImage, hasTransform, rotation, flipH, flipV, uploadMut]);
+  }, [sourceImage, hasTransform, rotation, flipH, flipV, uploadMut, toast]);
 
   const imageTransform = useMemo(() => {
     const parts: string[] = [];
@@ -936,7 +940,7 @@ export default function AiEditor() {
     } catch {
       toast.error('裁剪上传失败');
     }
-  }, [sourceImage, cropRect, uploadMut, saveToHistory]);
+  }, [sourceImage, cropRect, uploadMut, saveToHistory, toast]);
 
   const handleCropCancel = useCallback(() => {
     setCropMode(false);
@@ -1091,14 +1095,21 @@ export default function AiEditor() {
     }
   }, [labels]);
 
-  useEffect(() => {
-    if (!editingLabelId) return;
+  // Mirror the in-progress label edits into the committed label so the canvas
+  // preview updates live (adjust state during render)
+  const editingLabel = labels.find(l => l.id === editingLabelId);
+  if (editingLabel && (
+    editingLabel.text !== editLabelText || editingLabel.color !== editLabelColor ||
+    editingLabel.bgColor !== editLabelBgColor || editingLabel.fontSize !== editLabelFontSize ||
+    editingLabel.width !== editLabelWidth || editingLabel.height !== editLabelHeight ||
+    editingLabel.borderRadius !== editLabelBorderRadius || editingLabel.rotation !== editLabelRotation
+  )) {
     setLabels(prev => prev.map(l => l.id === editingLabelId ? {
       ...l, text: editLabelText, color: editLabelColor, bgColor: editLabelBgColor,
       fontSize: editLabelFontSize, width: editLabelWidth, height: editLabelHeight,
       borderRadius: editLabelBorderRadius, rotation: editLabelRotation,
     } : l));
-  }, [editingLabelId, editLabelText, editLabelColor, editLabelBgColor, editLabelFontSize, editLabelWidth, editLabelHeight, editLabelBorderRadius, editLabelRotation]);
+  }
 
   const handleDeleteLabel = useCallback((id: string) => {
     setLabels(prev => prev.filter(l => l.id !== id));
@@ -1185,7 +1196,7 @@ export default function AiEditor() {
       console.error('Apply labels failed:', e);
       toast.error('应用标签失败，请重试');
     }
-  }, [sourceImage, labels, uploadMut, saveToHistory]);
+  }, [sourceImage, labels, uploadMut, saveToHistory, toast]);
 
   const handleFillBackground = useCallback(async () => {
     if (!sourceImage) return;
@@ -1208,7 +1219,7 @@ export default function AiEditor() {
     } finally {
       setBgFillLoading(false);
     }
-  }, [sourceImage, bgFillColor, bgFillGradient, bgFillGradientEnd, saveToHistory]);
+  }, [sourceImage, bgFillColor, bgFillGradient, bgFillGradientEnd, saveToHistory, toast]);
 
   const handlePlatformAdapt = useCallback((targetW: number, targetH: number) => {
     setCanvasWidth(targetW);

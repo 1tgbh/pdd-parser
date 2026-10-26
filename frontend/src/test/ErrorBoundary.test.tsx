@@ -15,7 +15,7 @@ function GoodChild() {
   return <div>正常内容</div>;
 }
 
-function BadChild() {
+function BadChild(): React.ReactElement {
   throw new Error('测试错误');
 }
 

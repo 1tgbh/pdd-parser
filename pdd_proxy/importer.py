@@ -13,7 +13,9 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-DATA_DIR: Path = Path(__file__).resolve().parent / "data"
+from paths import DATA_DIR
+from normalization import money, pdd_price, normalize_skus, normalize_goods, valid_goods_id
+from storage import sync_skus
 DB_PATH: Path = DATA_DIR / "goods.db"
 
 COLUMN_ALIASES = {
@@ -34,11 +36,11 @@ COLUMN_ALIASES = {
     "skus": ["SKU详情", "SKU", "skus", "规格明细", "SKU信息", "sku价格", "规格详情"],
     "attributes": ["商品属性", "属性", "attributes", "参数", "商品参数", "商品属性信息"],
     "source_url": ["商品链接", "链接", "source_url", "url", "商品URL", "宝贝链接", "商品地址"],
-    "selling_points": ["卖点标签", "标签", "selling_points", "商品卖点标签", "核心卖点"],
+    "selling_points": ["卖点", "卖点标签", "标签", "selling_points", "商品卖点标签", "核心卖点"],
     "category": ["类目", "分类", "category", "商品类目", "所属分类", "商品分类"],
 }
 
-_IMAGE_SPLIT_RE = re.compile(r'[,;\n\r|]+')
+_IMAGE_SPLIT_RE = re.compile(r'[,;\s|]+')
 _ATTR_SPLIT_RE = re.compile(r'[;；\n]+')
 _ATTR_KV_RE = re.compile(r'^([^:：]+)[=:：]\s*(.+)$')
 _SPEC_KV_RE = re.compile(r'^([^:：,，]+)[=:：]\s*(.+)$')
@@ -131,7 +133,7 @@ def _parse_skus(raw, price_fallback: float = 0) -> list:
                     "sku_id": str(item.get("sku_id", "")),
                     "price": _to_float(item.get("price", price_fallback)),
                     "original_price": _to_float(item.get("original_price", 0)),
-                    "stock": int(item.get("stock", 999) or 999),
+                    "stock": int(item["stock"]) if item.get("stock") is not None else None,
                     "image": item.get("image", item.get("thumb_url", "")),
                     "specs": _parse_sku_specs_from_dict(item.get("specs", {})),
                 })
@@ -148,18 +150,22 @@ def _parse_skus(raw, price_fallback: float = 0) -> list:
         fields = _SKU_FIELD_SEP.split(part)
         specs_dict = {}
         price = price_fallback
-        stock = 999
+        stock = None
         image = ""
         spec_parts = []
+        price_seen = False
         for f in fields:
             f = f.strip()
             if not f:
                 continue
-            if re.match(r'^\d+\.?\d*$', f):
-                if price == price_fallback or price == 0:
-                    price = _to_float(f)
+            if re.match(r'^[¥￥]?\d+\.?\d*$', f):
+                if not price_seen:
+                    price = money(f)
+                    price_seen = True
                 else:
                     stock = int(_to_float(f))
+            elif re.match(r'^库存[:：]?\d+$', f):
+                stock = int(re.search(r'\d+', f).group())
             elif f.startswith("http"):
                 image = f
             else:
@@ -173,7 +179,7 @@ def _parse_skus(raw, price_fallback: float = 0) -> list:
             "sku_id": "",
             "price": price if price > 0 else price_fallback,
             "original_price": 0,
-            "stock": stock if stock > 0 else 999,
+            "stock": stock,
             "image": image,
             "specs": specs_dict,
         })
@@ -322,6 +328,7 @@ def import_file(filepath: str, column_mapping: dict = None) -> dict:
                 continue
             if not goods_id:
                 goods_id = _generate_id(title)
+            goods_id = valid_goods_id(goods_id)
 
             existing = conn.execute("SELECT 1 FROM goods WHERE goods_id = ?", (goods_id,)).fetchone()
             if existing:
@@ -329,9 +336,9 @@ def import_file(filepath: str, column_mapping: dict = None) -> dict:
                 continue
 
             subtitle = _col("subtitle")
-            price = _to_float(_col("price"))
-            original_price = _to_float(_col("original_price"))
-            min_group_price = _to_float(_col("min_group_price"))
+            price = money(_col("price"))
+            original_price = money(_col("original_price"))
+            min_group_price = money(_col("min_group_price"))
             if min_group_price <= 0:
                 min_group_price = price
             sales = _to_int(_col("sales"))
@@ -351,6 +358,7 @@ def import_file(filepath: str, column_mapping: dict = None) -> dict:
                 skus = _parse_skus(raw_sku, price)
             else:
                 skus = []
+            skus = normalize_skus(skus)
 
             selling_points_raw = _col("selling_points")
             selling_points = []
@@ -392,6 +400,7 @@ def import_file(filepath: str, column_mapping: dict = None) -> dict:
                     json.dumps(raw_data, ensure_ascii=False) if raw_data else "{}",
                 ),
             )
+            _sync_sku_items(conn, goods_id, skus, now, supplied_fields=set(mapping))
             imported += 1
         except Exception as e:
             errors.append(f"第{i + 2}行: {str(e)}")
@@ -445,6 +454,7 @@ def _extract_goods_from_raw_json(data: dict) -> dict | None:
     goods_id = str(goods.get("goods_id", goods.get("goodsID", "")))
     if not goods_id:
         return None
+    goods_id = valid_goods_id(goods_id)
     
     # 提取SKU数据
     sku_list = goods.get("sku", goods.get("skus", []))
@@ -453,26 +463,14 @@ def _extract_goods_from_raw_json(data: dict) -> dict | None:
     sku_images = []
     
     if isinstance(sku_list, list):
-        for s in sku_list:
+        for s in normalize_skus(sku_list, from_pdd=True):
             if not isinstance(s, dict):
                 continue
             
             # 价格处理: 大王解析格式用 groupPrice/normalPrice (元), skuPrice (分)
-            price = 0
-            if s.get("groupPrice"):
-                price = _to_float(s["groupPrice"])
-            elif s.get("skuPrice"):
-                price = _to_float(s["skuPrice"]) / 100
-            elif s.get("price"):
-                price = _to_float(s["price"])
-            
-            orig_price = 0
-            if s.get("normalPrice"):
-                orig_price = _to_float(s["normalPrice"])
-            elif s.get("normal_price"):
-                orig_price = _to_float(s["normal_price"])
-            
-            stock = int(s.get("quantity", s.get("stock", 0)) or 0)
+            price = s["price"]
+            orig_price = s["original_price"]
+            stock = s["stock"]
             image = s.get("thumbUrl", s.get("thumb_url", s.get("image", "")))
             
             if image and image.startswith("http") and image not in sku_images:
@@ -484,7 +482,7 @@ def _extract_goods_from_raw_json(data: dict) -> dict | None:
             if isinstance(raw_specs, list):
                 for sp in raw_specs:
                     if isinstance(sp, dict):
-                        name = sp.get("spec_key", sp.get("spec", ""))
+                        name = sp.get("key", sp.get("spec_key", sp.get("spec", "")))
                         value = sp.get("spec_value", sp.get("value", ""))
                         if name and value:
                             sku_specs.append({"key": name, "value": value})
@@ -556,19 +554,15 @@ def _extract_goods_from_raw_json(data: dict) -> dict | None:
                         selling_points.append(text)
     
     # 价格处理
-    price = 0
-    if goods.get("minGroupPrice"):
-        price = _to_float(goods["minGroupPrice"])
-    elif goods.get("min_group_price"):
-        price = _to_float(goods["min_group_price"])
-    elif skus:
+    price = pdd_price(goods)
+    if price <= 0 and skus:
         prices = [s["price"] for s in skus if s["price"] > 0]
         if prices:
             price = min(prices)
     
-    orig_price = _to_float(goods.get("market_price", goods.get("normal_price", goods.get("linePrice", 0))))
+    orig_price = pdd_price(goods, original=True)
     
-    return {
+    result = {
         "goods_id": goods_id,
         "title": goods.get("goodsName", goods.get("goods_name", goods.get("title", ""))),
         "subtitle": goods.get("goods_desc", goods.get("desc", "")),
@@ -589,8 +583,9 @@ def _extract_goods_from_raw_json(data: dict) -> dict | None:
         "attributes": attributes,
         "selling_points": selling_points,
         "source_url": f"https://mobile.yangkeduo.com/goods.html?goods_id={goods_id}",
-        "raw_data": data,
     }
+    result["raw_data"] = dict(result)
+    return result
 
 
 def import_raw_json_files(file_paths: list) -> dict:
@@ -642,6 +637,7 @@ def import_raw_json_files(file_paths: list) -> dict:
                     json.dumps(goods_info["raw_data"], ensure_ascii=False),
                 ),
             )
+            _sync_sku_items(conn, goods_id, goods_info["skus"], now)
             imported += 1
         except Exception as e:
             errors.append(f"{Path(filepath).name}: {str(e)}")
@@ -694,11 +690,13 @@ def import_goods_json(file_path: str) -> dict:
             goods_list = [goods_list]
 
         for goods in goods_list:
-            goods_id = goods.get("goods_id", "")
+            goods_id = goods.get("goods_id", "") if isinstance(goods, dict) else ""
             if not goods_id:
                 continue
 
             try:
+                provided_fields = set(goods)
+                goods = normalize_goods({**goods, "capture_source": "import"})
                 existing = conn.execute(
                     "SELECT 1 FROM goods WHERE goods_id = ?", (goods_id,)
                 ).fetchone()
@@ -761,7 +759,7 @@ def import_goods_json(file_path: str) -> dict:
                         ),
                     )
                     # 同步 sku_items 表
-                    _sync_sku_items(conn, goods_id, skus, now)
+                    _sync_sku_items(conn, goods_id, skus, now, supplied_fields=provided_fields)
                     updated += 1
                 else:
                     conn.execute(
@@ -788,7 +786,7 @@ def import_goods_json(file_path: str) -> dict:
                             price_min, price_max, 1,
                         ),
                     )
-                    _sync_sku_items(conn, goods_id, skus, now)
+                    _sync_sku_items(conn, goods_id, skus, now, supplied_fields=provided_fields)
                     imported += 1
             except Exception as e:
                 errors.append(f"{goods_id}: {str(e)}")
@@ -800,60 +798,19 @@ def import_goods_json(file_path: str) -> dict:
     return {"imported": imported, "updated": updated, "skipped": 0, "errors": errors}
 
 
-def _sync_sku_items(conn, goods_id: str, skus: list, now: str):
-    """根据导入的 skus 列表同步 sku_items 表的价格"""
-    if not skus:
-        return
-    # 先查出现有的 sku_items
-    existing_rows = conn.execute(
-        "SELECT id, sku_id FROM sku_items WHERE goods_id=?", (goods_id,)
-    ).fetchall()
-
-    if existing_rows:
-        # 按 sku_id 匹配更新价格
-        sku_by_id = {}
-        for s in skus:
-            if isinstance(s, dict):
-                sid = str(s.get("sku_id", ""))
-                if sid:
-                    sku_by_id[sid] = s
-
-        for row in existing_rows:
-            matched = sku_by_id.get(row["sku_id"], {})
-            if matched:
-                conn.execute(
-                    "UPDATE sku_items SET price=?, original_price=?, updated_at=? WHERE id=?",
-                    (matched.get("price", 0) or 0,
-                     matched.get("original_price", 0) or 0,
-                     now, row["id"])
-                )
-    else:
-        # 没有 sku_items 则从 skus 新建
-        for s in skus:
-            if not isinstance(s, dict):
-                continue
-            specs = s.get("specs", {})
-            if isinstance(specs, list):
-                specs_dict = {}
-                for sp in specs:
-                    if isinstance(sp, dict):
-                        specs_dict[sp.get("name", sp.get("spec_key", ""))] = sp.get("value", sp.get("spec_value", ""))
-                specs = specs_dict
-            conn.execute(
-                """INSERT INTO sku_items
-                   (goods_id, sku_id, specs, price, original_price, stock, image, created_at, updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?)""",
-                (
-                    goods_id,
-                    str(s.get("sku_id", "")),
-                    json.dumps(specs, ensure_ascii=False),
-                    s.get("price", 0) or 0,
-                    s.get("original_price", 0) or 0,
-                    s.get("stock", 0) or 0,
-                    s.get("image", ""),
-                    now, now,
-                ),
-            )
+def _sync_sku_items(conn, goods_id: str, skus: list, now: str, *, supplied_fields=None):
+    skus = normalize_skus(skus)
+    sync_skus(conn, goods_id, skus, now)
+    prices = [s["price"] for s in skus if s["price"] > 0]
+    if not prices:
+        row = conn.execute("SELECT price FROM goods WHERE goods_id=?", (goods_id,)).fetchone()
+        prices = [row[0] or 0] if row else [0]
+    stocks = [s["stock"] for s in skus]
+    total = sum(stocks) if stocks and all(s is not None for s in stocks) else None
+    conn.execute("UPDATE goods SET skus=?, price_min=?, price_max=?, total_stock=? WHERE goods_id=?",
+                 (json.dumps(skus, ensure_ascii=False), min(prices), max(prices), total, goods_id))
+    from provenance import mark_import
+    mark_import(conn, goods_id, now, supplied_fields)
 
 
 
